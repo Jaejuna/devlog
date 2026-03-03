@@ -2,12 +2,7 @@
 
 import { useState } from 'react'
 import TableOfContents from './TableOfContents'
-
-interface TocItem {
-  id: string
-  text: string
-  level: 2 | 3
-}
+import type { TocItem } from '@/lib/types'
 
 interface MobileTocProps {
   headings: TocItem[]

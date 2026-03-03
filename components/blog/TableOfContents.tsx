@@ -1,12 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-
-interface TocItem {
-  id: string
-  text: string
-  level: 2 | 3
-}
+import type { TocItem } from '@/lib/types'
 
 interface TableOfContentsProps {
   headings: TocItem[]
@@ -76,26 +71,4 @@ export default function TableOfContents({ headings }: TableOfContentsProps) {
       </ul>
     </nav>
   )
-}
-
-// 유틸: MDX 본문에서 h2/h3 헤딩 추출
-export function extractHeadings(content: string): TocItem[] {
-  const headingRegex = /^(#{2,3})\s+(.+)$/gm
-  const headings: TocItem[] = []
-
-  let match
-  while ((match = headingRegex.exec(content)) !== null) {
-    const level = match[1].length as 2 | 3
-    const text = match[2].trim()
-    // rehype-slug 방식으로 id 생성
-    const id = text
-      .toLowerCase()
-      .replace(/[^\w\s가-힣]/g, '')
-      .replace(/\s+/g, '-')
-      .trim()
-
-    headings.push({ id, text, level })
-  }
-
-  return headings
 }

@@ -3,11 +3,10 @@
 import Link from 'next/link'
 import { useState } from 'react'
 import SearchModal from '@/components/blog/SearchModal'
+import ThemeToggle from '@/components/ui/ThemeToggle'
 
 const navLinks = [
   { href: '/', label: '홈' },
-  { href: '/?category=개발', label: '개발' },
-  { href: '/?category=면접 준비', label: '면접 준비' },
   { href: '/tags', label: '태그' },
   { href: '/about', label: '소개' },
 ]
@@ -43,6 +42,9 @@ export default function Header() {
 
         {/* Search Icon + Mobile Menu Button */}
         <div className="flex items-center gap-3">
+          {/* Theme Toggle */}
+          <ThemeToggle />
+
           {/* Search Icon */}
           <button
             aria-label="검색"

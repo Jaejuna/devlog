@@ -14,15 +14,31 @@ export const metadata: Metadata = {
 
 const adsenseId = process.env.NEXT_PUBLIC_ADSENSE_ID
 
+// Runs before React hydration to avoid flash of wrong theme
+const themeScript = `
+(function() {
+  var stored = localStorage.getItem('theme');
+  var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  if (stored === 'dark' || (!stored && prefersDark)) {
+    document.documentElement.classList.add('dark');
+  } else {
+    document.documentElement.classList.remove('dark');
+  }
+})();
+`
+
 export default function RootLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
   return (
-    <html lang="ko" className="dark">
+    <html lang="ko" suppressHydrationWarning>
       <head>
-        {/* AdSense 글로벌 스크립트 — 프로덕션 + 환경변수 설정 시에만 삽입 */}
+        {/* Theme init — must run before paint to prevent flash */}
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+
+        {/* AdSense — production only */}
         {adsenseId && process.env.NODE_ENV === 'production' && (
           <Script
             async

@@ -6,6 +6,7 @@ import Badge from '@/components/ui/Badge'
 import Tag from '@/components/ui/Tag'
 import Link from 'next/link'
 import type { Metadata } from 'next'
+import SidebarSearch from '@/components/blog/SidebarSearch'
 
 export const metadata: Metadata = {
   title: 'devlog — 개발자 블로그',
@@ -67,15 +68,13 @@ export default function HomePage({ searchParams }: HomePageProps) {
           {/* 카테고리 필터 */}
           <div className="flex flex-wrap gap-2 mb-4">
             <Link href="/">
-              <Badge variant={!searchParams.category ? 'purple' : 'gray'}>
+              <Badge variant={!searchParams.category && !searchParams.tag ? 'purple' : 'gray'}>
                 전체
               </Badge>
             </Link>
             {categories.map((cat) => (
               <Link key={cat} href={`/?category=${encodeURIComponent(cat)}`}>
-                <Badge
-                  variant={searchParams.category === cat ? 'purple' : 'gray'}
-                >
+                <Badge variant={searchParams.category === cat ? 'purple' : 'gray'}>
                   {cat}
                 </Badge>
               </Link>
@@ -83,7 +82,7 @@ export default function HomePage({ searchParams }: HomePageProps) {
           </div>
 
           {/* 태그 필터 */}
-          <div className="flex flex-wrap gap-2 mb-6">
+          <div className="flex flex-wrap gap-2 mb-4">
             {allTags.map((tag) => (
               <Link key={tag} href={`/?tag=${encodeURIComponent(tag)}`}>
                 <Tag variant={searchParams.tag === tag ? 'blue' : 'gray'}>
@@ -92,6 +91,38 @@ export default function HomePage({ searchParams }: HomePageProps) {
               </Link>
             ))}
           </div>
+
+          {/* 활성 필터 표시 */}
+          {(searchParams.category || searchParams.tag) && (
+            <div className="flex items-center gap-2 mb-6">
+              <span className="text-xs text-gray-400 dark:text-gray-500">필터:</span>
+              {searchParams.category && (
+                <Link
+                  href="/"
+                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300 hover:bg-primary-200 dark:hover:bg-primary-900/50 transition-colors"
+                >
+                  {searchParams.category}
+                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </Link>
+              )}
+              {searchParams.tag && (
+                <Link
+                  href="/"
+                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors"
+                >
+                  #{searchParams.tag}
+                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </Link>
+              )}
+              <span className="text-xs text-gray-400 dark:text-gray-500">
+                ({filteredPosts.length}개)
+              </span>
+            </div>
+          )}
 
           {/* 포스트 목록 */}
           {filteredPosts.length > 0 ? (
@@ -115,12 +146,7 @@ export default function HomePage({ searchParams }: HomePageProps) {
               <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                 검색
               </h3>
-              <input
-                type="text"
-                placeholder="포스트 검색..."
-                className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500"
-                readOnly
-              />
+              <SidebarSearch />
             </div>
 
             {/* 광고 */}
@@ -157,24 +183,6 @@ export default function HomePage({ searchParams }: HomePageProps) {
                   </li>
                 ))}
               </ul>
-            </div>
-
-            {/* 뉴스레터 구독 */}
-            <div className="p-4 bg-primary-50 dark:bg-primary-900/20 rounded-xl border border-primary-100 dark:border-primary-800">
-              <h3 className="text-sm font-semibold text-primary-700 dark:text-primary-300 mb-2">
-                뉴스레터 구독
-              </h3>
-              <p className="text-xs text-gray-600 dark:text-gray-400 mb-3">
-                새 포스트 알림을 이메일로 받아보세요.
-              </p>
-              <input
-                type="email"
-                placeholder="이메일 주소"
-                className="w-full px-3 py-2 text-xs border border-primary-200 dark:border-primary-700 rounded-lg mb-2 bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-primary-500"
-              />
-              <button className="w-full py-2 bg-primary-600 hover:bg-primary-700 text-white text-xs font-medium rounded-lg transition-colors">
-                구독하기
-              </button>
             </div>
 
             {/* 태그 클라우드 */}
