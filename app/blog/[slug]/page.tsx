@@ -7,7 +7,6 @@ import AdSidebar from '@/components/ads/AdSidebar'
 import { MDXRemote } from 'next-mdx-remote/rsc'
 import rehypeHighlight from 'rehype-highlight'
 import rehypeSlug from 'rehype-slug'
-import rehypeAutolinkHeadings from 'rehype-autolink-headings'
 import remarkGfm from 'remark-gfm'
 import remarkMath from 'remark-math'
 import rehypeKatex from 'rehype-katex'
@@ -171,7 +170,6 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
                   remarkPlugins: [remarkGfm, remarkMath],
                   rehypePlugins: [
                     rehypeSlug,
-                    [rehypeAutolinkHeadings, { behavior: 'wrap' }],
                     rehypeHighlight,
                     rehypeKatex,
                   ],
@@ -201,7 +199,6 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
                     remarkPlugins: [remarkGfm, remarkMath],
                     rehypePlugins: [
                       rehypeSlug,
-                      [rehypeAutolinkHeadings, { behavior: 'wrap' }],
                       rehypeHighlight,
                       rehypeKatex,
                     ],
