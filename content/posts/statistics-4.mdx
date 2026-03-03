@@ -1,0 +1,537 @@
+---
+title: "회귀와 예측: 통계 기초 정리 4장"
+date: "2026-03-04"
+category: "데이터사이언스"
+tags: ["통계", "회귀분석", "머신러닝", "Python"]
+excerpt: "단순·다중선형회귀, 잔차 진단, 범주형 변수 인코딩, 다항·스플라인 회귀까지 회귀분석의 핵심 개념을 코드와 함께 정리했습니다."
+readTime: 13
+---
+
+3장에서 실험 설계와 유의성 검정을 다뤘다면, 4장은 "변수들 사이의 관계를 어떻게 수식으로 표현하고, 새로운 값을 어떻게 예측하는가?"를 다룹니다. 회귀분석은 통계학과 머신러닝 모두에서 가장 기본이 되는 예측 도구입니다.
+
+> 이 글은 *Practical Statistics for Data Scientists* 4장을 기반으로 정리했습니다.
+
+## 4.1 단순선형회귀
+
+하나의 독립변수로 응답변수를 예측하는 가장 기본적인 회귀 모형입니다.
+
+| 용어 | 설명 |
+|------|------|
+| **응답변수 ($y$)** | 예측하거나 설명하고자 하는 변수 — 종속변수라고도 함 |
+| **독립변수 ($x$)** | 응답변수에 영향을 주는 변수 — 설명변수, 예측변수라고도 함 |
+| **레코드** | 하나의 관측값 또는 데이터 행 |
+| **절편 ($\beta_0$)** | 모든 독립변수가 0일 때의 예측값 |
+| **회귀계수 ($\beta_i$)** | 독립변수 1단위 증가에 따른 응답변수의 평균적 변화량 |
+| **적합값 ($\hat{y}_i$)** | 회귀식에 의해 예측된 응답값 |
+| **잔차 ($e_i$)** | 실제 응답값과 적합값의 차이 |
+
+### 단순선형회귀 모형
+
+$$y = \beta_0 + \beta_1 x + \varepsilon$$
+
+### 최소제곱법 (Ordinary Least Squares)
+
+잔차 제곱합을 최소화하여 회귀계수를 추정합니다.
+
+$$\min_{\beta} \sum_{i=1}^{n} (y_i - \hat{y}_i)^2 \quad \Rightarrow \quad \hat{\beta}_1 = \frac{\sum(x_i - \bar{x})(y_i - \bar{y})}{\sum(x_i - \bar{x})^2}, \quad \hat{\beta}_0 = \bar{y} - \hat{\beta}_1 \bar{x}$$
+
+```python
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import matplotlib
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_squared_error, r2_score
+import statsmodels.api as sm
+
+matplotlib.rcParams['font.family'] = 'AppleGothic'
+matplotlib.rcParams['axes.unicode_minus'] = False
+np.random.seed(42)
+
+# 예시: 광고비(x)와 매출(y)의 관계
+n = 50
+ad_spend = np.random.uniform(10, 100, n)  # 광고비 (만원)
+sales = 3.5 * ad_spend + np.random.normal(0, 15, n) + 50  # 매출 (만원)
+
+# statsmodels로 회귀 수행 (상세 통계 제공)
+X = sm.add_constant(ad_spend)
+model = sm.OLS(sales, X).fit()
+
+print(model.summary())
+
+# 시각화
+y_pred = model.predict(X)
+residuals = sales - y_pred
+
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 4))
+
+ax1.scatter(ad_spend, sales, alpha=0.6, label='관측값')
+ax1.plot(sorted(ad_spend), model.predict(sm.add_constant(sorted(ad_spend))),
+         'r-', linewidth=2, label=f'회귀선: y={model.params[0]:.1f}+{model.params[1]:.2f}x')
+ax1.set_xlabel('광고비 (만원)')
+ax1.set_ylabel('매출 (만원)')
+ax1.set_title('단순선형회귀')
+ax1.legend()
+
+ax2.scatter(y_pred, residuals, alpha=0.6)
+ax2.axhline(0, color='red', linestyle='--')
+ax2.set_xlabel('적합값')
+ax2.set_ylabel('잔차')
+ax2.set_title('잔차 vs 적합값 플롯')
+
+plt.tight_layout()
+plt.show()
+```
+
+> **실무 적용:** 광고비-매출 예측, 경력-연봉 모델링, 온도-에너지 소비 예측 등 두 변수의 선형 관계를 파악할 때 사용합니다. 단순선형회귀는 해석이 쉬워 초기 탐색에 특히 유용합니다.
+
+## 4.2 다중선형회귀
+
+둘 이상의 독립변수를 사용해 응답변수를 예측합니다.
+
+$$y = \beta_0 + \beta_1 x_1 + \beta_2 x_2 + \cdots + \beta_p x_p + \varepsilon$$
+
+행렬 표현:
+
+$$y = X\beta + \varepsilon, \quad \hat{\beta} = (X^\top X)^{-1} X^\top y$$
+
+### 모델 성능 지표
+
+| 지표 | 수식 | 의미 |
+|------|------|------|
+| **RMSE** | $\sqrt{\dfrac{1}{n}\sum(y_i - \hat{y}_i)^2}$ | 평균 예측 오차 크기 (단위 동일) |
+| **RSE** | $\sqrt{\dfrac{1}{n-p-1}\sum(y_i - \hat{y}_i)^2}$ | 자유도 반영 잔차 표준편차 |
+| **$R^2$** | $1 - \dfrac{\sum(y_i - \hat{y}_i)^2}{\sum(y_i - \bar{y})^2}$ | 모델이 설명하는 변동 비율 (0~1) |
+
+$$\text{RMSE} = \sqrt{\frac{1}{n} \sum_{i=1}^{n} (y_i - \hat{y}_i)^2}$$
+
+$$R^2 = 1 - \frac{\sum(y_i - \hat{y}_i)^2}{\sum(y_i - \bar{y})^2}$$
+
+### 가중회귀 (Weighted Least Squares)
+
+분산이 관측값마다 다를 때, 신뢰도 높은 관측값에 더 큰 가중치를 부여합니다.
+
+$$\min_{\beta} \sum_{i=1}^{n} w_i (y_i - x_i^\top \beta)^2$$
+
+```python
+import numpy as np
+import pandas as pd
+import statsmodels.api as sm
+from sklearn.metrics import mean_squared_error, r2_score
+
+np.random.seed(42)
+
+# 예시: 집 가격 예측 (면적, 방 개수, 연식)
+n = 100
+area = np.random.uniform(50, 200, n)          # 면적 (m²)
+rooms = np.random.randint(1, 6, n)             # 방 개수
+age = np.random.uniform(0, 40, n)              # 연식 (년)
+
+price = (300 * area + 500 * rooms - 30 * age
+         + np.random.normal(0, 3000, n) + 5000)  # 가격 (만원)
+
+df = pd.DataFrame({'가격': price, '면적': area, '방수': rooms, '연식': age})
+
+# 다중선형회귀
+X = sm.add_constant(df[['면적', '방수', '연식']])
+model = sm.OLS(df['가격'], X).fit()
+
+y_pred = model.predict(X)
+rmse = np.sqrt(mean_squared_error(df['가격'], y_pred))
+r2 = r2_score(df['가격'], y_pred)
+
+print("=== 다중선형회귀 계수 ===")
+for name, coef in zip(['절편', '면적', '방수', '연식'], model.params):
+    print(f"  {name}: {coef:.2f}")
+
+print(f"\nRMSE: {rmse:.0f}만원")
+print(f"R²: {r2:.4f}  ({r2*100:.1f}%의 변동 설명)")
+print(f"RSE: {model.mse_resid**0.5:.0f}만원")
+
+# 계수 해석
+print("\n=== 계수 해석 ===")
+print(f"  면적 1m² 증가 시 가격 평균 {model.params['면적']:.0f}만원 증가")
+print(f"  방 1개 증가 시 가격 평균 {model.params['방수']:.0f}만원 증가")
+print(f"  연식 1년 증가 시 가격 평균 {abs(model.params['연식']):.0f}만원 감소")
+```
+
+> **실무 적용:** 부동산 가격 모델링, 수요 예측, 의료 비용 예측 등 여러 요인이 복합적으로 작용하는 문제에 사용됩니다. $R^2$는 높을수록 좋지만, 변수를 무조건 추가하면 $R^2$가 올라가므로 수정된 $R^2$ (Adjusted $R^2$)를 함께 확인해야 합니다.
+
+## 4.3 회귀를 이용한 예측
+
+| 개념 | 수식 | 해석 |
+|------|------|------|
+| **신뢰구간** | $\hat{y}_0 \pm t^* \cdot s\sqrt{x_0^\top (X^\top X)^{-1} x_0}$ | 모집단 평균 응답값의 불확실성 |
+| **예측구간** | $\hat{y}_0 \pm t^* \cdot s\sqrt{1 + x_0^\top (X^\top X)^{-1} x_0}$ | 개별 새 관측값의 불확실성 |
+| **외삽 (extrapolation)** | $x_0$이 훈련 데이터 범위 밖 | 예측 신뢰도 급격히 하락 |
+
+> 예측구간은 항상 신뢰구간보다 넓습니다. 신뢰구간은 평균의 불확실성, 예측구간은 개별값의 불확실성을 나타내기 때문입니다.
+
+```python
+import numpy as np
+import statsmodels.api as sm
+import matplotlib.pyplot as plt
+import matplotlib
+matplotlib.rcParams['font.family'] = 'AppleGothic'
+matplotlib.rcParams['axes.unicode_minus'] = False
+
+np.random.seed(42)
+
+x = np.linspace(10, 80, 50)
+y = 2.5 * x + np.random.normal(0, 10, 50) + 20
+
+X = sm.add_constant(x)
+model = sm.OLS(y, X).fit()
+
+# 예측 범위 (훈련 범위 + 외삽 포함)
+x_new = np.linspace(0, 100, 200)
+X_new = sm.add_constant(x_new)
+
+pred = model.get_prediction(X_new)
+pred_df = pred.summary_frame(alpha=0.05)
+
+plt.figure(figsize=(10, 5))
+plt.scatter(x, y, alpha=0.6, label='관측값', zorder=5)
+plt.plot(x_new, pred_df['mean'], 'r-', linewidth=2, label='회귀선')
+plt.fill_between(x_new, pred_df['mean_ci_lower'], pred_df['mean_ci_upper'],
+                 alpha=0.3, color='blue', label='신뢰구간 (95%)')
+plt.fill_between(x_new, pred_df['obs_ci_lower'], pred_df['obs_ci_upper'],
+                 alpha=0.1, color='green', label='예측구간 (95%)')
+
+# 훈련 범위 표시
+plt.axvline(x=10, color='gray', linestyle=':', linewidth=1.5)
+plt.axvline(x=80, color='gray', linestyle=':', linewidth=1.5)
+plt.text(5, y.min(), '외삽\n범위', ha='center', fontsize=9, color='gray')
+plt.text(85, y.min(), '외삽\n범위', ha='center', fontsize=9, color='gray')
+
+plt.xlabel('x')
+plt.ylabel('y')
+plt.title('신뢰구간 vs 예측구간 — 훈련 범위 밖(외삽)에서 구간이 넓어짐')
+plt.legend()
+plt.tight_layout()
+plt.show()
+```
+
+> **실무 적용:** 외삽은 주가 예측, 기후 변화 예측처럼 미래를 예측해야 할 때 피할 수 없지만, 훈련 데이터 범위를 크게 벗어날수록 예측 신뢰도가 급감합니다. 외삽 범위에서는 항상 예측구간과 함께 해석해야 합니다.
+
+## 4.4 회귀에서의 요인변수
+
+범주형 변수는 수치형으로 변환해야 회귀에 사용할 수 있습니다.
+
+| 용어 | 설명 |
+|------|------|
+| **요인변수** | 범주형 값을 가지는 변수 — 직접 회귀에 사용 불가 |
+| **지표변수 / 가변수** | 범주형 수준을 0 또는 1로 나타내는 변수 |
+| **기준 부호화** | 하나의 기준 수준을 제외하고 나머지에 가변수 생성 — 절편에 기준 수준 포함 |
+| **원-핫 인코딩** | 모든 범주 수준에 대해 각각 가변수 생성 ($k$개 → $k$개 변수) |
+| **편차 부호화** | 각 범주 효과가 전체 평균에서 얼마나 벗어나는지 표현 ($-1, 0, 1$) |
+
+### 인코딩 방식 비교
+
+| 방식 | 변수 수 | 기준점 | 특징 |
+|------|---------|--------|------|
+| **기준 부호화** | $k - 1$ | 기준 범주 | 가장 일반적, 다중공선성 방지 |
+| **원-핫 인코딩** | $k$ | 없음 | 머신러닝에 자주 사용, 회귀에선 하나 제거 필요 |
+| **편차 부호화** | $k - 1$ | 전체 평균 | 절편이 전체 평균, 해석이 직관적 |
+
+```python
+import pandas as pd
+import numpy as np
+import statsmodels.api as sm
+import matplotlib
+matplotlib.rcParams['font.family'] = 'AppleGothic'
+matplotlib.rcParams['axes.unicode_minus'] = False
+
+np.random.seed(42)
+
+# 예시: 광고 채널(범주형)에 따른 전환율
+n = 120
+channels = np.random.choice(['SNS', '검색', '이메일'], n)
+base_rates = {'SNS': 5.0, '검색': 7.0, '이메일': 4.0}
+conversion = np.array([base_rates[c] + np.random.normal(0, 1.5) for c in channels])
+
+df = pd.DataFrame({'채널': channels, '전환율': conversion})
+
+# 기준 부호화 (drop_first=True → 'SNS'가 기준)
+df_encoded = pd.get_dummies(df, columns=['채널'], drop_first=True)
+print("=== 기준 부호화 (drop_first=True, 기준: 이메일) ===")
+print(df_encoded.head())
+
+X = sm.add_constant(df_encoded.drop('전환율', axis=1))
+model = sm.OLS(df_encoded['전환율'], X).fit()
+
+print("\n=== 회귀 계수 ===")
+print(model.params.round(3))
+print("\n해석: 계수는 '이메일' 대비 차이")
+
+# 원-핫 인코딩 (pandas)
+df_onehot = pd.get_dummies(df, columns=['채널'])
+print("\n=== 원-핫 인코딩 ===")
+print(df_onehot.head())
+
+# 각 채널 평균 비교
+print("\n=== 채널별 평균 전환율 ===")
+print(df.groupby('채널')['전환율'].mean().round(3))
+```
+
+> **실무 적용:** 성별, 지역, 요일, 상품 카테고리 같은 범주형 변수를 회귀/머신러닝에 활용할 때 인코딩이 필수입니다. 트리 기반 모델(랜덤포레스트, XGBoost)은 원-핫 인코딩 없이도 범주형 변수를 처리할 수 있습니다.
+
+## 4.5 회귀방정식 해석
+
+회귀계수를 올바르게 해석하는 것이 분석의 핵심입니다.
+
+| 용어 | 설명 |
+|------|------|
+| **다중공선성** | 독립변수들 사이에 강한 상관이 있어 회귀계수 추정이 불안정해지는 현상 |
+| **교란변수** | 독립변수와 종속변수 모두에 영향을 주어 인과관계를 왜곡하는 제3의 변수 |
+| **주효과** | 한 독립변수가 종속변수에 미치는 독립적인 효과 |
+| **상호작용** | 두 독립변수의 조합이 종속변수에 미치는 결합 효과 |
+
+### 회귀방정식 요소별 해석
+
+$$\hat{y} = \underbrace{\beta_0}_{\text{절편}} + \underbrace{\beta_1}_{\text{기울기}} x_1 + \underbrace{\beta_2}_{\text{기울기}} x_2 + \cdots$$
+
+| 요소 | 의미 |
+|------|------|
+| $\beta_0$ (절편) | 모든 $x_i = 0$일 때의 예측값 |
+| $\beta_i$ (회귀계수) | **다른 변수들을 고정**했을 때, $x_i$ 1단위 증가 시 $y$의 평균 변화량 |
+| $\hat{y}$ (적합값) | 회귀모형에 의해 예측된 응답값 |
+| $e_i = y_i - \hat{y}_i$ (잔차) | 실제값과 예측값의 차이 |
+
+```python
+import numpy as np
+import pandas as pd
+import statsmodels.api as sm
+import matplotlib.pyplot as plt
+import matplotlib
+matplotlib.rcParams['font.family'] = 'AppleGothic'
+matplotlib.rcParams['axes.unicode_minus'] = False
+
+np.random.seed(42)
+
+# 다중공선성 예시
+n = 100
+x1 = np.random.normal(0, 1, n)
+x2 = x1 + np.random.normal(0, 0.1, n)  # x1과 거의 같은 변수 (다중공선성)
+x3 = np.random.normal(0, 1, n)          # 독립적인 변수
+y = 2 * x1 + 3 * x3 + np.random.normal(0, 1, n)
+
+df = pd.DataFrame({'y': y, 'x1': x1, 'x2': x2, 'x3': x3})
+
+# 상관행렬 확인
+print("=== 상관행렬 ===")
+print(df.corr().round(3))
+
+# x1, x3만 사용 (다중공선성 없음)
+X_good = sm.add_constant(df[['x1', 'x3']])
+m_good = sm.OLS(y, X_good).fit()
+
+# x1, x2, x3 사용 (다중공선성 있음)
+X_bad = sm.add_constant(df[['x1', 'x2', 'x3']])
+m_bad = sm.OLS(y, X_bad).fit()
+
+print("\n=== 다중공선성 없음 (x1, x3) ===")
+print(m_good.params.round(3))
+print(f"VIF: x1={1/(1-np.corrcoef(x1, x3)[0,1]**2):.2f}")
+
+print("\n=== 다중공선성 있음 (x1, x2, x3) — 계수 불안정 ===")
+print(m_bad.params.round(3))
+
+# 상호작용 항
+df['x1_x3'] = df['x1'] * df['x3']  # 상호작용 항
+X_int = sm.add_constant(df[['x1', 'x3', 'x1_x3']])
+m_int = sm.OLS(y, X_int).fit()
+
+print("\n=== 상호작용 항 포함 모델 ===")
+print(m_int.params.round(3))
+print("해석: x1의 효과가 x3의 값에 따라 달라짐")
+```
+
+> **실무 적용:** VIF(분산팽창지수)가 10 이상이면 다중공선성을 의심합니다. 교란변수를 통제하지 않으면 잘못된 인과관계를 도출할 수 있습니다 (예: 아이스크림 판매량과 익사 사고의 상관 — 실제 원인은 더위).
+
+## 4.6 회귀 진단 (가정 검정)
+
+회귀분석은 여러 가정에 의존합니다. 잔차 분석으로 이를 검증합니다.
+
+| 진단 도구 | 가정 | 위반 시 |
+|-----------|------|---------|
+| **잔차 vs 적합값 플롯** | 등분산성 (분산 일정) | 부채꼴 모양 → 이분산성 의심 |
+| **QQ 플롯** | 정규성 (잔차 정규분포) | 직선 이탈 → 비정규 잔차 |
+| **지렛대-잔차 플롯** | 영향값 없음 | 오른쪽 위 점 → 영향값 |
+| **편잔차 플롯** | 선형성 | 곡선 형태 → 비선형 관계 |
+
+### 주요 진단 지표
+
+$$\text{표준화잔차}: \quad r_i = \frac{e_i}{\hat{\sigma}\sqrt{1 - h_{ii}}}$$
+
+$$\text{지렛대}: \quad h_{ii} = x_i^\top (X^\top X)^{-1} x_i$$
+
+$|r_i| > 2$ 이면 특잇값 의심, $h_{ii}$가 높고 $r_i$도 크면 영향값으로 판단합니다.
+
+```python
+import numpy as np
+import pandas as pd
+import statsmodels.api as sm
+import matplotlib.pyplot as plt
+import matplotlib
+from statsmodels.graphics.regressionplots import plot_leverage_resid2, plot_partregress_grid
+
+matplotlib.rcParams['font.family'] = 'AppleGothic'
+matplotlib.rcParams['axes.unicode_minus'] = False
+np.random.seed(42)
+
+n = 80
+x = np.random.uniform(1, 10, n)
+y = 2 * x + np.random.normal(0, 2, n)
+
+# 의도적 이상값 추가
+x = np.append(x, [15, 15.5])
+y = np.append(y, [5, 35])  # 지렛대 높음 + 잔차 큼 → 영향값
+
+X = sm.add_constant(x)
+model = sm.OLS(y, X).fit()
+
+influence = model.get_influence()
+standardized_resid = influence.resid_studentized_internal
+leverage = influence.hat_matrix_diag
+
+fig, axes = plt.subplots(2, 2, figsize=(12, 10))
+
+# 1. 잔차 vs 적합값 (등분산성)
+axes[0, 0].scatter(model.fittedvalues, model.resid, alpha=0.6)
+axes[0, 0].axhline(0, color='red', linestyle='--')
+axes[0, 0].set_xlabel('적합값')
+axes[0, 0].set_ylabel('잔차')
+axes[0, 0].set_title('잔차 vs 적합값 (등분산성 진단)')
+
+# 2. QQ 플롯 (정규성)
+sm.qqplot(model.resid, line='s', ax=axes[0, 1], alpha=0.6)
+axes[0, 1].set_title('QQ 플롯 (잔차 정규성 진단)')
+
+# 3. 표준화잔차 (특잇값)
+axes[1, 0].scatter(range(len(standardized_resid)), standardized_resid, alpha=0.6)
+axes[1, 0].axhline(2, color='red', linestyle='--', label='|r|=2 기준선')
+axes[1, 0].axhline(-2, color='red', linestyle='--')
+axes[1, 0].set_xlabel('관측 번호')
+axes[1, 0].set_ylabel('표준화잔차')
+axes[1, 0].set_title('표준화잔차 (특잇값 탐지)')
+axes[1, 0].legend()
+
+# 4. 지렛대 vs 표준화잔차 (영향값)
+axes[1, 1].scatter(leverage, standardized_resid, alpha=0.6)
+axes[1, 1].axhline(2, color='red', linestyle='--')
+axes[1, 1].axhline(-2, color='red', linestyle='--')
+axes[1, 1].axvline(2 * X.shape[1] / len(x), color='blue', linestyle='--', label='평균 지렛대 2배')
+axes[1, 1].set_xlabel('지렛대 (Leverage)')
+axes[1, 1].set_ylabel('표준화잔차')
+axes[1, 1].set_title('지렛대 vs 표준화잔차 (영향값 탐지)')
+axes[1, 1].legend()
+
+plt.tight_layout()
+plt.show()
+
+# 영향값 확인
+print("=== 영향값 후보 (|표준화잔차| > 2 AND 지렛대 높음) ===")
+df_diag = pd.DataFrame({'leverage': leverage, 'std_resid': standardized_resid})
+print(df_diag[np.abs(df_diag['std_resid']) > 2].tail())
+```
+
+> **실무 적용:** 이분산성은 로그 변환이나 가중회귀로 대응합니다. 영향값이 발견되면 해당 관측값을 제거하기 전에 데이터 오류인지 실제 극단값인지를 먼저 확인해야 합니다.
+
+## 4.7 다항회귀와 스플라인 회귀
+
+선형 관계가 맞지 않을 때 비선형 관계를 모델링하는 방법들입니다.
+
+| 기법 | 설명 | 장단점 |
+|------|------|--------|
+| **다항회귀** | $x^2, x^3$ 등 거듭제곱 항 추가 | 간단하지만 고차에서 불안정 |
+| **스플라인 회귀** | 구간별 다항식을 매끄럽게 연결 | 유연하고 안정적 |
+| **GAM** | 각 변수에 비선형 함수 적용 후 가법 결합 | 해석 가능한 비선형 모델 |
+
+### 다항회귀 모형
+
+$$y = \beta_0 + \beta_1 x + \beta_2 x^2 + \cdots + \beta_k x^k + \varepsilon$$
+
+### 일반화가법모형 (GAM)
+
+$$y = \beta_0 + f_1(x_1) + f_2(x_2) + \cdots + f_p(x_p) + \varepsilon$$
+
+각 $f_j$는 스플라인 등 비선형 함수 — 각 변수의 효과를 따로 시각화 가능합니다.
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib
+from sklearn.preprocessing import PolynomialFeatures
+from sklearn.linear_model import LinearRegression
+from sklearn.pipeline import Pipeline
+
+matplotlib.rcParams['font.family'] = 'AppleGothic'
+matplotlib.rcParams['axes.unicode_minus'] = False
+np.random.seed(42)
+
+# 비선형 데이터 생성
+x = np.linspace(-3, 3, 100)
+y_true = np.sin(x) * x + np.random.normal(0, 0.3, 100)
+
+x_test = np.linspace(-3, 3, 300).reshape(-1, 1)
+
+fig, axes = plt.subplots(1, 3, figsize=(15, 4))
+
+# 선형 회귀 (과소적합)
+lin_model = LinearRegression().fit(x.reshape(-1, 1), y_true)
+axes[0].scatter(x, y_true, alpha=0.4, s=20)
+axes[0].plot(x_test, lin_model.predict(x_test), 'r-', linewidth=2)
+axes[0].set_title(f'선형회귀 (degree=1)\nR²={lin_model.score(x.reshape(-1, 1), y_true):.3f}')
+
+# 다항회귀 degree=4 (적절한 적합)
+poly4 = Pipeline([('poly', PolynomialFeatures(degree=4)), ('reg', LinearRegression())])
+poly4.fit(x.reshape(-1, 1), y_true)
+axes[1].scatter(x, y_true, alpha=0.4, s=20)
+axes[1].plot(x_test, poly4.predict(x_test), 'r-', linewidth=2)
+axes[1].set_title(f'다항회귀 (degree=4)\nR²={poly4.score(x.reshape(-1, 1), y_true):.3f}')
+
+# 다항회귀 degree=15 (과대적합)
+poly15 = Pipeline([('poly', PolynomialFeatures(degree=15)), ('reg', LinearRegression())])
+poly15.fit(x.reshape(-1, 1), y_true)
+axes[2].scatter(x, y_true, alpha=0.4, s=20)
+axes[2].plot(x_test, poly15.predict(x_test), 'r-', linewidth=2)
+axes[2].set_ylim(-5, 5)
+axes[2].set_title(f'다항회귀 (degree=15) — 과대적합\nR²={poly15.score(x.reshape(-1, 1), y_true):.3f}')
+
+for ax in axes:
+    ax.set_xlabel('x')
+    ax.set_ylabel('y')
+
+plt.tight_layout()
+plt.show()
+
+# 스플라인 회귀 (scipy)
+from scipy.interpolate import UnivariateSpline
+
+spline = UnivariateSpline(x, y_true, s=5)  # s: 평활 파라미터
+
+plt.figure(figsize=(8, 4))
+plt.scatter(x, y_true, alpha=0.4, s=20, label='관측값')
+plt.plot(x_test, spline(x_test), 'r-', linewidth=2, label='스플라인 회귀')
+plt.xlabel('x')
+plt.ylabel('y')
+plt.title('스플라인 회귀 — 매듭 자동 설정')
+plt.legend()
+print(f"스플라인 매듭(knot) 위치: {spline.get_knots().round(2)}")
+plt.show()
+```
+
+> **실무 적용:** 나이-소득 관계, 시간-기온 변화처럼 비선형적인 패턴이 있을 때 다항회귀나 스플라인을 사용합니다. 다항 차수가 너무 높으면 과대적합되므로, 교차검증으로 최적 차수를 선택하는 것이 중요합니다.
+
+---
+
+4장 핵심 요약:
+
+- **최소제곱법**: 잔차 제곱합을 최소화해 회귀계수를 추정 — $\hat{\beta} = (X^\top X)^{-1} X^\top y$
+- **RMSE / $R^2$**: RMSE는 예측 오차의 절대적 크기, $R^2$는 설명력 비율 (0~1)
+- **신뢰구간 vs 예측구간**: 예측구간이 항상 넓음 — 개별값의 불확실성이 더 크기 때문
+- **범주형 변수 인코딩**: 기준 부호화(drop_first)가 일반적 — 다중공선성 방지
+- **다중공선성**: 독립변수 간 높은 상관 → VIF로 확인, 변수 제거 또는 정규화로 대응
+- **잔차 진단**: 등분산성(잔차 vs 적합값), 정규성(QQ 플롯), 영향값(지렛대-잔차 플롯)
+- **다항·스플라인 회귀**: 비선형 관계 모델링 — 차수 선택에 교차검증 필수
