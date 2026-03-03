@@ -34,6 +34,6 @@
     { "id": "10-1", "title": "반응형 최종 점검", "done": true },
     { "id": "10-2", "title": "다크 테마 기본 적용", "done": true },
     { "id": "10-3", "title": "AGENTS.md 최종 정리", "done": true },
-    { "id": "10-4", "title": "README.md 작성", "done": false }
+    { "id": "10-4", "title": "README.md 작성", "done": true }
   ]
 }
