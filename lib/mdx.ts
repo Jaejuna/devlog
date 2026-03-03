@@ -1,6 +1,11 @@
 import fs from 'fs'
 import path from 'path'
 import matter from 'gray-matter'
+import { serialize } from 'next-mdx-remote/serialize'
+import rehypeHighlight from 'rehype-highlight'
+import rehypeSlug from 'rehype-slug'
+import rehypeAutolinkHeadings from 'rehype-autolink-headings'
+import remarkGfm from 'remark-gfm'
 import type { Post, PostMeta } from './types'
 
 const postsDirectory = path.join(process.cwd(), 'content/posts')
@@ -53,5 +58,31 @@ export function getPostBySlug(slug: string): Post | null {
     excerpt: data.excerpt as string,
     readTime: data.readTime as number,
     content,
+  }
+}
+
+export async function serializeMdx(content: string) {
+  return serialize(content, {
+    mdxOptions: {
+      remarkPlugins: [remarkGfm],
+      rehypePlugins: [
+        rehypeSlug,
+        [rehypeAutolinkHeadings, { behavior: 'wrap' }],
+        rehypeHighlight,
+      ],
+    },
+  })
+}
+
+export function getAdjacentPosts(slug: string): {
+  prev: PostMeta | null
+  next: PostMeta | null
+} {
+  const posts = getAllPosts()
+  const index = posts.findIndex((p) => p.slug === slug)
+
+  return {
+    prev: index < posts.length - 1 ? posts[index + 1] : null,
+    next: index > 0 ? posts[index - 1] : null,
   }
 }
