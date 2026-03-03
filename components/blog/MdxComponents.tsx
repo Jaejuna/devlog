@@ -1,5 +1,6 @@
 import type { MDXComponents } from 'mdx/types'
 import type { DetailedHTMLProps, HTMLAttributes } from 'react'
+import CodeBlock from './CodeBlock'
 
 type HeadingProps = DetailedHTMLProps<
   HTMLAttributes<HTMLHeadingElement>,
@@ -81,14 +82,7 @@ const mdxComponents: MDXComponents = {
     )
   },
 
-  pre: ({ children, ...props }: PreProps) => (
-    <pre
-      className="overflow-x-auto rounded-xl bg-gray-900 dark:bg-gray-800 p-4 my-6 text-sm leading-relaxed"
-      {...props}
-    >
-      {children}
-    </pre>
-  ),
+  pre: ({ children }: PreProps) => <CodeBlock>{children}</CodeBlock>,
 
   a: ({ href, children, ...props }: AnchorProps) => {
     const isExternal = href?.startsWith('http')

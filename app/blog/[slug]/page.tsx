@@ -16,6 +16,7 @@ import MobileToc from '@/components/blog/MobileToc'
 import AdBanner from '@/components/ads/AdBanner'
 import PostNavigation from '@/components/blog/PostNavigation'
 import RelatedPosts from '@/components/blog/RelatedPosts'
+import ReadingProgress from '@/components/blog/ReadingProgress'
 
 interface BlogPostPageProps {
   params: { slug: string }
@@ -122,6 +123,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
 
   return (
     <>
+      <ReadingProgress />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
