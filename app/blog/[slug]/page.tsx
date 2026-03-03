@@ -198,11 +198,12 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
                 components={mdxComponents}
                 options={{
                   mdxOptions: {
-                    remarkPlugins: [remarkGfm],
+                    remarkPlugins: [remarkGfm, remarkMath],
                     rehypePlugins: [
                       rehypeSlug,
                       [rehypeAutolinkHeadings, { behavior: 'wrap' }],
                       rehypeHighlight,
+                      rehypeKatex,
                     ],
                   },
                 }}
