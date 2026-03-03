@@ -1,6 +1,7 @@
 import { getAllPosts } from '@/lib/mdx'
 import PostList from '@/components/blog/PostList'
 import AdSidebar from '@/components/ads/AdSidebar'
+import AdBanner from '@/components/ads/AdBanner'
 import Badge from '@/components/ui/Badge'
 import Tag from '@/components/ui/Tag'
 import Link from 'next/link'
@@ -38,6 +39,14 @@ export default function HomePage({ searchParams }: HomePageProps) {
       <div className="flex flex-col lg:flex-row gap-8">
         {/* Main Content */}
         <div className="flex-1 min-w-0">
+          {/* 상단 광고 배너 */}
+          <div className="mb-6">
+            <AdBanner
+              adClient={process.env.NEXT_PUBLIC_ADSENSE_ID ?? ''}
+              adSlot={process.env.NEXT_PUBLIC_AD_SLOT_BANNER ?? ''}
+            />
+          </div>
+
           {/* 카테고리 필터 */}
           <div className="flex flex-wrap gap-2 mb-4">
             <Link href="/">
