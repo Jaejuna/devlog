@@ -43,6 +43,8 @@ export async function generateMetadata({
       publishedTime: post.date,
       tags: post.tags,
       locale: 'ko_KR',
+      siteName: 'devlog',
+      url: `${process.env.NEXT_PUBLIC_BASE_URL ?? 'https://devlog-two.vercel.app'}/blog/${params.slug}`,
       images: [{ url: '/soong.png', width: 1200, height: 630 }],
     },
     twitter: {

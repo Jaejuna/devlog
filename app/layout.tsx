@@ -12,6 +12,7 @@ export const metadata: Metadata = {
   },
   description: '개발 경험과 면접 준비 콘텐츠를 다루는 개인 기술 블로그',
   openGraph: {
+    siteName: 'devlog',
     images: [{ url: '/soong.png', width: 1200, height: 630 }],
   },
   twitter: {

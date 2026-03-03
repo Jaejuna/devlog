@@ -16,6 +16,8 @@ export const metadata: Metadata = {
     description: '개발 경험과 면접 준비 콘텐츠를 다루는 개인 기술 블로그',
     type: 'website',
     locale: 'ko_KR',
+    siteName: 'devlog',
+    url: process.env.NEXT_PUBLIC_BASE_URL ?? 'https://devlog-two.vercel.app',
     images: [{ url: '/soong.png', width: 1200, height: 630 }],
   },
   twitter: {
