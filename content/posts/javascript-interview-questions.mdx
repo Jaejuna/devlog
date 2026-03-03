@@ -1,0 +1,233 @@
+---
+title: "JavaScript 면접 질문 완벽 정리: 클로저, 호이스팅, 이벤트 루프"
+date: "2024-07-01"
+category: "면접 준비"
+tags: ["JavaScript", "면접", "CS"]
+excerpt: "클로저, 호이스팅, this 바인딩, 이벤트 루프 등 프론트엔드 면접의 단골 JavaScript 질문들을 코드와 함께 정리했습니다."
+readTime: 9
+---
+
+프론트엔드 면접에서 JavaScript 기초 질문은 빠지지 않습니다. 단순히 동작을 아는 것을 넘어, 왜 그렇게 동작하는지까지 설명할 수 있어야 합니다.
+
+## 호이스팅 (Hoisting)
+
+변수와 함수 선언이 스코프의 최상단으로 끌어올려지는 것처럼 동작하는 현상입니다.
+
+```javascript
+console.log(name) // undefined (에러 아님!)
+var name = '홍길동'
+console.log(name) // '홍길동'
+
+// 실제 실행 순서 (개념적으로)
+var name       // 선언만 호이스팅
+console.log(name) // undefined
+name = '홍길동'
+console.log(name) // '홍길동'
+```
+
+`let`, `const`는 TDZ(Temporal Dead Zone) 때문에 호이스팅되지만 초기화 전에는 접근 불가합니다.
+
+```javascript
+console.log(age) // ❌ ReferenceError: Cannot access 'age' before initialization
+let age = 30
+```
+
+함수 선언식은 통째로 호이스팅됩니다.
+
+```javascript
+greet() // ✅ '안녕하세요' (호이스팅으로 동작)
+
+function greet() {
+  console.log('안녕하세요')
+}
+
+// 함수 표현식은 변수만 호이스팅
+sayHi() // ❌ TypeError: sayHi is not a function
+
+var sayHi = function() {
+  console.log('안녕')
+}
+```
+
+## 클로저 (Closure)
+
+함수가 자신이 선언된 렉시컬 스코프를 기억하는 것입니다. 함수가 외부 스코프 변수에 접근할 수 있습니다.
+
+```javascript
+function makeCounter() {
+  let count = 0 // 외부 함수의 변수
+
+  return function() {
+    count++         // 내부 함수가 외부 변수에 접근
+    return count
+  }
+}
+
+const counter = makeCounter()
+counter() // 1
+counter() // 2
+counter() // 3
+// count는 외부에서 직접 접근 불가 → 캡슐화
+```
+
+### 클로저 실전 활용
+
+```javascript
+// 1. 데이터 은닉
+function createUser(name) {
+  let _name = name // private 변수
+
+  return {
+    getName: () => _name,
+    setName: (newName) => { _name = newName }
+  }
+}
+
+// 2. 커링 (함수 분리)
+function multiply(x) {
+  return (y) => x * y
+}
+
+const double = multiply(2)
+const triple = multiply(3)
+
+double(5) // 10
+triple(5) // 15
+
+// 3. 메모이제이션
+function memoize(fn) {
+  const cache = {}
+  return function(n) {
+    if (cache[n] !== undefined) return cache[n]
+    cache[n] = fn(n)
+    return cache[n]
+  }
+}
+```
+
+## this 바인딩
+
+`this`는 함수가 **호출되는 방식**에 따라 결정됩니다.
+
+```javascript
+// 1. 일반 함수 호출 → 전역 객체 (strict mode: undefined)
+function show() {
+  console.log(this) // window (브라우저)
+}
+
+// 2. 메서드 호출 → 메서드를 소유한 객체
+const obj = {
+  name: '홍길동',
+  greet() {
+    console.log(this.name) // '홍길동'
+  }
+}
+obj.greet()
+
+// 3. 화살표 함수 → 상위 스코프의 this 상속
+const obj2 = {
+  name: '홍길동',
+  greet: () => {
+    console.log(this.name) // undefined (화살표 함수는 this가 없음)
+  },
+  greetLater() {
+    setTimeout(() => {
+      console.log(this.name) // '홍길동' (상위 스코프의 this)
+    }, 1000)
+  }
+}
+
+// 4. call / apply / bind
+function introduce(greeting) {
+  console.log(`${greeting}, ${this.name}입니다`)
+}
+
+const user = { name: '홍길동' }
+introduce.call(user, '안녕하세요')   // this를 user로 고정하고 즉시 호출
+introduce.apply(user, ['안녕하세요']) // apply는 인자를 배열로
+const boundFn = introduce.bind(user) // this를 고정한 새 함수 반환
+boundFn('반갑습니다')
+```
+
+## 프로토타입 (Prototype)
+
+JavaScript의 상속은 프로토타입 체인을 통해 구현됩니다.
+
+```javascript
+function Animal(name) {
+  this.name = name
+}
+
+Animal.prototype.speak = function() {
+  return `${this.name}이(가) 소리를 냅니다`
+}
+
+const dog = new Animal('강아지')
+dog.speak() // '강아지이(가) 소리를 냅니다'
+
+// dog에 speak가 없으면 프로토타입 체인에서 찾음
+// dog → Animal.prototype → Object.prototype → null
+```
+
+ES6 class는 프로토타입의 문법적 설탕(Syntactic Sugar)입니다.
+
+```javascript
+class Animal {
+  constructor(name) {
+    this.name = name
+  }
+  speak() {
+    return `${this.name}이(가) 소리를 냅니다`
+  }
+}
+
+class Dog extends Animal {
+  speak() {
+    return `${this.name}이(가) 멍멍!`
+  }
+}
+```
+
+## 이벤트 루프 (Event Loop)
+
+```javascript
+console.log('1')
+
+setTimeout(() => console.log('2'), 0)
+
+Promise.resolve().then(() => console.log('3'))
+
+console.log('4')
+
+// 출력 순서: 1, 4, 3, 2
+```
+
+왜 이런 순서일까요?
+
+1. `1` 출력 — 동기 코드
+2. setTimeout 콜백 → **Macrotask Queue** 에 등록
+3. Promise 콜백 → **Microtask Queue** 에 등록
+4. `4` 출력 — 동기 코드
+5. Call Stack 비움 → **Microtask Queue 먼저** 실행 → `3` 출력
+6. Microtask Queue 비움 → **Macrotask Queue** 실행 → `2` 출력
+
+> Microtask(Promise, queueMicrotask)는 Macrotask(setTimeout, setInterval)보다 먼저 실행됩니다.
+
+## var vs let vs const
+
+| 구분 | var | let | const |
+|------|-----|-----|-------|
+| 스코프 | 함수 스코프 | 블록 스코프 | 블록 스코프 |
+| 호이스팅 | 선언 + undefined 초기화 | 선언만 (TDZ) | 선언만 (TDZ) |
+| 재선언 | 가능 | 불가 | 불가 |
+| 재할당 | 가능 | 가능 | 불가 |
+
+실무에서는 `const`를 기본으로, 재할당이 필요한 경우에만 `let`을 사용합니다. `var`는 사용하지 않습니다.
+
+## 면접 빈출 질문 요약
+
+- **호이스팅이란?** 선언이 스코프 최상단으로 끌어올려지는 현상. `var`는 undefined로 초기화, `let/const`는 TDZ
+- **클로저란?** 함수가 선언된 렉시컬 스코프를 기억하는 것. 데이터 은닉과 상태 유지에 활용
+- **this는 어떻게 결정되나?** 호출 방식에 따라 결정. 화살표 함수는 상위 스코프의 this를 상속
+- **이벤트 루프란?** Call Stack이 비면 Microtask Queue, Macrotask Queue 순서로 실행
+- **Promise와 setTimeout 중 뭐가 먼저?** Promise (Microtask)가 setTimeout (Macrotask)보다 먼저 실행

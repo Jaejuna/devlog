@@ -1,0 +1,204 @@
+---
+title: "시간복잡도와 Big-O 표기법: 코딩테스트 필수 개념"
+date: "2024-09-01"
+category: "면접 준비"
+tags: ["알고리즘", "CS", "코딩테스트", "면접"]
+excerpt: "코딩테스트와 면접에 반드시 필요한 시간복잡도와 Big-O 표기법을 실제 코드 예제와 함께 정리했습니다."
+readTime: 7
+---
+
+코딩테스트를 풀 때 "이 코드가 시간 초과가 날까?"를 판단하려면 시간복잡도를 알아야 합니다. 면접에서도 "왜 이 자료구조를 선택했나요?"에 답하려면 복잡도 비교가 필수입니다.
+
+## Big-O 표기법이란?
+
+알고리즘의 **입력 크기(N)에 따른 실행 시간 증가율**을 나타냅니다. 정확한 시간이 아닌, 최악의 경우 성능을 표현합니다.
+
+```
+O(1) < O(log N) < O(N) < O(N log N) < O(N²) < O(2^N) < O(N!)
+빠름 ─────────────────────────────────────────────────▶ 느림
+```
+
+## 각 복잡도 실제 예시
+
+### O(1) — 상수 시간
+
+입력 크기와 상관없이 항상 일정한 시간이 걸립니다.
+
+```javascript
+// 배열의 특정 인덱스 접근
+function getFirst(arr) {
+  return arr[0] // 배열 길이에 상관없이 즉시 반환
+}
+
+// 해시맵 조회
+const map = new Map()
+map.set('key', 'value')
+map.get('key') // O(1)
+```
+
+### O(log N) — 로그 시간
+
+입력이 2배가 돼도 실행 시간은 1만 늘어납니다.
+
+```javascript
+// 이진 탐색 (Binary Search)
+function binarySearch(arr, target) {
+  let left = 0
+  let right = arr.length - 1
+
+  while (left <= right) {
+    const mid = Math.floor((left + right) / 2)
+
+    if (arr[mid] === target) return mid
+    if (arr[mid] < target) left = mid + 1
+    else right = mid - 1
+  }
+
+  return -1
+}
+
+// N=1,000,000 → 최대 20번 비교
+// N=1,000,000,000 → 최대 30번 비교
+```
+
+### O(N) — 선형 시간
+
+입력 크기에 비례해 시간이 늘어납니다.
+
+```javascript
+// 배열 순회
+function findMax(arr) {
+  let max = arr[0]
+  for (const num of arr) { // N번 반복
+    if (num > max) max = num
+  }
+  return max
+}
+```
+
+### O(N log N) — 선형 로그 시간
+
+효율적인 정렬 알고리즘의 복잡도입니다.
+
+```javascript
+// 병합 정렬, 퀵 정렬 평균
+arr.sort((a, b) => a - b) // JavaScript 내장 sort는 O(N log N)
+```
+
+### O(N²) — 이차 시간
+
+중첩 반복문에서 자주 발생합니다.
+
+```javascript
+// 버블 정렬
+function bubbleSort(arr) {
+  for (let i = 0; i < arr.length; i++) {       // N번
+    for (let j = 0; j < arr.length - i; j++) { // N번
+      if (arr[j] > arr[j + 1]) {
+        [arr[j], arr[j + 1]] = [arr[j + 1], arr[j]]
+      }
+    }
+  }
+  return arr
+}
+
+// N=10,000이면 → 최대 1억 번 연산 (위험!)
+```
+
+## 복잡도 빠른 계산법
+
+### 중첩 반복문
+
+```javascript
+// 반복문이 N번 × N번 → O(N²)
+for (let i = 0; i < n; i++) {
+  for (let j = 0; j < n; j++) { }
+}
+
+// 반복문이 N번 × M번 → O(N×M)
+for (let i = 0; i < n; i++) {
+  for (let j = 0; j < m; j++) { }
+}
+
+// 반복문이 절반씩 줄어듦 → O(log N)
+while (n > 1) {
+  n = Math.floor(n / 2)
+}
+```
+
+### 재귀 함수
+
+```javascript
+// 피보나치 — O(2^N)
+function fib(n) {
+  if (n <= 1) return n
+  return fib(n - 1) + fib(n - 2) // 각 호출이 2개로 분기
+}
+
+// 메모이제이션으로 O(N)으로 개선
+function fib(n, memo = {}) {
+  if (n in memo) return memo[n]
+  if (n <= 1) return n
+  memo[n] = fib(n - 1, memo) + fib(n - 2, memo)
+  return memo[n]
+}
+```
+
+## 자료구조별 시간복잡도
+
+| 자료구조 | 접근 | 검색 | 삽입 | 삭제 |
+|---------|------|------|------|------|
+| 배열 | O(1) | O(N) | O(N) | O(N) |
+| 연결 리스트 | O(N) | O(N) | O(1) | O(1) |
+| 스택 / 큐 | O(N) | O(N) | O(1) | O(1) |
+| 해시테이블 | - | O(1) | O(1) | O(1) |
+| 이진 탐색 트리 | O(log N) | O(log N) | O(log N) | O(log N) |
+| 힙 | - | O(N) | O(log N) | O(log N) |
+
+## 코딩테스트 제한 시간 가늠하기
+
+일반적으로 1초에 약 **1억 번(10^8)** 연산이 가능합니다.
+
+| N의 크기 | 가능한 복잡도 |
+|---------|-------------|
+| N ≤ 10 | O(N!), O(2^N) |
+| N ≤ 25 | O(2^N) |
+| N ≤ 100 | O(N³) |
+| N ≤ 3,000 | O(N²) |
+| N ≤ 500,000 | O(N log N) |
+| N ≤ 10,000,000 | O(N) |
+| N ≤ 10^18 | O(log N) |
+
+## 공간복잡도
+
+시간복잡도와 함께 메모리 사용량도 고려해야 합니다.
+
+```javascript
+// O(1) 공간 — 입력 크기와 무관하게 상수 메모리 사용
+function sum(arr) {
+  let total = 0  // 변수 하나
+  for (const n of arr) total += n
+  return total
+}
+
+// O(N) 공간 — 입력 크기에 비례한 메모리 사용
+function double(arr) {
+  return arr.map(n => n * 2)  // 새 배열 생성 (N개)
+}
+
+// 재귀는 콜 스택도 메모리를 사용
+function factorial(n) {
+  if (n <= 1) return 1
+  return n * factorial(n - 1) // O(N) 스택 공간
+}
+```
+
+## 마무리
+
+Big-O는 정확한 시간을 재는 게 아니라 **입력이 커질수록 얼마나 느려지는가**를 표현합니다. 코딩테스트에서 시간 초과가 날 것 같다면:
+
+1. N의 크기를 확인
+2. 현재 알고리즘의 복잡도 계산
+3. 더 나은 자료구조(해시, 힙)나 알고리즘(이진 탐색, DP)으로 개선
+
+이 사고 흐름이 알고리즘 문제 해결의 기본입니다.
