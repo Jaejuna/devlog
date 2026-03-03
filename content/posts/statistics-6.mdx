@@ -1,0 +1,479 @@
+---
+title: "통계적 머신러닝: 통계 기초 정리 6장"
+date: "2026-03-04"
+category: "데이터사이언스"
+tags: ["통계", "머신러닝", "랜덤포레스트", "부스팅", "Python"]
+excerpt: "KNN, 결정 트리, 랜덤 포레스트, AdaBoost, 그레이디언트 부스팅까지 트리 기반 앙상블 모델의 핵심 개념을 코드와 함께 정리했습니다."
+readTime: 13
+---
+
+5장에서 분류의 기본 알고리즘을 다뤘다면, 6장은 거리 기반 모델(KNN)과 트리 기반 앙상블 모델(랜덤 포레스트, 부스팅)을 다룹니다. 이 방법들은 현대 머신러닝 대회와 실무에서 가장 널리 사용되는 알고리즘입니다.
+
+> 이 글은 *Practical Statistics for Data Scientists* 6장을 기반으로 정리했습니다.
+
+## 6.1 K 최근접 이웃 (KNN)
+
+새로운 데이터가 들어왔을 때, 가장 가까운 $k$개의 이웃 데이터를 참조해 예측합니다.
+
+| 용어 | 설명 |
+|------|------|
+| **이웃 (neighbor)** | 기준 데이터와 거리가 가까운 다른 데이터 포인트 |
+| **KNN (분류)** | $k$개 이웃 중 다수 클래스를 예측값으로 선택 |
+| **KNN (회귀)** | $k$개 이웃의 평균값을 예측값으로 사용 |
+| **표준화** | 거리 계산 전 변수 스케일 통일 — 필수 전처리 |
+
+### 거리 지표 비교
+
+| 지표 | 수식 | 특징 |
+|------|------|------|
+| **유클리드 거리** | $\sqrt{\sum(x_i - y_i)^2}$ | 직선 거리, 가장 일반적 |
+| **맨해튼 거리** | $\sum \lvert x_i - y_i \rvert$ | 격자 이동 거리, 이상값에 강함 |
+| **코사인 거리** | $1 - \dfrac{\sum x_i y_i}{\sqrt{\sum x_i^2}\sqrt{\sum y_i^2}}$ | 방향 유사도, 텍스트 분석에 적합 |
+
+$$d_{\text{Euclid}}(x, y) = \sqrt{\sum_{i=1}^{n}(x_i - y_i)^2}$$
+
+$$d_{\text{Manhattan}}(x, y) = \sum_{i=1}^{n} |x_i - y_i|$$
+
+### z-점수 표준화
+
+$$z = \frac{x - \mu}{\sigma}$$
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib
+from sklearn.neighbors import KNeighborsClassifier, KNeighborsRegressor
+from sklearn.datasets import make_classification, make_regression
+from sklearn.model_selection import train_test_split, cross_val_score
+from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import accuracy_score
+
+matplotlib.rcParams['font.family'] = 'AppleGothic'
+matplotlib.rcParams['axes.unicode_minus'] = False
+np.random.seed(42)
+
+# KNN 분류
+X, y = make_classification(n_samples=500, n_features=2, n_informative=2,
+                            n_redundant=0, random_state=42)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+
+scaler = StandardScaler()
+X_train_sc = scaler.fit_transform(X_train)
+X_test_sc  = scaler.transform(X_test)
+
+# k 값에 따른 성능 변화
+k_range = range(1, 31)
+cv_scores = []
+for k in k_range:
+    knn = KNeighborsClassifier(n_neighbors=k)
+    scores = cross_val_score(knn, X_train_sc, y_train, cv=5, scoring='accuracy')
+    cv_scores.append(scores.mean())
+
+best_k = k_range[np.argmax(cv_scores)]
+print(f"최적 k: {best_k}, CV 정확도: {max(cv_scores):.4f}")
+
+knn_best = KNeighborsClassifier(n_neighbors=best_k)
+knn_best.fit(X_train_sc, y_train)
+print(f"테스트 정확도: {accuracy_score(y_test, knn_best.predict(X_test_sc)):.4f}")
+
+# k에 따른 성능 시각화
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 4))
+
+ax1.plot(k_range, cv_scores, 'b-o', markersize=4)
+ax1.axvline(best_k, color='red', linestyle='--', label=f'최적 k={best_k}')
+ax1.set_xlabel('k (이웃 수)')
+ax1.set_ylabel('CV 정확도')
+ax1.set_title('k 값에 따른 분류 성능')
+ax1.legend()
+ax1.grid(alpha=0.3)
+
+# 결정 경계 시각화 (k=1 vs 최적 k)
+xx, yy = np.meshgrid(np.linspace(-3, 3, 200), np.linspace(-3, 3, 200))
+grid = np.c_[xx.ravel(), yy.ravel()]
+
+for i, (k, title) in enumerate([(1, 'k=1 (과대적합)'), (best_k, f'k={best_k} (최적)')]):
+    knn_tmp = KNeighborsClassifier(n_neighbors=k)
+    knn_tmp.fit(X_train_sc, y_train)
+    Z = knn_tmp.predict(grid).reshape(xx.shape)
+
+    ax = ax1 if i == 0 else ax2
+    if i == 1:
+        ax2.contourf(xx, yy, Z, alpha=0.3, cmap='RdBu')
+        ax2.scatter(X_test_sc[:, 0], X_test_sc[:, 1], c=y_test,
+                    cmap='RdBu', edgecolors='k', s=30, alpha=0.7)
+        ax2.set_title(title)
+        ax2.set_xlabel('특징 1')
+        ax2.set_ylabel('특징 2')
+
+plt.tight_layout()
+plt.show()
+
+# 거리 지표 비교
+print("\n=== 거리 지표별 성능 비교 ===")
+for metric in ['euclidean', 'manhattan', 'cosine']:
+    knn_m = KNeighborsClassifier(n_neighbors=best_k, metric=metric)
+    score = cross_val_score(knn_m, X_train_sc, y_train, cv=5).mean()
+    print(f"  {metric}: {score:.4f}")
+```
+
+> **실무 적용:** 추천 시스템(유사한 사용자 찾기), 이상 탐지, 이미지 검색에 활용됩니다. 표준화 없이 KNN을 사용하면 스케일이 큰 변수가 거리를 지배하므로, 반드시 전처리가 필요합니다. 데이터가 클수록($n$이 크면) 예측 속도가 느려지는 단점이 있습니다.
+
+## 6.2 트리 모델
+
+데이터를 반복적으로 분할하여 규칙 기반 예측을 수행하는 직관적인 모델입니다.
+
+| 용어 | 설명 |
+|------|------|
+| **재귀 분할** | 데이터를 반복적으로 이진 분할해 트리 생성 |
+| **분할값** | 각 분기의 기준 조건 (예: $x_j \leq c$) |
+| **내부 마디** | 조건에 따라 데이터를 나누는 분기점 |
+| **잎 (leaf)** | 최종 예측값(클래스 또는 평균)을 출력하는 끝 노드 |
+| **가지치기 (pruning)** | 중요하지 않은 마디를 제거해 과적합 방지 |
+
+### 노드 분할 기준: 불순도 지표
+
+$$\text{지니 불순도} = 1 - \sum_{k=1}^{K} p_k^2$$
+
+$$\text{엔트로피} = -\sum_{k=1}^{K} p_k \log_2 p_k$$
+
+$p_k$: 노드 내 클래스 $k$의 비율. 노드가 순수(한 클래스만)할수록 불순도 → 0
+
+### 손실 함수 비교
+
+| 손실 함수 | 수식 | 사용 |
+|-----------|------|------|
+| **MSE** | $\frac{1}{n}\sum(y_i - \hat{y}_i)^2$ | 회귀 |
+| **MAE** | $\frac{1}{n}\sum\lvert y_i - \hat{y}_i \rvert$ | 회귀 (이상값에 강함) |
+| **Log Loss** | $-\frac{1}{n}\sum[y_i \log\hat{p}_i + (1-y_i)\log(1-\hat{p}_i)]$ | 이진 분류 |
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib
+from sklearn.tree import DecisionTreeClassifier, plot_tree, export_text
+from sklearn.datasets import load_iris
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score
+
+matplotlib.rcParams['font.family'] = 'AppleGothic'
+matplotlib.rcParams['axes.unicode_minus'] = False
+np.random.seed(42)
+
+iris = load_iris()
+X, y = iris.data, iris.target
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+
+# 트리 깊이에 따른 성능 (과적합 관찰)
+train_scores, test_scores = [], []
+depths = range(1, 15)
+
+for d in depths:
+    dt = DecisionTreeClassifier(max_depth=d, random_state=42)
+    dt.fit(X_train, y_train)
+    train_scores.append(accuracy_score(y_train, dt.predict(X_train)))
+    test_scores.append(accuracy_score(y_test,  dt.predict(X_test)))
+
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 5))
+
+ax1.plot(depths, train_scores, 'b-o', markersize=5, label='훈련 정확도')
+ax1.plot(depths, test_scores, 'r-o', markersize=5, label='테스트 정확도')
+ax1.axvline(np.argmax(test_scores) + 1, color='gray', linestyle='--',
+            label=f'최적 깊이={np.argmax(test_scores)+1}')
+ax1.set_xlabel('트리 최대 깊이')
+ax1.set_ylabel('정확도')
+ax1.set_title('트리 깊이와 과적합')
+ax1.legend()
+ax1.grid(alpha=0.3)
+
+# 최적 트리 시각화
+best_depth = np.argmax(test_scores) + 1
+dt_best = DecisionTreeClassifier(max_depth=best_depth, random_state=42)
+dt_best.fit(X_train, y_train)
+
+plot_tree(dt_best, feature_names=iris.feature_names, class_names=iris.target_names,
+          filled=True, rounded=True, ax=ax2, fontsize=9)
+ax2.set_title(f'결정 트리 (max_depth={best_depth})')
+
+plt.tight_layout()
+plt.show()
+
+# 불순도 계산 직접 확인
+print("=== 불순도 직접 계산 ===")
+p = np.array([0.5, 0.5])  # 반반 섞인 노드 (최대 불순도)
+gini = 1 - np.sum(p**2)
+entropy = -np.sum(p * np.log2(p + 1e-10))
+print(f"p=[0.5, 0.5]: 지니={gini:.3f}, 엔트로피={entropy:.3f}")
+
+p = np.array([1.0, 0.0])  # 순수 노드 (최소 불순도)
+gini = 1 - np.sum(p**2)
+entropy = -np.sum(p * np.log2(p + 1e-10))
+print(f"p=[1.0, 0.0]: 지니={gini:.3f}, 엔트로피={entropy:.3f}")
+
+print("\n=== 결정 규칙 요약 ===")
+print(export_text(dt_best, feature_names=list(iris.feature_names)))
+```
+
+> **실무 적용:** 결정 트리는 규칙을 사람이 이해할 수 있어 의료 진단, 신용 평가, 고객 세분화에서 해석 가능성이 중요한 경우에 사용됩니다. 단, 단일 트리는 데이터 변화에 민감하고 과적합되기 쉬우므로 실무에서는 앙상블(랜덤 포레스트, 부스팅)로 확장합니다.
+
+## 6.3 배깅과 랜덤 포레스트
+
+단일 트리의 높은 분산 문제를 여러 트리의 평균으로 해결합니다.
+
+| 용어 | 설명 |
+|------|------|
+| **앙상블** | 여러 모델 결합 → 단일 모델보다 안정적이고 정확한 예측 |
+| **배깅** | 복원추출로 여러 훈련 데이터 생성 → 각각 모델 학습 → 결합 |
+| **랜덤 포레스트** | 배깅 + 각 노드에서 일부 변수만 무작위 고려 → 변수 간 상관 감소 |
+| **변수 중요도** | 불순도 감소량 기준, 각 변수의 예측 기여도 |
+| **OOB 오차** | 부트스트랩에 포함되지 않은 샘플로 모델을 평가하는 내부 검증 |
+
+### 변수 중요도
+
+$$\text{Importance}(x_j) = \sum_{\text{노드 } t,\ x_j \text{ 사용}} \Delta\text{Impurity}(t)$$
+
+트리 전체에 걸쳐 변수 $x_j$를 사용한 분할에서 불순도가 얼마나 감소했는지의 합입니다.
+
+```python
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import matplotlib
+from sklearn.ensemble import RandomForestClassifier, BaggingClassifier
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.datasets import make_classification
+from sklearn.model_selection import train_test_split, cross_val_score
+from sklearn.metrics import accuracy_score
+
+matplotlib.rcParams['font.family'] = 'AppleGothic'
+matplotlib.rcParams['axes.unicode_minus'] = False
+np.random.seed(42)
+
+X, y = make_classification(n_samples=1000, n_features=15, n_informative=8,
+                            n_redundant=3, random_state=42)
+feature_names = [f'변수{i+1}' for i in range(X.shape[1])]
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+
+# 단일 트리 vs 배깅 vs 랜덤 포레스트 비교
+dt   = DecisionTreeClassifier(random_state=42)
+bag  = BaggingClassifier(estimator=DecisionTreeClassifier(), n_estimators=100,
+                         random_state=42, n_jobs=-1)
+rf   = RandomForestClassifier(n_estimators=100, random_state=42, n_jobs=-1,
+                              oob_score=True)
+
+for model, name in [(dt, '단일 트리'), (bag, '배깅'), (rf, '랜덤 포레스트')]:
+    model.fit(X_train, y_train)
+    train_acc = accuracy_score(y_train, model.predict(X_train))
+    test_acc  = accuracy_score(y_test,  model.predict(X_test))
+    print(f"{name}: 훈련={train_acc:.4f}, 테스트={test_acc:.4f}", end='')
+    if hasattr(model, 'oob_score_'):
+        print(f", OOB={model.oob_score_:.4f}", end='')
+    print()
+
+# 변수 중요도 시각화
+importances = rf.feature_importances_
+idx = np.argsort(importances)[::-1]
+
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 5))
+
+# 변수 중요도
+ax1.bar(range(len(importances)), importances[idx], color='steelblue', alpha=0.8)
+ax1.set_xticks(range(len(importances)))
+ax1.set_xticklabels([feature_names[i] for i in idx], rotation=45, ha='right')
+ax1.set_ylabel('중요도 (불순도 감소량)')
+ax1.set_title('랜덤 포레스트 변수 중요도')
+ax1.grid(axis='y', alpha=0.3)
+
+# 트리 수에 따른 OOB 오차 수렴
+oob_errors = []
+for n_trees in range(1, 201, 5):
+    rf_tmp = RandomForestClassifier(n_estimators=n_trees, oob_score=True,
+                                    random_state=42, warm_start=True)
+    rf_tmp.set_params(n_estimators=n_trees)
+    rf_tmp.fit(X_train, y_train)
+    oob_errors.append(1 - rf_tmp.oob_score_)
+
+ax2.plot(range(1, 201, 5), oob_errors, 'b-', linewidth=2)
+ax2.set_xlabel('트리 수 (n_estimators)')
+ax2.set_ylabel('OOB 오차율')
+ax2.set_title('트리 수 증가에 따른 OOB 오차 수렴')
+ax2.grid(alpha=0.3)
+
+plt.tight_layout()
+plt.show()
+
+# 배깅이 분산을 줄이는 효과 확인 (반복 실험)
+print("\n=== 예측 분산 비교 (10회 반복) ===")
+for model, name in [(DecisionTreeClassifier(random_state=None),  '단일 트리'),
+                    (RandomForestClassifier(n_estimators=100, random_state=None), '랜덤 포레스트')]:
+    accs = []
+    for _ in range(10):
+        model.fit(X_train, y_train)
+        accs.append(accuracy_score(y_test, model.predict(X_test)))
+    print(f"  {name}: 평균={np.mean(accs):.4f}, 표준편차={np.std(accs):.4f}")
+```
+
+> **실무 적용:** 랜덤 포레스트는 금융 위험 평가, 의료 진단, 마케팅 예측에서 강력한 성능을 보입니다. OOB 오차를 통해 교차검증 없이도 일반화 성능을 추정할 수 있어 편리합니다. 변수 중요도로 어떤 특징이 중요한지 파악해 특징 선택에도 활용됩니다.
+
+## 6.4 부스팅
+
+배깅이 병렬로 모델을 학습하는 반면, 부스팅은 **순차적으로** 이전 모델의 오차를 보완합니다.
+
+| 알고리즘 | 핵심 아이디어 | 특징 |
+|---------|------------|------|
+| **AdaBoost** | 틀린 샘플에 가중치 증가 | 이상값에 민감 |
+| **Gradient Boosting** | 잔차(음의 그래디언트)에 새 트리 피팅 | 유연한 손실함수 |
+| **Stochastic GB** | 각 반복에서 일부 데이터만 샘플링 | 과적합 감소, 속도 향상 |
+| **XGBoost / LightGBM** | 정규화 + 최적화 추가 | 가장 성능 우수 |
+
+### 그레이디언트 부스팅 업데이트
+
+$$F_m(x) = F_{m-1}(x) + \gamma_m h_m(x)$$
+
+$h_m(x)$: 현재 단계의 약한 학습기 (이전 단계 잔차에 피팅)
+$\gamma_m$: 학습률 (learning rate) — 작을수록 안정적이지만 더 많은 반복 필요
+
+```python
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import matplotlib
+from sklearn.ensemble import (AdaBoostClassifier, GradientBoostingClassifier,
+                              RandomForestClassifier)
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.datasets import make_classification
+from sklearn.model_selection import train_test_split, cross_val_score
+from sklearn.metrics import accuracy_score
+
+matplotlib.rcParams['font.family'] = 'AppleGothic'
+matplotlib.rcParams['axes.unicode_minus'] = False
+np.random.seed(42)
+
+X, y = make_classification(n_samples=1000, n_features=15, n_informative=8,
+                            n_redundant=3, random_state=42)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+
+# 모델 비교
+models = {
+    '단일 트리':        DecisionTreeClassifier(max_depth=3, random_state=42),
+    '랜덤 포레스트':    RandomForestClassifier(n_estimators=100, random_state=42, n_jobs=-1),
+    'AdaBoost':        AdaBoostClassifier(n_estimators=100, learning_rate=0.1, random_state=42),
+    'Gradient Boost':  GradientBoostingClassifier(n_estimators=100, learning_rate=0.1,
+                                                   max_depth=3, random_state=42),
+}
+
+print("=== 모델 성능 비교 ===")
+results = {}
+for name, model in models.items():
+    model.fit(X_train, y_train)
+    train_acc = accuracy_score(y_train, model.predict(X_train))
+    test_acc  = accuracy_score(y_test,  model.predict(X_test))
+    cv_acc    = cross_val_score(model, X_train, y_train, cv=5).mean()
+    results[name] = {'훈련': train_acc, '테스트': test_acc, 'CV': cv_acc}
+    print(f"  {name:<18}: 훈련={train_acc:.4f}, 테스트={test_acc:.4f}, CV={cv_acc:.4f}")
+
+# 부스팅 반복 횟수에 따른 학습 곡선
+fig, axes = plt.subplots(1, 2, figsize=(14, 5))
+
+n_estimators_range = range(1, 201, 5)
+gb_train, gb_test = [], []
+ada_train, ada_test = [], []
+
+for n in n_estimators_range:
+    gb = GradientBoostingClassifier(n_estimators=n, learning_rate=0.1,
+                                    max_depth=3, random_state=42)
+    gb.fit(X_train, y_train)
+    gb_train.append(accuracy_score(y_train, gb.predict(X_train)))
+    gb_test.append(accuracy_score(y_test,  gb.predict(X_test)))
+
+    ada = AdaBoostClassifier(n_estimators=n, learning_rate=0.1, random_state=42)
+    ada.fit(X_train, y_train)
+    ada_train.append(accuracy_score(y_train, ada.predict(X_train)))
+    ada_test.append(accuracy_score(y_test,  ada.predict(X_test)))
+
+axes[0].plot(n_estimators_range, gb_train, 'b-', linewidth=1.5, label='GB 훈련')
+axes[0].plot(n_estimators_range, gb_test,  'b--', linewidth=1.5, label='GB 테스트')
+axes[0].plot(n_estimators_range, ada_train, 'r-', linewidth=1.5, label='Ada 훈련')
+axes[0].plot(n_estimators_range, ada_test,  'r--', linewidth=1.5, label='Ada 테스트')
+axes[0].set_xlabel('반복 횟수 (n_estimators)')
+axes[0].set_ylabel('정확도')
+axes[0].set_title('부스팅 반복 횟수에 따른 학습 곡선')
+axes[0].legend()
+axes[0].grid(alpha=0.3)
+
+# 학습률(learning rate)에 따른 영향
+lr_values = [0.001, 0.01, 0.05, 0.1, 0.3, 1.0]
+lr_test_scores = []
+for lr in lr_values:
+    gb = GradientBoostingClassifier(n_estimators=100, learning_rate=lr,
+                                    max_depth=3, random_state=42)
+    gb.fit(X_train, y_train)
+    lr_test_scores.append(accuracy_score(y_test, gb.predict(X_test)))
+
+axes[1].semilogx(lr_values, lr_test_scores, 'go-', markersize=8, linewidth=2)
+axes[1].set_xlabel('학습률 (learning rate, log scale)')
+axes[1].set_ylabel('테스트 정확도')
+axes[1].set_title('학습률에 따른 성능 (n_estimators=100)')
+axes[1].grid(alpha=0.3)
+for lr, score in zip(lr_values, lr_test_scores):
+    axes[1].annotate(f'{score:.3f}', (lr, score), textcoords='offset points',
+                     xytext=(0, 8), ha='center', fontsize=9)
+
+plt.tight_layout()
+plt.show()
+
+# XGBoost 예시 (설치된 경우)
+try:
+    from xgboost import XGBClassifier
+    xgb = XGBClassifier(n_estimators=100, learning_rate=0.1, max_depth=3,
+                        random_state=42, eval_metric='logloss', verbosity=0)
+    xgb.fit(X_train, y_train)
+    print(f"\nXGBoost 테스트 정확도: {accuracy_score(y_test, xgb.predict(X_test)):.4f}")
+except ImportError:
+    print("\nXGBoost 미설치: pip install xgboost")
+```
+
+### 하이퍼파라미터 튜닝 가이드
+
+| 하이퍼파라미터 | 역할 | 권장 범위 |
+|------------|------|----------|
+| `n_estimators` | 트리(반복) 수 | 100~1000 (클수록 좋지만 수렴 후 불필요) |
+| `learning_rate` | 각 트리의 기여도 | 0.01~0.3 (작을수록 안정적, 더 많은 반복 필요) |
+| `max_depth` | 트리의 최대 깊이 | 3~8 (얕을수록 과적합 감소) |
+| `subsample` | 각 반복의 샘플 비율 | 0.6~0.9 (확률적 GB) |
+| `min_samples_leaf` | 리프 최소 샘플 수 | 1~20 (클수록 과적합 감소) |
+
+```python
+from sklearn.model_selection import GridSearchCV
+
+# 하이퍼파라미터 탐색 예시
+param_grid = {
+    'n_estimators':  [50, 100, 200],
+    'learning_rate': [0.05, 0.1, 0.2],
+    'max_depth':     [2, 3, 5],
+}
+
+gb = GradientBoostingClassifier(random_state=42)
+grid_search = GridSearchCV(gb, param_grid, cv=5, scoring='accuracy',
+                           n_jobs=-1, verbose=0)
+grid_search.fit(X_train, y_train)
+
+print("=== 그레이디언트 부스팅 하이퍼파라미터 튜닝 ===")
+print(f"최적 파라미터: {grid_search.best_params_}")
+print(f"최적 CV 정확도: {grid_search.best_score_:.4f}")
+print(f"테스트 정확도: {accuracy_score(y_test, grid_search.predict(X_test)):.4f}")
+```
+
+> **실무 적용:** XGBoost, LightGBM, CatBoost는 Kaggle 대회와 실무에서 가장 높은 성능을 보이는 알고리즘으로 알려져 있습니다. 학습률을 낮추고 트리 수를 늘리면 일반적으로 더 좋은 성능을 내지만 학습 시간이 증가합니다. 조기 종료(early stopping)와 교차검증을 통해 최적 반복 횟수를 찾는 것이 중요합니다.
+
+---
+
+6장 핵심 요약:
+
+- **KNN**: 가까운 $k$개 이웃의 다수결/평균으로 예측 — 표준화 필수, $k$는 교차검증으로 선택
+- **결정 트리**: 지니 불순도/엔트로피를 최소화하는 분할 반복 — 직관적이지만 과적합 취약
+- **배깅**: 복원추출로 여러 트리 학습 후 평균 → 분산 감소
+- **랜덤 포레스트**: 배깅 + 변수 무작위 선택 → 트리 간 상관 감소, OOB로 내부 검증
+- **부스팅**: 이전 모델의 오차를 순차적으로 보완 → 편향 감소
+- **그레이디언트 부스팅**: 잔차에 새 트리를 피팅 — 학습률 × 트리 수 트레이드오프
+- **하이퍼파라미터**: `learning_rate`와 `n_estimators`는 반비례 관계 — 교차검증으로 최적화
