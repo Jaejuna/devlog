@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { useState } from 'react'
+import SearchModal from '@/components/blog/SearchModal'
 
 const navLinks = [
   { href: '/', label: '홈' },
@@ -13,8 +14,10 @@ const navLinks = [
 
 export default function Header() {
   const [menuOpen, setMenuOpen] = useState(false)
+  const [searchOpen, setSearchOpen] = useState(false)
 
   return (
+    <>
     <header className="sticky top-0 z-50 w-full bg-white/80 dark:bg-gray-950/80 backdrop-blur-md border-b border-gray-200 dark:border-gray-800">
       <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
         {/* Logo */}
@@ -44,6 +47,7 @@ export default function Header() {
           <button
             aria-label="검색"
             className="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+            onClick={() => setSearchOpen(true)}
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -124,5 +128,9 @@ export default function Header() {
         </nav>
       )}
     </header>
+
+      {/* 검색 모달 */}
+      <SearchModal isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
+    </>
   )
 }
