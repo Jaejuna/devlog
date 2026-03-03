@@ -1,0 +1,451 @@
+---
+title: "데이터와 표본분포: 통계 기초 정리 2장"
+date: "2026-03-04"
+category: "데이터사이언스"
+tags: ["통계", "데이터분석", "표본분포", "Python"]
+excerpt: "랜덤표본추출과 편향, 부트스트랩, 신뢰구간, 정규분포, t분포, 이항·푸아송 분포까지 표본분포의 핵심 개념을 코드와 함께 정리했습니다."
+readTime: 10
+---
+
+1장에서 데이터의 유형과 기술통계량을 다뤘다면, 2장은 "우리가 가진 데이터(표본)가 전체(모집단)를 얼마나 잘 대표하는가?"라는 질문을 다룹니다. 이 질문이 통계적 추론의 출발점입니다.
+
+> 이 글은 *Practical Statistics for Data Scientists* 2장을 기반으로 정리했습니다.
+
+## 2.1 랜덤표본추출과 표본편향
+
+| 용어 | 설명 |
+|------|------|
+| **표본 (sample)** | 더 큰 데이터 집합에서 선택한 부분 집합 |
+| **모집단 (population)** | 전체 데이터 집합 또는 분석 대상 전체 |
+| **N / n** | 모집단(N) 또는 표본(n)의 크기 |
+| **표본편향 (sample bias)** | 모집단을 잘못 대표하는 표본을 선택한 경우 |
+
+### 표본추출 방식 비교
+
+| 방식 | 설명 | 특징 |
+|------|------|------|
+| **임의표집 (random sampling)** | 완전 무작위 추출 | 가장 단순, 소규모에 적합 |
+| **층화표집 (stratified sampling)** | 모집단을 층으로 나눈 뒤 각 층에서 무작위 추출 | 소수 집단도 반드시 포함 |
+| **단순임의표본 (simple random sample)** | 층화 없이 무작위 추출 | 층화표집의 특수 케이스 |
+| **복원추출 (with replacement)** | 추출 후 다시 모집단에 포함 | 부트스트랩에 사용 |
+| **비복원추출 (without replacement)** | 한 번 추출하면 재선택 불가 | 일반적인 설문조사 |
+
+```python
+import numpy as np
+import pandas as pd
+
+np.random.seed(42)
+
+# 모집단: 1000명의 고객 데이터
+population = pd.DataFrame({
+    "나이":  np.random.randint(20, 70, 1000),
+    "성별":  np.random.choice(["남", "여"], 1000, p=[0.5, 0.5]),
+    "구매금액": np.random.lognormal(10, 1, 1000),
+})
+
+# 단순임의표본 (비복원)
+simple_sample = population.sample(n=100, replace=False, random_state=42)
+
+# 층화표집 — 성별 비율 유지
+stratified = population.groupby("성별", group_keys=False).apply(
+    lambda x: x.sample(frac=0.1, random_state=42)
+)
+
+print("모집단 성별 비율:\n", population["성별"].value_counts(normalize=True).round(3))
+print("\n층화 표본 성별 비율:\n", stratified["성별"].value_counts(normalize=True).round(3))
+
+print(f"\n모집단 평균 구매금액: {population['구매금액'].mean():.0f}원")
+print(f"단순표본 평균 구매금액: {simple_sample['구매금액'].mean():.0f}원")
+print(f"층화표본 평균 구매금액: {stratified['구매금액'].mean():.0f}원")
+```
+
+**실무에서는?** 사용자 설문이나 A/B 테스트에서 층화표집은 필수입니다. 예를 들어 신규 기능 테스트 시 모바일/PC 사용자, 신규/기존 사용자 비율을 모집단과 동일하게 맞추지 않으면 결과가 편향됩니다. 의학 임상시험에서는 연령·성별·중증도로 층화해 각 그룹에서 무작위 배정합니다.
+
+## 2.2 선택 편향
+
+| 용어 | 설명 |
+|------|------|
+| **편향 (bias)** | 계통적 오차 — 우연이 아닌 구조적 원인에 의한 오류 |
+| **데이터 스누핑 (data snooping)** | 데이터를 광범위하게 탐색하며 패턴을 찾는 행위 |
+| **방대한 검색 효과 (vast search effect)** | 수많은 변수 조합을 시도하다 우연히 유의미해 보이는 결과를 발견하는 편향 |
+
+> **데이터 스누핑의 위험**: 변수 100개 중 우연히 유의해 보이는 변수가 5개 나올 확률은 통계적으로 당연합니다(5% 유의수준에서). 이를 실제 발견으로 오해하면 안 됩니다. 훈련 데이터로 발견한 패턴은 반드시 **홀드아웃 데이터(test set)**로 검증해야 합니다.
+
+**실무에서는?** 생존 편향(survivorship bias)이 대표적입니다. 성공한 스타트업만 분석해 "공통 특징"을 찾으면, 같은 특징을 가졌지만 실패한 회사는 데이터에서 빠집니다. 추천 시스템에서는 사용자가 클릭한 항목만 데이터로 수집되는 노출 편향(exposure bias)이 문제가 됩니다.
+
+## 2.3 통계학에서의 표본분포
+
+| 용어 | 설명 |
+|------|------|
+| **표본통계량 (sample statistic)** | 표본에서 계산한 측정값 (표본 평균, 표본 분산 등) |
+| **데이터 분포 (data distribution)** | 개별 관측값들의 도수분포 |
+| **표본분포 (sampling distribution)** | 여러 표본에서 얻은 통계량의 분포 |
+| **중심극한정리 (CLT)** | 표본 크기가 커질수록 표본 평균의 분포가 정규분포에 수렴 |
+| **표준오차 (standard error, SE)** | 표본통계량의 표준편차. $SE = \sigma / \sqrt{n}$ |
+
+중심극한정리는 원래 모집단의 분포가 어떻든 상관없이, 표본 크기 $n$이 충분히 크면 표본 평균의 분포가 정규분포를 따른다는 것을 보장합니다.
+
+$$SE = \frac{\sigma}{\sqrt{n}}$$
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+np.random.seed(0)
+
+# 지수분포(비정규) 모집단
+population = np.random.exponential(scale=5, size=100_000)
+
+sample_sizes = [5, 30, 100]
+n_samples = 1000
+
+fig, axes = plt.subplots(1, 3, figsize=(14, 4))
+
+for ax, n in zip(axes, sample_sizes):
+    sample_means = [np.mean(np.random.choice(population, n, replace=False))
+                    for _ in range(n_samples)]
+    ax.hist(sample_means, bins=40, edgecolor="white", color="steelblue", density=True)
+    ax.set_title(f"표본크기 n={n}\n표준오차={np.std(sample_means):.3f}")
+    ax.set_xlabel("표본 평균")
+
+fig.suptitle("중심극한정리: 표본 크기에 따른 표본 평균의 분포", y=1.02)
+plt.tight_layout()
+plt.show()
+
+# 이론적 표준오차 vs 시뮬레이션 표준오차 비교
+print("표본크기  이론 SE      시뮬레이션 SE")
+for n in [5, 30, 100, 500]:
+    theoretical = population.std() / np.sqrt(n)
+    simulated = np.std([np.mean(np.random.choice(population, n)) for _ in range(1000)])
+    print(f"n={n:4d}    {theoretical:.4f}      {simulated:.4f}")
+```
+
+**실무에서는?** A/B 테스트에서 "몇 명을 실험해야 하는가?(표본 크기 결정)"의 근거가 바로 표준오차와 중심극한정리입니다. 표본이 클수록 표준오차가 줄어 더 정확한 추정이 가능합니다.
+
+## 2.4 부트스트랩
+
+표본이 하나뿐이고 모집단을 반복 추출할 수 없을 때, 표본 자체를 모집단처럼 사용해 반복 추출합니다.
+
+| 용어 | 설명 |
+|------|------|
+| **부트스트랩 표본 (bootstrap sample)** | 관측 데이터에서 복원추출한 새로운 표본 |
+| **재표집 (resampling)** | 관측 데이터로부터 반복 표본추출. 부트스트랩과 순열(셔플링) 포함 |
+
+```python
+import numpy as np
+
+np.random.seed(42)
+sample = np.array([2.3, 5.1, 3.8, 7.2, 4.6, 6.1, 3.3, 5.9, 4.2, 6.8])
+
+n_bootstrap = 10_000
+bootstrap_means = np.array([
+    np.mean(np.random.choice(sample, len(sample), replace=True))
+    for _ in range(n_bootstrap)
+])
+
+print(f"원래 표본 평균: {sample.mean():.3f}")
+print(f"부트스트랩 평균의 평균: {bootstrap_means.mean():.3f}")
+print(f"부트스트랩 표준오차: {bootstrap_means.std():.3f}")
+print(f"95% 신뢰구간: ({np.percentile(bootstrap_means, 2.5):.3f}, "
+      f"{np.percentile(bootstrap_means, 97.5):.3f})")
+```
+
+**실무에서는?** 머신러닝의 랜덤 포레스트(Random Forest)는 부트스트랩 표본마다 결정 트리를 학습시켜 앙상블하는 배깅(Bagging) 기법입니다. 데이터가 적어 교차검증이 불안정할 때 부트스트랩 신뢰구간으로 모델 성능의 불확실성을 추정합니다.
+
+## 2.5 신뢰구간
+
+| 용어 | 설명 |
+|------|------|
+| **신뢰구간 (confidence interval)** | 모수가 포함될 것으로 예상되는 값의 범위 |
+| **신뢰수준 (confidence level)** | 동일한 방법으로 반복했을 때 신뢰구간이 모수를 포함하는 비율 (예: 95%) |
+| **구간끝점 (interval endpoint)** | 신뢰구간의 하한과 상한 |
+
+> **흔한 오해**: "95% 신뢰구간은 모수가 이 구간 안에 있을 확률이 95%"라는 해석은 틀렸습니다. 올바른 해석은 "같은 방법으로 100번 표본을 추출하면 약 95개의 신뢰구간이 실제 모수를 포함한다"입니다.
+
+```python
+import numpy as np
+from scipy import stats
+
+np.random.seed(42)
+
+# 표본으로 모평균 신뢰구간 추정
+sample = np.random.normal(loc=50, scale=10, size=30)
+n = len(sample)
+mean = sample.mean()
+se = sample.std(ddof=1) / np.sqrt(n)
+
+# 95% 신뢰구간 (t분포 사용 — 모표준편차 미지)
+ci_95 = stats.t.interval(0.95, df=n-1, loc=mean, scale=se)
+ci_99 = stats.t.interval(0.99, df=n-1, loc=mean, scale=se)
+
+print(f"표본 평균: {mean:.2f}")
+print(f"표준오차: {se:.2f}")
+print(f"95% 신뢰구간: ({ci_95[0]:.2f}, {ci_95[1]:.2f})")
+print(f"99% 신뢰구간: ({ci_99[0]:.2f}, {ci_99[1]:.2f})")
+
+# 신뢰수준 시각화: 100개의 신뢰구간 중 모수를 포함하는 비율 확인
+true_mean = 50
+contains = 0
+for _ in range(100):
+    s = np.random.normal(true_mean, 10, 30)
+    ci = stats.t.interval(0.95, df=29, loc=s.mean(), scale=s.std(ddof=1)/np.sqrt(30))
+    if ci[0] <= true_mean <= ci[1]:
+        contains += 1
+
+print(f"\n100번 중 모수를 포함한 신뢰구간 수: {contains}개 (기대값: ~95개)")
+```
+
+**실무에서는?** A/B 테스트 결과를 "전환율이 2% 증가했다"가 아니라 "전환율이 1.2%~2.8% 증가했다(95% CI)"로 표현하면 불확실성을 함께 전달할 수 있습니다. 신뢰구간이 0을 포함하면 통계적으로 유의하지 않은 결과입니다.
+
+## 2.6 정규분포
+
+| 용어 | 설명 |
+|------|------|
+| **표준화 (standardization)** | 데이터를 평균 0, 표준편차 1로 변환 |
+| **z 점수 (z-score)** | 개별값이 평균에서 표준편차 단위로 얼마나 떨어졌는지 |
+| **정규분포 (normal distribution)** | 평균을 중심으로 대칭인 종 모양 연속 확률분포 |
+| **표준정규분포** | $\mu=0$, $\sigma=1$인 정규분포 |
+| **QQ 그림 (QQ plot)** | 두 분포의 분위수를 비교해 정규성을 시각적으로 확인 |
+
+$$z = \frac{x - \mu}{\sigma}$$
+
+$$f(x) = \frac{1}{\sqrt{2\pi\sigma^2}} e^{-\frac{(x-\mu)^2}{2\sigma^2}}$$
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy import stats
+
+fig, axes = plt.subplots(1, 3, figsize=(14, 4))
+
+# 정규분포 PDF
+x = np.linspace(-4, 4, 300)
+for mu, sigma, label in [(0, 1, "μ=0, σ=1"), (0, 2, "μ=0, σ=2"), (2, 1, "μ=2, σ=1")]:
+    axes[0].plot(x, stats.norm.pdf(x, mu, sigma), label=label)
+axes[0].set_title("정규분포 PDF")
+axes[0].legend()
+axes[0].set_xlabel("x")
+
+# z점수 변환 (표준화)
+data = np.random.normal(170, 10, 500)  # 키 데이터 (cm)
+z_scores = (data - data.mean()) / data.std()
+axes[1].hist(z_scores, bins=30, edgecolor="white", color="steelblue", density=True)
+x_line = np.linspace(-4, 4, 200)
+axes[1].plot(x_line, stats.norm.pdf(x_line), "r-", linewidth=2, label="표준정규분포")
+axes[1].set_title("표준화 후 z점수 분포")
+axes[1].legend()
+
+# QQ 그림 — 정규성 확인
+stats.probplot(data, plot=axes[2])
+axes[2].set_title("QQ 그림 (정규성 검증)")
+
+plt.tight_layout()
+plt.show()
+
+# z점수 활용: 이상값 탐지
+outliers = data[np.abs(z_scores) > 3]
+print(f"|z| > 3인 이상값: {len(outliers)}개 ({len(outliers)/len(data)*100:.1f}%)")
+# 이론적으로 정규분포에서 |z|>3은 약 0.27%
+```
+
+**실무에서는?** 피처 스케일링에서 StandardScaler가 바로 z점수 변환입니다. 선형 회귀, SVM, 신경망은 피처의 스케일에 민감하므로 표준화가 필수입니다. QQ 그림은 모델의 잔차(residual)가 정규분포를 따르는지 진단할 때 사용합니다.
+
+## 2.7 긴 꼬리 분포
+
+| 용어 | 설명 |
+|------|------|
+| **꼬리 (tail)** | 분포에서 평균으로부터 멀리 떨어진 극단값 영역 |
+| **왜도 (skewness)** | 분포의 비대칭 정도 |
+
+$$\text{Skewness} = \frac{1}{n}\sum_{i=1}^{n}\left(\frac{x_i - \bar{x}}{s}\right)^3$$
+
+| 왜도 | 의미 |
+|------|------|
+| 양의 왜도 (오른쪽 꼬리) | 평균 > 중앙값, 오른쪽으로 긴 꼬리 |
+| 음의 왜도 (왼쪽 꼬리) | 평균 < 중앙값, 왼쪽으로 긴 꼬리 |
+| 0에 가까운 왜도 | 대칭 분포 (정규분포) |
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy import stats
+
+fig, axes = plt.subplots(1, 3, figsize=(14, 4))
+
+datasets = {
+    "오른쪽 꼬리\n(소득 분포)": np.random.lognormal(0, 1, 2000),
+    "대칭\n(정규분포)": np.random.normal(0, 1, 2000),
+    "왼쪽 꼬리\n(시험 점수)": -np.random.lognormal(0, 0.5, 2000) + 100,
+}
+
+for ax, (title, data) in zip(axes, datasets.items()):
+    skew = stats.skew(data)
+    ax.hist(data, bins=50, edgecolor="white", color="steelblue", density=True)
+    ax.axvline(np.mean(data), color="red", linestyle="--", label=f"평균: {np.mean(data):.1f}")
+    ax.axvline(np.median(data), color="green", linestyle="-", label=f"중앙값: {np.median(data):.1f}")
+    ax.set_title(f"{title}\n왜도={skew:.2f}")
+    ax.legend(fontsize=8)
+
+plt.tight_layout()
+plt.show()
+```
+
+**실무에서는?** 소득, 자산, 웹 트래픽, SNS 팔로워 수는 대표적인 긴 꼬리(long-tail) 분포입니다. 이런 데이터에 평균을 쓰면 왜곡됩니다. 로그 변환으로 정규분포에 가깝게 만든 뒤 분석하거나, 중앙값을 기준으로 리포팅합니다.
+
+## 2.8 스튜던트의 t 분포
+
+모표준편차($\sigma$)를 모를 때 표본표준편차($s$)로 대신 추정하면 불확실성이 생깁니다. t 분포는 이 추가 불확실성을 반영한 분포입니다.
+
+$$t = \frac{\bar{x} - \mu}{s / \sqrt{n}}$$
+
+| 용어 | 설명 |
+|------|------|
+| **t 분포** | 정규분포보다 꼬리가 두꺼운 분포. 표본이 작을수록 더 넓게 퍼짐 |
+| **자유도 (df)** | 자유롭게 변할 수 있는 값의 수. 보통 $n-1$ |
+
+> 표본 수 $n$이 커질수록 t 분포는 표준정규분포에 수렴합니다. 통상 $n \geq 30$이면 정규분포로 근사해도 무방합니다.
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy import stats
+
+x = np.linspace(-5, 5, 300)
+
+plt.figure(figsize=(8, 4))
+plt.plot(x, stats.norm.pdf(x), "k-", linewidth=2, label="정규분포 (n→∞)")
+for df, color in [(2, "red"), (5, "orange"), (30, "steelblue")]:
+    plt.plot(x, stats.t.pdf(x, df), linestyle="--", color=color, label=f"t분포 (df={df})")
+plt.legend()
+plt.title("t 분포 vs 정규분포: 자유도에 따른 꼬리 두께")
+plt.xlabel("t")
+plt.ylabel("밀도")
+plt.tight_layout()
+plt.show()
+
+# 단일 표본 t검정
+np.random.seed(42)
+sample = np.random.normal(52, 10, 25)  # 실제 모평균 = 52
+t_stat, p_value = stats.ttest_1samp(sample, popmean=50)
+print(f"t 통계량: {t_stat:.3f}")
+print(f"p값: {p_value:.3f}")
+print(f"결론: {'귀무가설 기각 (유의미한 차이)' if p_value < 0.05 else '귀무가설 채택 (유의미한 차이 없음)'}")
+```
+
+**실무에서는?** A/B 테스트에서 두 그룹의 평균을 비교할 때 t검정을 사용합니다. "새 UI의 구매 전환율이 기존보다 통계적으로 유의하게 높은가?"를 검증하는 것이 전형적인 예입니다.
+
+## 2.9 이항분포
+
+독립적인 이진(0/1) 시행을 $n$번 반복할 때 성공 횟수의 분포입니다.
+
+| 용어 | 설명 |
+|------|------|
+| **시행 (trial)** | 확률적 결과를 관측하는 단일 실험 |
+| **이항시행 (Bernoulli trial)** | 결과가 성공/실패 두 가지뿐인 독립 시행 |
+| **이항분포 (binomial distribution)** | n번 시행 중 성공 횟수 k의 확률분포 |
+
+$$P(X = k) = \binom{n}{k} p^k (1-p)^{n-k}$$
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy import stats
+
+fig, axes = plt.subplots(1, 2, figsize=(12, 4))
+
+# 이항분포 PMF 시각화
+n, p = 20, 0.3
+k = np.arange(0, n+1)
+pmf = stats.binom.pmf(k, n, p)
+axes[0].bar(k, pmf, color="steelblue", edgecolor="white")
+axes[0].axvline(n*p, color="red", linestyle="--", label=f"기댓값 = np = {n*p}")
+axes[0].set_title(f"이항분포 (n={n}, p={p})")
+axes[0].set_xlabel("성공 횟수 k")
+axes[0].legend()
+
+# 실전: 클릭률(CTR) 검정
+# 광고 1000번 노출 중 클릭 35번 — 기대 CTR 3%인가?
+observed_clicks = 35
+n_impressions = 1000
+expected_ctr = 0.03
+
+p_value = stats.binom_test(observed_clicks, n_impressions, expected_ctr, alternative="two-sided")
+print(f"관측 클릭 수: {observed_clicks} / {n_impressions}")
+print(f"기대 CTR: {expected_ctr*100}%")
+print(f"p값: {p_value:.4f}")
+print(f"결론: {'기대 CTR과 유의미한 차이 있음' if p_value < 0.05 else '기대 CTR과 차이 없음'}")
+
+# 이항분포 → 정규분포 근사 (n이 클 때)
+n_large = 1000
+simulated = np.random.binomial(n_large, 0.3, 10000) / n_large
+axes[1].hist(simulated, bins=50, edgecolor="white", color="steelblue", density=True)
+axes[1].set_title(f"이항분포 정규 근사 (n={n_large}, p=0.3)")
+axes[1].set_xlabel("성공 비율")
+
+plt.tight_layout()
+plt.show()
+```
+
+**실무에서는?** 광고 CTR 추정, 불량률 검사, 이메일 오픈율 분석이 모두 이항분포 문제입니다. 표본이 충분히 크면 ($np \geq 5$, $n(1-p) \geq 5$) 정규분포로 근사해 신뢰구간을 계산합니다.
+
+## 2.10 푸아송 분포와 관련 분포
+
+단위 시간(또는 공간)에 사건이 평균 $\lambda$번 발생할 때 실제 발생 횟수의 분포입니다.
+
+| 분포 | 공식 | 용도 |
+|------|------|------|
+| **푸아송 (Poisson)** | $P(X=k) = \frac{\lambda^k e^{-\lambda}}{k!}$ | 단위 시간당 사건 횟수 |
+| **지수 (Exponential)** | $f(x) = \lambda e^{-\lambda x}$ | 사건 간 시간 간격 |
+| **와이블 (Weibull)** | $f(x) = \frac{k}{\lambda}\left(\frac{x}{\lambda}\right)^{k-1} e^{-(x/\lambda)^k}$ | 수명·고장 분석 |
+
+> $\lambda$ (람다): 단위 시간당 평균 사건 발생 횟수. 푸아송·지수분포의 핵심 파라미터
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy import stats
+
+fig, axes = plt.subplots(1, 3, figsize=(14, 4))
+
+# 푸아송 분포 — 시간당 고객 도착 수
+for lam, color in [(2, "steelblue"), (5, "orange"), (10, "green")]:
+    k = np.arange(0, 20)
+    axes[0].plot(k, stats.poisson.pmf(k, lam), "o-", label=f"λ={lam}", color=color)
+axes[0].set_title("푸아송 분포")
+axes[0].set_xlabel("사건 발생 횟수 k")
+axes[0].legend()
+
+# 지수 분포 — 고객 간 도착 시간
+x = np.linspace(0, 3, 300)
+for lam, color in [(1, "steelblue"), (2, "orange"), (5, "green")]:
+    axes[1].plot(x, stats.expon.pdf(x, scale=1/lam), label=f"λ={lam}", color=color)
+axes[1].set_title("지수 분포 (사건 간 시간)")
+axes[1].set_xlabel("시간")
+axes[1].legend()
+
+# 와이블 분포 — 기계 수명 분석
+x = np.linspace(0, 3, 300)
+for k_shape, color, label in [(0.5, "steelblue", "k=0.5 초기고장"),
+                               (1.0, "orange",    "k=1.0 지수분포"),
+                               (3.0, "green",     "k=3.0 마모고장")]:
+    axes[2].plot(x, stats.weibull_min.pdf(x, k_shape), label=label, color=color)
+axes[2].set_title("와이블 분포 (수명·고장 분석)")
+axes[2].set_xlabel("시간")
+axes[2].legend()
+
+plt.tight_layout()
+plt.show()
+
+# 실전: 콜센터 대기 시간 시뮬레이션
+lam = 3  # 시간당 평균 3건 문의
+n_calls = 1000
+inter_arrival = np.random.exponential(1/lam, n_calls)  # 문의 간격 (시간)
+print(f"평균 문의 간격: {inter_arrival.mean()*60:.1f}분")
+print(f"1분 내 다음 문의 올 확률: {(inter_arrival < 1/60).mean()*100:.1f}%")
+```
+
+**실무에서는?** 서버 엔지니어링에서 초당 요청 수(RPS)는 푸아송 분포를 따릅니다. 이를 바탕으로 큐잉 이론(queueing theory)으로 서버 용량을 계획합니다. 지수 분포는 장비 MTBF(평균 고장 간격) 모델링에 쓰이고, 와이블 분포는 제품 보증 기간 설계와 예측 정비(predictive maintenance)에 활용됩니다.
+
+---
+
+2장의 핵심은 **불확실성을 정량화하는 방법**입니다. 표본으로 모집단을 추론할 때 반드시 오차가 생기고, 그 오차의 크기를 신뢰구간과 표준오차로 표현합니다. 통계적 검정의 p값, 머신러닝의 교차검증, A/B 테스트 설계 모두 이 2장의 개념 위에 세워져 있습니다.
