@@ -11,6 +11,7 @@ import rehypeAutolinkHeadings from 'rehype-autolink-headings'
 import remarkGfm from 'remark-gfm'
 import mdxComponents from '@/components/blog/MdxComponents'
 import TableOfContents, { extractHeadings } from '@/components/blog/TableOfContents'
+import MobileToc from '@/components/blog/MobileToc'
 import AdBanner from '@/components/ads/AdBanner'
 import PostNavigation from '@/components/blog/PostNavigation'
 import RelatedPosts from '@/components/blog/RelatedPosts'
@@ -147,6 +148,9 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
               <span>{post.readTime}분 읽기</span>
             </div>
           </header>
+
+          {/* 모바일 목차 (접기/펼치기) */}
+          <MobileToc headings={headings} />
 
           {/* MDX 본문 — Part 1 */}
           <div className="prose prose-gray dark:prose-invert max-w-none prose-headings:scroll-mt-20">

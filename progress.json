@@ -31,7 +31,7 @@
     { "id": "8-4", "title": "JSON-LD 구조화 데이터", "done": true },
     { "id": "9-1", "title": "AdSense 글로벌 스크립트 삽입", "done": true },
     { "id": "9-2", "title": "광고 슬롯 환경변수화", "done": true },
-    { "id": "10-1", "title": "반응형 최종 점검", "done": false },
+    { "id": "10-1", "title": "반응형 최종 점검", "done": true },
     { "id": "10-2", "title": "다크 테마 기본 적용", "done": false },
     { "id": "10-3", "title": "AGENTS.md 최종 정리", "done": false },
     { "id": "10-4", "title": "README.md 작성", "done": false }
