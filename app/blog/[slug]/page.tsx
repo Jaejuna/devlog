@@ -12,6 +12,8 @@ import remarkGfm from 'remark-gfm'
 import mdxComponents from '@/components/blog/MdxComponents'
 import TableOfContents, { extractHeadings } from '@/components/blog/TableOfContents'
 import AdBanner from '@/components/ads/AdBanner'
+import PostNavigation from '@/components/blog/PostNavigation'
+import { getAdjacentPosts } from '@/lib/mdx'
 
 interface BlogPostPageProps {
   params: { slug: string }
@@ -72,6 +74,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
 
   const headings = extractHeadings(post.content)
   const [contentPart1, contentPart2] = splitAtFirstH2(post.content)
+  const { prev, next } = getAdjacentPosts(params.slug)
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
@@ -153,6 +156,9 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
               adSlot={process.env.NEXT_PUBLIC_AD_SLOT_BANNER ?? ''}
             />
           </div>
+
+          {/* 이전/다음 포스트 네비게이션 */}
+          <PostNavigation prev={prev} next={next} />
         </article>
 
         {/* Sidebar (desktop only) */}
