@@ -18,7 +18,7 @@
     { "id": "4-3", "title": "목차(ToC) 컴포넌트", "done": true },
     { "id": "4-4", "title": "상세 페이지 내 광고 삽입", "done": true },
     { "id": "4-5", "title": "이전/다음 포스트 네비게이션", "done": true },
-    { "id": "4-6", "title": "관련 포스트 추천", "done": false },
+    { "id": "4-6", "title": "관련 포스트 추천", "done": true },
     { "id": "5-1", "title": "카테고리 페이지", "done": false },
     { "id": "5-2", "title": "태그 페이지", "done": false },
     { "id": "5-3", "title": "전체 태그 목록 페이지", "done": false },

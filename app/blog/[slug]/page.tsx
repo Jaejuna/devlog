@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation'
-import { getAllPosts, getPostBySlug } from '@/lib/mdx'
+import { getAllPosts, getPostBySlug, getAdjacentPosts } from '@/lib/mdx'
 import type { Metadata } from 'next'
 import Badge from '@/components/ui/Badge'
 import Tag from '@/components/ui/Tag'
@@ -13,7 +13,7 @@ import mdxComponents from '@/components/blog/MdxComponents'
 import TableOfContents, { extractHeadings } from '@/components/blog/TableOfContents'
 import AdBanner from '@/components/ads/AdBanner'
 import PostNavigation from '@/components/blog/PostNavigation'
-import { getAdjacentPosts } from '@/lib/mdx'
+import RelatedPosts from '@/components/blog/RelatedPosts'
 
 interface BlogPostPageProps {
   params: { slug: string }
@@ -75,6 +75,11 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
   const headings = extractHeadings(post.content)
   const [contentPart1, contentPart2] = splitAtFirstH2(post.content)
   const { prev, next } = getAdjacentPosts(params.slug)
+
+  // 관련 포스트: 같은 카테고리 내 최근 3개 (현재 포스트 제외)
+  const relatedPosts = getAllPosts()
+    .filter((p) => p.category === post.category && p.slug !== post.slug)
+    .slice(0, 3)
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
@@ -159,6 +164,9 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
 
           {/* 이전/다음 포스트 네비게이션 */}
           <PostNavigation prev={prev} next={next} />
+
+          {/* 관련 포스트 */}
+          <RelatedPosts posts={relatedPosts} />
         </article>
 
         {/* Sidebar (desktop only) */}
