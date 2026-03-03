@@ -8,7 +8,7 @@
     { "id": "2-2", "title": "Footer 컴포넌트", "done": true },
     { "id": "2-3", "title": "Badge & Tag UI 컴포넌트", "done": true },
     { "id": "2-4", "title": "AdBanner 컴포넌트 (728×90)", "done": true },
-    { "id": "2-5", "title": "AdInFeed 컴포넌트", "done": false },
+    { "id": "2-5", "title": "AdInFeed 컴포넌트", "done": true },
     { "id": "2-6", "title": "AdSidebar 컴포넌트 (300×250)", "done": false },
     { "id": "3-1", "title": "PostCard 컴포넌트", "done": false },
     { "id": "3-2", "title": "홈 페이지 레이아웃 (2컬럼)", "done": false },
