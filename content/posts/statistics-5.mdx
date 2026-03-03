@@ -1,0 +1,482 @@
+---
+title: "분류: 통계 기초 정리 5장"
+date: "2026-03-04"
+category: "데이터사이언스"
+tags: ["통계", "분류", "로지스틱회귀", "머신러닝", "Python"]
+excerpt: "나이브 베이즈, 판별분석, 로지스틱 회귀, 혼동행렬, ROC/AUC, 불균형 데이터 처리까지 분류 알고리즘의 핵심 개념을 코드와 함께 정리했습니다."
+readTime: 13
+---
+
+4장에서 연속형 응답변수를 예측하는 회귀를 다뤘다면, 5장은 "이 데이터가 어떤 클래스에 속하는가?"를 예측하는 분류(classification)를 다룹니다. 스팸 탐지, 암 진단, 이탈 고객 예측 등이 모두 분류 문제입니다.
+
+> 이 글은 *Practical Statistics for Data Scientists* 5장을 기반으로 정리했습니다.
+
+## 5.1 나이브 베이즈
+
+베이즈 정리를 기반으로, 특징들이 클래스에 대해 서로 독립이라는 단순한(naive) 가정 하에 분류를 수행합니다.
+
+### 베이즈 정리
+
+$$P(C \mid X) = \frac{P(X \mid C) \cdot P(C)}{P(X)}$$
+
+| 용어 | 의미 |
+|------|------|
+| **사전확률 $P(C)$** | 데이터를 보기 전, 클래스 $C$의 사전 분포 |
+| **우도 $P(X \mid C)$** | 클래스 $C$에서 데이터 $X$가 관측될 확률 |
+| **사후확률 $P(C \mid X)$** | 데이터 $X$가 주어졌을 때 클래스 $C$에 속할 확률 |
+| **조건부 확률** | $P(B \mid A) = \dfrac{P(A \cap B)}{P(A)}$ |
+
+### 나이브 베이즈 분류 규칙
+
+특징들 $x_1, \ldots, x_n$이 클래스에 대해 조건부 독립이라고 가정하면:
+
+$$P(C \mid x_1, \ldots, x_n) \propto P(C) \prod_{i=1}^{n} P(x_i \mid C)$$
+
+예측: 사후확률이 가장 높은 클래스를 선택합니다.
+
+$$\hat{C} = \arg\max_C \left[ \log P(C) + \sum_{i=1}^{n} \log P(x_i \mid C) \right]$$
+
+```python
+import numpy as np
+import pandas as pd
+from sklearn.naive_bayes import GaussianNB, MultinomialNB
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import classification_report, accuracy_score
+from sklearn.datasets import load_iris
+
+# 예시 1: 가우시안 나이브 베이즈 (연속형 특징)
+iris = load_iris()
+X, y = iris.data, iris.target
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+
+gnb = GaussianNB()
+gnb.fit(X_train, y_train)
+y_pred = gnb.predict(X_test)
+
+print("=== 가우시안 나이브 베이즈 (붓꽃 분류) ===")
+print(f"정확도: {accuracy_score(y_test, y_pred):.4f}")
+print("\n클래스별 사전확률 (P(C)):")
+for cls, prior in zip(iris.target_names, gnb.class_prior_):
+    print(f"  {cls}: {prior:.3f}")
+
+# 예시 2: 스팸 분류 (나이브 베이즈 직접 구현)
+print("\n=== 나이브 베이즈 직접 구현 (스팸 분류) ===")
+# 단어 빈도 데이터 (단순화)
+np.random.seed(42)
+spam_words = np.random.poisson([5, 2, 8, 1], size=(200, 4))   # 스팸에 자주 나오는 단어
+ham_words  = np.random.poisson([1, 5, 1, 6], size=(200, 4))   # 정상 메일
+
+X_spam = np.vstack([spam_words, ham_words])
+y_spam = np.array([1] * 200 + [0] * 200)
+
+X_tr, X_te, y_tr, y_te = train_test_split(X_spam, y_spam, test_size=0.3, random_state=42)
+
+mnb = MultinomialNB()
+mnb.fit(X_tr, y_tr)
+print(f"정확도: {mnb.score(X_te, y_te):.4f}")
+print("\n로그 우도 (단어별 클래스 연관성):")
+words = ['무료', '안녕', '당첨', '회의']
+for w, log_ham, log_spam in zip(words, mnb.feature_log_prob_[0], mnb.feature_log_prob_[1]):
+    print(f"  '{w}': 정상={np.exp(log_ham):.3f}, 스팸={np.exp(log_spam):.3f}")
+```
+
+> **실무 적용:** 스팸 필터링, 감성 분석, 문서 분류에서 빠르고 효과적입니다. 특징 간 독립 가정이 실제로는 성립하지 않는 경우가 많지만, 그럼에도 불구하고 실용적 성능을 보입니다. 텍스트 분류에서는 MultinomialNB, 연속형 특징에는 GaussianNB를 사용합니다.
+
+## 5.2 판별분석
+
+클래스 간 차이를 최대화하는 방향으로 데이터를 투영해 분류하는 방법입니다.
+
+| 용어 | 설명 |
+|------|------|
+| **공분산** | 두 변수 간 선형 관계 강도 — 양수: 같은 방향, 음수: 반대 방향 |
+| **판별함수** | 관측값이 어느 집단에 속하는지를 판단하는 함수 |
+| **판별 가중치** | 판별함수의 계수 — 판별축 방향 결정 |
+| **LDA** | 클래스 간 분산 최대화, 클래스 내 분산 최소화 — 공분산 동일 가정 |
+
+### 공분산
+
+$$\text{Cov}(X, Y) = \frac{1}{n-1} \sum_{i=1}^{n} (x_i - \bar{x})(y_i - \bar{y})$$
+
+### LDA 판별함수
+
+공분산 행렬 $\Sigma$가 클래스 간 동일하다고 가정할 때:
+
+$$g_k(x) = x^\top \Sigma^{-1} \mu_k - \frac{1}{2} \mu_k^\top \Sigma^{-1} \mu_k + \log P(C_k)$$
+
+클래스 간 분산 대비 클래스 내 분산의 비를 최대화하는 방향을 찾습니다.
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis, QuadraticDiscriminantAnalysis
+from sklearn.datasets import load_iris
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score
+
+matplotlib.rcParams['font.family'] = 'AppleGothic'
+matplotlib.rcParams['axes.unicode_minus'] = False
+
+iris = load_iris()
+X, y = iris.data, iris.target
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+
+# LDA
+lda = LinearDiscriminantAnalysis()
+lda.fit(X_train, y_train)
+print(f"LDA 정확도: {accuracy_score(y_test, lda.predict(X_test)):.4f}")
+
+# QDA (클래스마다 공분산 행렬이 다를 때)
+qda = QuadraticDiscriminantAnalysis()
+qda.fit(X_train, y_train)
+print(f"QDA 정확도: {accuracy_score(y_test, qda.predict(X_test)):.4f}")
+
+# LDA로 차원 축소 후 시각화 (4차원 → 2차원)
+lda_2d = LinearDiscriminantAnalysis(n_components=2)
+X_lda = lda_2d.fit_transform(X, y)
+
+plt.figure(figsize=(8, 5))
+colors = ['red', 'green', 'blue']
+for cls, color, name in zip([0, 1, 2], colors, iris.target_names):
+    mask = y == cls
+    plt.scatter(X_lda[mask, 0], X_lda[mask, 1], c=color, label=name, alpha=0.7)
+
+plt.xlabel('LD1 (판별축 1)')
+plt.ylabel('LD2 (판별축 2)')
+plt.title('LDA 판별 공간 시각화 (4차원 → 2차원)')
+plt.legend()
+plt.grid(alpha=0.3)
+plt.show()
+
+print("\n=== LDA vs QDA 비교 ===")
+print("LDA: 클래스 간 공분산 동일 가정 → 선형 결정 경계")
+print("QDA: 클래스마다 공분산 다름 허용 → 이차 결정 경계 (더 유연, 과대적합 위험)")
+```
+
+> **실무 적용:** 얼굴 인식(Eigenface), 의학 진단(바이오마커로 집단 분류), 금융 리스크 분류에 활용됩니다. LDA는 차원 축소 기법으로도 사용되며, PCA와 달리 클래스 정보를 활용한다는 차이가 있습니다.
+
+## 5.3 로지스틱 회귀
+
+이진 분류에서 가장 널리 사용되는 방법으로, 확률을 직접 모델링합니다.
+
+| 용어 | 설명 |
+|------|------|
+| **오즈 (odds)** | $\dfrac{p}{1-p}$ — 사건 발생/미발생 확률의 비 |
+| **로짓 (logit)** | $\log\!\left(\dfrac{p}{1-p}\right)$ — 확률을 실수 전체로 변환 |
+| **역로짓 (sigmoid)** | $p = \dfrac{1}{1+e^{-z}}$ — 실수를 확률(0~1)로 변환 |
+| **MLE** | 관측 데이터를 가장 잘 설명하는 파라미터를 찾는 추정법 |
+| **GLM** | 연결함수로 다양한 분포를 선형 모형으로 확장 |
+
+### 로지스틱 회귀 모형
+
+$$\log\!\left(\frac{p}{1-p}\right) = \beta_0 + \beta_1 x_1 + \cdots + \beta_p x_p$$
+
+역변환으로 확률을 구합니다:
+
+$$p = \frac{1}{1 + e^{-(\beta_0 + \beta_1 x_1 + \cdots + \beta_p x_p)}}$$
+
+### 로지스틱 함수 (sigmoid)
+
+$$\sigma(z) = \frac{1}{1 + e^{-z}}$$
+
+```python
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import matplotlib
+import statsmodels.api as sm
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import classification_report
+
+matplotlib.rcParams['font.family'] = 'AppleGothic'
+matplotlib.rcParams['axes.unicode_minus'] = False
+np.random.seed(42)
+
+# 예시: 신용 위험 분류 (대출 상환 여부)
+n = 500
+income = np.random.normal(4000, 1500, n)       # 월소득 (만원)
+debt_ratio = np.random.uniform(0.1, 0.9, n)    # 부채비율
+credit_score = np.random.normal(700, 80, n)    # 신용점수
+
+log_odds = (-5 + 0.001 * income - 2 * debt_ratio + 0.005 * credit_score
+            + np.random.normal(0, 0.5, n))
+prob = 1 / (1 + np.exp(-log_odds))
+default = (np.random.random(n) < (1 - prob)).astype(int)  # 1=상환 실패
+
+df = pd.DataFrame({'부도': default, '소득': income, '부채비율': debt_ratio, '신용점수': credit_score})
+
+# statsmodels로 로지스틱 회귀
+X = sm.add_constant(df[['소득', '부채비율', '신용점수']])
+logit_model = sm.Logit(df['부도'], X).fit(disp=False)
+
+print("=== 로지스틱 회귀 계수 ===")
+print(logit_model.params.round(4))
+
+print("\n=== 오즈비 (Odds Ratio) 해석 ===")
+odds_ratios = np.exp(logit_model.params)
+for name, OR in odds_ratios.items():
+    print(f"  {name}: OR={OR:.4f} → 1단위 증가 시 부도 오즈 {(OR-1)*100:+.1f}%")
+
+# sigmoid 함수 시각화
+z = np.linspace(-6, 6, 300)
+sigma = 1 / (1 + np.exp(-z))
+
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 4))
+
+ax1.plot(z, sigma, 'b-', linewidth=2)
+ax1.axhline(0.5, color='red', linestyle='--', alpha=0.7, label='p=0.5 (결정 경계)')
+ax1.axvline(0, color='gray', linestyle='--', alpha=0.7)
+ax1.set_xlabel('선형 예측값 z')
+ax1.set_ylabel('확률 p')
+ax1.set_title('Sigmoid 함수 (로지스틱 반응 함수)')
+ax1.legend()
+ax1.grid(alpha=0.3)
+
+# 예측 확률 분포
+from sklearn.linear_model import LogisticRegression
+lr = LogisticRegression(max_iter=1000, random_state=42)
+lr.fit(df[['소득', '부채비율', '신용점수']], df['부도'])
+probs = lr.predict_proba(df[['소득', '부채비율', '신용점수']])[:, 1]
+
+ax2.hist(probs[df['부도'] == 0], bins=30, alpha=0.6, label='정상 상환', color='blue')
+ax2.hist(probs[df['부도'] == 1], bins=30, alpha=0.6, label='부도', color='red')
+ax2.axvline(0.5, color='black', linestyle='--', label='임계값 0.5')
+ax2.set_xlabel('예측 부도 확률')
+ax2.set_ylabel('빈도')
+ax2.set_title('클래스별 예측 확률 분포')
+ax2.legend()
+
+plt.tight_layout()
+plt.show()
+```
+
+> **실무 적용:** 신용 위험 평가, 질병 진단, 이탈 고객 예측, 이메일 스팸 분류 등에 폭넓게 사용됩니다. 계수의 오즈비(exp(β))로 각 변수의 효과를 직관적으로 해석할 수 있어 규제 환경(금융, 의료)에서 특히 선호됩니다.
+
+## 5.4 분류 모델 평가하기
+
+분류 모델의 성능은 단순 정확도만으로는 부족합니다. 클래스 불균형이 있으면 특히 그렇습니다.
+
+### 혼동행렬 (Confusion Matrix)
+
+| 실제 \ 예측 | Positive | Negative |
+|------------|----------|----------|
+| **Positive** | TP (진양성) | FN (위음성) |
+| **Negative** | FP (위양성) | TN (진음성) |
+
+### 주요 성능 지표
+
+$$\text{정확도} = \frac{TP + TN}{TP + FP + TN + FN}$$
+
+$$\text{민감도 (재현율)} = \frac{TP}{TP + FN} \quad \text{— 실제 양성 중 잡아낸 비율}$$
+
+$$\text{특이도} = \frac{TN}{TN + FP} \quad \text{— 실제 음성 중 올바르게 음성 판정}$$
+
+$$\text{정밀도} = \frac{TP}{TP + FP} \quad \text{— 양성 예측 중 실제 양성 비율}$$
+
+$$F_1 = 2 \cdot \frac{\text{정밀도} \times \text{재현율}}{\text{정밀도} + \text{재현율}}$$
+
+### 리프트 (Lift)
+
+$$\text{Lift} = \frac{P(\text{Positive} \mid \text{Model prediction})}{P(\text{Positive overall})}$$
+
+랜덤 대비 모델이 얼마나 더 효율적으로 양성을 찾아내는지를 나타냅니다.
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib
+from sklearn.linear_model import LogisticRegression
+from sklearn.datasets import make_classification
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import (confusion_matrix, classification_report,
+                              roc_curve, auc, ConfusionMatrixDisplay)
+
+matplotlib.rcParams['font.family'] = 'AppleGothic'
+matplotlib.rcParams['axes.unicode_minus'] = False
+np.random.seed(42)
+
+X, y = make_classification(n_samples=1000, n_features=10, n_informative=5,
+                            weights=[0.7, 0.3], random_state=42)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+
+lr = LogisticRegression(max_iter=500, random_state=42)
+lr.fit(X_train, y_train)
+y_pred = lr.predict(X_test)
+y_prob = lr.predict_proba(X_test)[:, 1]
+
+print("=== 분류 성능 지표 ===")
+print(classification_report(y_test, y_pred, target_names=['음성', '양성']))
+
+# 혼동행렬 시각화
+fig, axes = plt.subplots(1, 3, figsize=(15, 4))
+
+# 1. 혼동행렬
+cm = confusion_matrix(y_test, y_pred)
+disp = ConfusionMatrixDisplay(cm, display_labels=['음성', '양성'])
+disp.plot(ax=axes[0], colorbar=False, cmap='Blues')
+axes[0].set_title('혼동행렬')
+
+# 2. ROC 곡선
+fpr, tpr, thresholds = roc_curve(y_test, y_prob)
+roc_auc = auc(fpr, tpr)
+axes[1].plot(fpr, tpr, 'b-', linewidth=2, label=f'AUC = {roc_auc:.4f}')
+axes[1].plot([0, 1], [0, 1], 'k--', label='랜덤 분류기')
+axes[1].set_xlabel('1 - 특이도 (FPR)')
+axes[1].set_ylabel('민감도 (TPR)')
+axes[1].set_title('ROC 곡선')
+axes[1].legend()
+axes[1].grid(alpha=0.3)
+
+# 3. 리프트 차트
+sorted_idx = np.argsort(-y_prob)
+y_sorted = y_test[sorted_idx]
+n_pos = y_test.sum()
+
+lifts = []
+proportions = np.linspace(0.01, 1, 100)
+for p in proportions:
+    n = int(p * len(y_test))
+    pos_in_top_n = y_sorted[:n].sum()
+    lift = (pos_in_top_n / n) / (n_pos / len(y_test))
+    lifts.append(lift)
+
+axes[2].plot(proportions * 100, lifts, 'b-', linewidth=2)
+axes[2].axhline(1, color='red', linestyle='--', label='랜덤 기준선 (Lift=1)')
+axes[2].set_xlabel('상위 예측 비율 (%)')
+axes[2].set_ylabel('Lift')
+axes[2].set_title('리프트 차트')
+axes[2].legend()
+axes[2].grid(alpha=0.3)
+
+plt.tight_layout()
+plt.show()
+
+print(f"\nAUC = {roc_auc:.4f}")
+print(f"상위 10% 대상 Lift = {lifts[9]:.2f}배 (랜덤 대비)")
+```
+
+> **실무 적용:** 암 진단(높은 민감도 필요 — 놓치면 위험), 스팸 필터(높은 정밀도 필요 — 정상 메일을 스팸으로 오분류 방지), 마케팅 캠페인(리프트로 ROI 추정). 비즈니스 목적에 따라 어떤 지표를 최적화할지가 달라집니다.
+
+## 5.5 불균형 데이터 다루기
+
+실무 데이터는 대부분 클래스 불균형이 심합니다 (사기 탐지: 0.1% 사기, 암 진단: 5% 양성 등). 단순 정확도는 무의미해집니다.
+
+| 기법 | 설명 | 장단점 |
+|------|------|--------|
+| **과소표본 (undersampling)** | 다수 클래스 표본 수 축소 | 빠름, 정보 손실 |
+| **과잉표본 (oversampling)** | 소수 클래스 복제 또는 합성 | 정보 손실 없음, 과대적합 위험 |
+| **SMOTE** | 소수 클래스 이웃 사이에 합성 샘플 생성 | 다양성 확보 |
+| **가중치 조정** | 손실함수에서 소수 클래스에 더 큰 가중치 | 빠르고 간단 |
+| **임계값 조정** | 분류 임계값을 0.5 이외로 변경 | 추가 데이터 불필요 |
+
+### z-점수 (표준화)
+
+불균형 데이터 분석 전 특징을 스케일링하는 데 사용합니다:
+
+$$z = \frac{x - \mu}{\sigma}$$
+
+```python
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import matplotlib
+from sklearn.datasets import make_classification
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import classification_report, roc_auc_score
+from sklearn.preprocessing import StandardScaler
+from imblearn.over_sampling import SMOTE
+from imblearn.under_sampling import RandomUnderSampler
+
+matplotlib.rcParams['font.family'] = 'AppleGothic'
+matplotlib.rcParams['axes.unicode_minus'] = False
+np.random.seed(42)
+
+# 불균형 데이터 생성 (95% 음성, 5% 양성)
+X, y = make_classification(n_samples=2000, n_features=10, n_informative=5,
+                            weights=[0.95, 0.05], random_state=42)
+print(f"클래스 분포: 음성={sum(y==0)}, 양성={sum(y==1)} ({sum(y==1)/len(y)*100:.1f}%)")
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3,
+                                                     stratify=y, random_state=42)
+
+scaler = StandardScaler()
+X_train_sc = scaler.fit_transform(X_train)
+X_test_sc = scaler.transform(X_test)
+
+def evaluate(name, X_tr, y_tr, X_te=X_test_sc, y_te=y_test, **kwargs):
+    lr = LogisticRegression(max_iter=1000, random_state=42, **kwargs)
+    lr.fit(X_tr, y_tr)
+    y_pred = lr.predict(X_te)
+    y_prob = lr.predict_proba(X_te)[:, 1]
+    report = classification_report(y_te, y_pred, output_dict=True)
+    auc = roc_auc_score(y_te, y_prob)
+    print(f"\n[{name}]")
+    print(f"  양성 재현율: {report['1']['recall']:.3f} | 정밀도: {report['1']['precision']:.3f} | AUC: {auc:.3f}")
+
+# 1. 기준: 불균형 그대로
+evaluate("기준 (불균형)", X_train_sc, y_train)
+
+# 2. 클래스 가중치 조정
+evaluate("클래스 가중치", X_train_sc, y_train, class_weight='balanced')
+
+# 3. 과소표본
+rus = RandomUnderSampler(random_state=42)
+X_under, y_under = rus.fit_resample(X_train_sc, y_train)
+print(f"\n과소표본 후: 음성={sum(y_under==0)}, 양성={sum(y_under==1)}")
+evaluate("과소표본", X_under, y_under)
+
+# 4. SMOTE (과잉표본)
+smote = SMOTE(random_state=42)
+X_smote, y_smote = smote.fit_resample(X_train_sc, y_train)
+print(f"SMOTE 후: 음성={sum(y_smote==0)}, 양성={sum(y_smote==1)}")
+evaluate("SMOTE", X_smote, y_smote)
+
+# 5. 임계값 조정 (0.5 → 0.3)
+lr_base = LogisticRegression(max_iter=1000, random_state=42)
+lr_base.fit(X_train_sc, y_train)
+y_prob = lr_base.predict_proba(X_test_sc)[:, 1]
+y_pred_low_thresh = (y_prob >= 0.3).astype(int)
+
+report = classification_report(y_test, y_pred_low_thresh, output_dict=True)
+print(f"\n[임계값 0.3 조정]")
+print(f"  양성 재현율: {report['1']['recall']:.3f} | 정밀도: {report['1']['precision']:.3f}")
+
+# 임계값에 따른 정밀도-재현율 트레이드오프
+from sklearn.metrics import precision_recall_curve
+precision, recall, thresh = precision_recall_curve(y_test, y_prob)
+
+plt.figure(figsize=(8, 4))
+plt.plot(recall, precision, 'b-', linewidth=2)
+plt.xlabel('재현율 (Recall)')
+plt.ylabel('정밀도 (Precision)')
+plt.title('정밀도-재현율 트레이드오프 (임계값 조정 효과)')
+plt.grid(alpha=0.3)
+plt.show()
+```
+
+### 불균형 처리 방법 선택 기준
+
+| 상황 | 권장 방법 |
+|------|----------|
+| 데이터가 충분히 많음 | 과소표본 (빠름) |
+| 데이터가 부족함 | SMOTE 또는 과잉표본 |
+| 추가 데이터 생성 어려움 | 클래스 가중치 조정 |
+| 비즈니스 요구사항 명확 | 임계값 조정 (정밀도/재현율 트레이드오프) |
+| 사기 탐지, 암 진단 | 재현율 최대화 (놓치면 치명적) |
+| 스팸 필터 | 정밀도 최대화 (정상 메일 잘못 걸러내면 안 됨) |
+
+> **실무 적용:** 금융 사기 탐지(양성 비율 0.1% 미만), 의료 진단, 기계 고장 예측 등이 대표적인 불균형 분류 문제입니다. 단순 정확도만 보면 "항상 음성 예측"만 해도 99.9%가 나오는 함정이 있습니다. 반드시 재현율, AUC, F1 등을 함께 확인해야 합니다.
+
+---
+
+5장 핵심 요약:
+
+- **나이브 베이즈**: 특징 독립 가정 + 베이즈 정리 → 빠르고 텍스트 분류에 강함
+- **LDA**: 클래스 간 분산 최대화, 공분산 동일 가정 → 차원 축소 기법으로도 활용
+- **로지스틱 회귀**: 확률을 직접 모델링 — 오즈비로 해석, MLE로 추정
+- **혼동행렬**: TP, FP, FN, TN으로 분류 성능을 세밀하게 파악
+- **ROC/AUC**: 임계값에 무관한 모델 전반 성능 — 1에 가까울수록 우수
+- **리프트**: 마케팅 등에서 랜덤 대비 모델 효율성 측정
+- **불균형 데이터**: 정확도만 믿으면 안 됨 — SMOTE, 가중치, 임계값 조정으로 대응
