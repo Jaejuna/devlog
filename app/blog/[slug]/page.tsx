@@ -9,6 +9,8 @@ import rehypeHighlight from 'rehype-highlight'
 import rehypeSlug from 'rehype-slug'
 import rehypeAutolinkHeadings from 'rehype-autolink-headings'
 import remarkGfm from 'remark-gfm'
+import remarkMath from 'remark-math'
+import rehypeKatex from 'rehype-katex'
 import mdxComponents from '@/components/blog/MdxComponents'
 import TableOfContents from '@/components/blog/TableOfContents'
 import { extractHeadings } from '@/lib/types'
@@ -166,11 +168,12 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
               components={mdxComponents}
               options={{
                 mdxOptions: {
-                  remarkPlugins: [remarkGfm],
+                  remarkPlugins: [remarkGfm, remarkMath],
                   rehypePlugins: [
                     rehypeSlug,
                     [rehypeAutolinkHeadings, { behavior: 'wrap' }],
                     rehypeHighlight,
+                    rehypeKatex,
                   ],
                 },
               }}
