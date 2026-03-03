@@ -10,6 +10,7 @@ import rehypeSlug from 'rehype-slug'
 import rehypeAutolinkHeadings from 'rehype-autolink-headings'
 import remarkGfm from 'remark-gfm'
 import mdxComponents from '@/components/blog/MdxComponents'
+import TableOfContents, { extractHeadings } from '@/components/blog/TableOfContents'
 
 interface BlogPostPageProps {
   params: { slug: string }
@@ -45,6 +46,8 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
   const post = getPostBySlug(params.slug)
 
   if (!post) notFound()
+
+  const headings = extractHeadings(post.content)
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
@@ -93,13 +96,12 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
         {/* Sidebar (desktop only) */}
         <aside className="hidden lg:block w-72 flex-shrink-0">
           <div className="sticky top-20 flex flex-col gap-6">
-            {/* 목차 자리 (4-3에서 구현) */}
-            <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-xl">
-              <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                목차
-              </h3>
-              <p className="text-xs text-gray-400">[목차 — 4-3 태스크에서 구현]</p>
-            </div>
+            {/* 목차 */}
+            {headings.length > 0 && (
+              <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-xl">
+                <TableOfContents headings={headings} />
+              </div>
+            )}
 
             {/* 사이드바 광고 */}
             <AdSidebar
