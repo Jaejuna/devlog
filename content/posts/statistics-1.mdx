@@ -1,0 +1,249 @@
+---
+title: "데이터 종류와 위치·변이 추정: 통계 기초 정리"
+date: "2026-03-04"
+category: "데이터사이언스"
+tags: ["통계", "데이터분석", "pandas", "Python"]
+excerpt: "데이터의 종류(연속형, 이산, 범주형 등)와 위치 추정(평균, 중앙값), 변이 추정(분산, 표준편차)의 개념을 코드 예시와 함께 정리했습니다."
+readTime: 8
+---
+
+통계와 머신러닝을 공부하다 보면 가장 먼저 마주치는 것이 "이 데이터가 어떤 종류인가?"라는 질문입니다. 데이터 유형을 제대로 파악해야 적합한 분석 방법을 선택할 수 있습니다.
+
+## 1.1 정형화된 데이터의 요소
+
+| 유형 | 설명 | 예시 |
+|------|------|------|
+| **연속형 (continuous)** | 일정 범위 안에 어떤 값이든 취할 수 있는 데이터 | 키, 몸무게, 온도 |
+| **이산 (discrete)** | 횟수, 정수형 데이터 | 방문자 수, 구매 횟수 |
+| **범주형 (categorical)** | 가능한 범주 안의 값만 취하는 데이터 | 혈액형, 지역 |
+| **이진 (binary)** | 두 개의 값만 갖는 범주형 데이터 | 합격/불합격, 0/1 |
+| **순서형 (ordinal)** | 값들 사이에 순위가 있는 범주형 데이터 | 만족도(상/중/하), 학점 |
+
+이 외에도 파일의 저장 구조에 따라 **정형**, **반정형**, **비정형** 데이터로 나누기도 합니다.
+
+```python
+import pandas as pd
+
+df = pd.DataFrame({
+    "키":        [165.3, 172.0, 180.5],   # 연속형
+    "방문횟수":  [3, 7, 12],               # 이산
+    "혈액형":    ["A", "B", "O"],          # 범주형
+    "합격여부":  [True, False, True],       # 이진
+    "만족도":    pd.Categorical(
+                    ["상", "중", "하"],
+                    categories=["하", "중", "상"],
+                    ordered=True            # 순서형
+                ),
+})
+
+print(df.dtypes)
+# 키          float64
+# 방문횟수      int64
+# 혈액형        object
+# 합격여부        bool
+# 만족도      category
+```
+
+## 1.2 테이블 데이터
+
+머신러닝에서 가장 기본이 되는 데이터 구조는 테이블(행렬) 형태입니다.
+
+- **데이터 프레임 (data frame)**: 테이블 형태의 데이터 구조. 통계, ML에서 가장 기본이 되는 구조
+- **피처 (feature)**: 테이블의 열 (특징, 속성)
+- **레코드 (record)**: 테이블의 행 (사건, 사례, 관측값, 패턴, 샘플)
+- **결과 (outcome)**: 통계, ML 모델을 사용하여 도출하는 예측값 — 독립 변수들을 통해 종속변수를 도출
+
+```python
+import pandas as pd
+
+# 데이터 프레임 생성
+df = pd.DataFrame({
+    "나이":   [25, 32, 28, 45],   # 피처
+    "소득":   [3000, 5200, 4100, 7800],
+    "구매여부": [0, 1, 0, 1],     # 결과(레이블)
+})
+
+# 피처(X)와 결과(y) 분리
+X = df[["나이", "소득"]]  # feature matrix
+y = df["구매여부"]         # target vector
+
+print(f"레코드 수: {len(df)}")        # 4
+print(f"피처 수: {X.shape[1]}")       # 2
+```
+
+### pandas 주요 특징
+
+pandas의 `DataFrame` 객체는 모든 행에 순차적으로 정수 인덱스를 자동 부여하며, 계층적(다중) 인덱스도 지원해 대규모 데이터를 효율적으로 처리할 수 있습니다.
+
+```python
+# 기본 정수 인덱스
+df = pd.DataFrame({"값": [10, 20, 30]})
+print(df.index)  # RangeIndex(start=0, stop=3, step=1)
+
+# 다중(계층적) 인덱스
+arrays = [["서울", "서울", "부산"], ["강남", "마포", "해운대"]]
+index = pd.MultiIndex.from_arrays(arrays, names=["시", "구"])
+df_multi = pd.DataFrame({"인구": [56, 38, 42]}, index=index)
+print(df_multi)
+```
+
+## 1.3 위치 추정
+
+데이터의 중심 경향성을 나타내는 대표값입니다.
+
+| 지표 | 설명 | 특징 |
+|------|------|------|
+| **평균 (mean)** | 모든 값의 합 / 개수 | 특잇값에 민감 |
+| **가중평균 (weighted mean)** | 가중치를 곱한 합 / 가중치 합 | 중요도 반영 |
+| **중간값 (median)** | 정렬 후 가운데 위치 값 | 특잇값에 강건 |
+| **가중 중간값 (weighted median)** | 가중치 누적합의 중간에 위치하는 값 | - |
+| **절사평균 (trimmed mean)** | 극단값 일부 제외 후 평균 | 로버스트 |
+
+> **로버스트(robust)**: 특잇값(outlier)에 민감하지 않은 성질. 중간값과 절사평균이 평균보다 로버스트합니다.
+
+```python
+import numpy as np
+from scipy import stats
+
+data = [10, 12, 11, 14, 13, 100]  # 100은 특잇값(outlier)
+
+# 평균 — 특잇값에 크게 영향받음
+print(f"평균: {np.mean(data):.1f}")           # 26.7
+
+# 중간값 — 특잇값에 강건
+print(f"중간값: {np.median(data):.1f}")        # 12.5
+
+# 절사평균 — 상하 10% 제거 후 평균
+print(f"절사평균: {stats.trim_mean(data, 0.1):.1f}")  # 12.0
+
+# 가중평균 — 최신 데이터에 가중치 부여 예시
+weights = [1, 1, 1, 2, 2, 3]
+print(f"가중평균: {np.average(data, weights=weights):.1f}")
+```
+
+## 1.4 변이 추정
+
+데이터가 얼마나 퍼져 있는지(산포도)를 나타내는 지표입니다.
+
+### 핵심 지표 정리
+
+**편차 (deviation)**
+관측값과 기준값(주로 평균 또는 중간값) 사이의 차이입니다.
+
+$$\text{편차} = x_i - \bar{x}$$
+
+**분산 (variance)**
+편차의 제곱을 평균한 값. 표본 분산은 n−1로 나눕니다(베셀 보정).
+
+$$s^2 = \frac{1}{n-1} \sum_{i=1}^{n}(x_i - \bar{x})^2$$
+
+**표준편차 (standard deviation)**
+분산의 제곱근. 원래 단위와 같아 해석이 직관적입니다.
+
+$$s = \sqrt{s^2}$$
+
+
+**평균절대편차 (MAD, Mean Absolute Deviation)**
+각 값이 평균에서 떨어진 거리의 평균. L1 노름 기반으로 이상값에 덜 민감합니다.
+
+$$\text{MAD} = \frac{1}{n}\sum_{i=1}^{n}|x_i - \bar{x}|$$
+
+**중위절대편차 (Median Absolute Deviation)**
+각 값이 중위값에서 떨어진 거리의 중위값. 가장 로버스트한 변이 지표입니다.
+
+$$\text{MAD}_\text{med} = \text{median}(|x_i - \text{median}(x)|)$$
+
+**범위 (range)**
+
+$$\text{Range} = \max(x) - \min(x)$$
+
+**사분위범위 (IQR, Interquartile Range)**
+중간 50% 데이터의 퍼짐 정도. 상자그림(box plot)의 기준이 됩니다.
+
+$$\text{IQR} = Q_3 - Q_1$$
+
+```python
+import numpy as np
+import pandas as pd
+from scipy import stats
+
+data = np.array([2, 4, 4, 4, 5, 5, 7, 9, 100])  # 100은 이상값
+
+# 기본 변이 지표
+print(f"분산 (표본): {np.var(data, ddof=1):.2f}")
+print(f"표준편차:    {np.std(data, ddof=1):.2f}")
+print(f"범위:        {data.max() - data.min()}")
+
+# pandas로 한번에
+s = pd.Series(data)
+print(s.describe())
+# count     9.000000
+# mean     16.667
+# std      31.927
+# min       2.000
+# 25%       4.000   ← Q1
+# 50%       5.000   ← 중위값(median)
+# 75%       7.000   ← Q3
+# max     100.000
+
+# IQR
+q1, q3 = s.quantile(0.25), s.quantile(0.75)
+iqr = q3 - q1
+print(f"IQR: {iqr}")          # 3.0
+
+# 이상값 탐지 (IQR 기반)
+lower = q1 - 1.5 * iqr
+upper = q3 + 1.5 * iqr
+outliers = s[(s < lower) | (s > upper)]
+print(f"이상값: {outliers.tolist()}")   # [100]
+```
+
+### 평균절대편차 vs 중위절대편차 비교
+
+```python
+from scipy.stats import median_abs_deviation
+
+data_normal  = [2, 4, 4, 4, 5, 5, 7, 9]
+data_outlier = [2, 4, 4, 4, 5, 5, 7, 9, 100]
+
+for label, data in [("정상 데이터", data_normal), ("이상값 포함", data_outlier)]:
+    arr = np.array(data)
+    mad_mean   = np.mean(np.abs(arr - np.mean(arr)))
+    mad_median = median_abs_deviation(arr)
+    print(f"[{label}]")
+    print(f"  평균절대편차(MAD):    {mad_mean:.2f}")
+    print(f"  중위절대편차(MADmed): {mad_median:.2f}")
+    print()
+
+# [정상 데이터]
+#   평균절대편차(MAD):    1.75
+#   중위절대편차(MADmed): 1.00
+
+# [이상값 포함]
+#   평균절대편차(MAD):    17.28   ← 이상값에 크게 영향받음
+#   중위절대편차(MADmed): 1.00    ← 이상값에 강건
+```
+
+### 순서통계량과 백분위수
+
+**순서통계량 (order statistics)**: 데이터를 크기순으로 정렬했을 때 각 순서 위치의 값
+
+**백분위수 (percentile)**: 전체 데이터 중 P%가 해당 값 이하인 지점
+
+```python
+data = [15, 20, 35, 40, 50, 55, 60, 75, 80, 100]
+
+p25 = np.percentile(data, 25)   # Q1
+p50 = np.percentile(data, 50)   # 중위값
+p75 = np.percentile(data, 75)   # Q3
+p90 = np.percentile(data, 90)   # 상위 10%
+
+print(f"25번째 백분위수 (Q1): {p25}")  # 36.25
+print(f"50번째 백분위수 (Q2): {p50}")  # 52.5
+print(f"75번째 백분위수 (Q3): {p75}")  # 71.25
+print(f"90번째 백분위수:      {p90}")  # 82.0
+```
+
+---
+
+데이터 유형을 정확히 파악하고, 이상값 존재 여부에 따라 로버스트한 지표(중간값, 절사평균, 중위절대편차, IQR)를 선택하는 것이 좋은 데이터 분석의 출발점입니다.

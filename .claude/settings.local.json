@@ -5,7 +5,12 @@
       "Bash(npm run typecheck 2>&1)",
       "Bash(git init && git add package.json tsconfig.json tailwind.config.ts next.config.ts postcss.config.js app/ 2>&1)",
       "Bash(git commit -m \"$\\(cat <<'EOF'\nfeat: Next.js 프로젝트 초기화\n\n- Next.js 14, TypeScript, Tailwind CSS 기본 설정\n- package.json, tsconfig.json, tailwind.config.ts, next.config.ts 생성\n- app/layout.tsx, app/page.tsx, app/globals.css 기본 구조 생성\n\nCo-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>\nEOF\n\\)\")",
-      "Bash(git add -A && git commit -m \"$\\(cat <<'EOF'\nfeat: 폴더 구조 세팅\n\n- app/blog/[slug]/page.tsx, app/about/page.tsx 생성\n- components/layout, blog, ads, ui 디렉토리 및 플레이스홀더 컴포넌트 생성\n- lib/types.ts \\(Post, PostMeta 타입\\), lib/mdx.ts \\(getAllPosts, getPostBySlug\\) 생성\n- content/posts/ 디렉토리 생성\n- @/ import alias tsconfig.json에 설정\n\nCo-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>\nEOF\n\\)\")"
+      "Bash(git add -A && git commit -m \"$\\(cat <<'EOF'\nfeat: 폴더 구조 세팅\n\n- app/blog/[slug]/page.tsx, app/about/page.tsx 생성\n- components/layout, blog, ads, ui 디렉토리 및 플레이스홀더 컴포넌트 생성\n- lib/types.ts \\(Post, PostMeta 타입\\), lib/mdx.ts \\(getAllPosts, getPostBySlug\\) 생성\n- content/posts/ 디렉토리 생성\n- @/ import alias tsconfig.json에 설정\n\nCo-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git remote add origin https://github.com/Jaejuna/devlog.git && git log --oneline -5)",
+      "Bash(git push -u origin main --force 2>&1)",
+      "Bash(npm info next-mdx-remote versions --json 2>/dev/null | python3 -c \"import json,sys; v=json.load\\(sys.stdin\\); print\\([x for x in v if x.startswith\\('6'\\)]\\)\")",
+      "Bash(npm install next-mdx-remote@6.0.0 2>&1 | tail -5)",
+      "Bash(npm install remark-math rehype-katex 2>&1 | tail -5)"
     ]
   }
 }
