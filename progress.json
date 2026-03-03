@@ -24,7 +24,7 @@
     { "id": "5-3", "title": "전체 태그 목록 페이지", "done": true },
     { "id": "6-1", "title": "정적 검색 인덱스 생성", "done": true },
     { "id": "6-2", "title": "클라이언트 사이드 검색 UI", "done": true },
-    { "id": "7-1", "title": "About 페이지", "done": false },
+    { "id": "7-1", "title": "About 페이지", "done": true },
     { "id": "8-1", "title": "동적 메타데이터 (generateMetadata)", "done": false },
     { "id": "8-2", "title": "sitemap.xml 자동 생성", "done": false },
     { "id": "8-3", "title": "robots.txt", "done": false },
