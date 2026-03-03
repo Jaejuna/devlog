@@ -20,6 +20,16 @@ export async function generateMetadata({
   return {
     title: `#${name} 태그`,
     description: `${name} 태그의 포스트 목록`,
+    openGraph: {
+      title: `#${name} 태그 | devlog`,
+      description: `${name} 태그의 포스트 목록`,
+      type: 'website',
+      locale: 'ko_KR',
+    },
+    twitter: {
+      card: 'summary',
+      title: `#${name} 태그 | devlog`,
+    },
   }
 }
 

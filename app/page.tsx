@@ -5,6 +5,23 @@ import AdBanner from '@/components/ads/AdBanner'
 import Badge from '@/components/ui/Badge'
 import Tag from '@/components/ui/Tag'
 import Link from 'next/link'
+import type { Metadata } from 'next'
+
+export const metadata: Metadata = {
+  title: 'devlog — 개발자 블로그',
+  description: '개발 경험과 면접 준비 콘텐츠를 다루는 개인 기술 블로그',
+  openGraph: {
+    title: 'devlog — 개발자 블로그',
+    description: '개발 경험과 면접 준비 콘텐츠를 다루는 개인 기술 블로그',
+    type: 'website',
+    locale: 'ko_KR',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'devlog — 개발자 블로그',
+    description: '개발 경험과 면접 준비 콘텐츠를 다루는 개인 기술 블로그',
+  },
+}
 
 interface HomePageProps {
   searchParams: {
