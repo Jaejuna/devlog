@@ -1,0 +1,653 @@
+---
+title: "통계적 실험과 유의성 검정: 통계 기초 정리 3장"
+date: "2026-03-04"
+category: "데이터사이언스"
+tags: ["통계", "가설검정", "A/B테스트", "Python"]
+excerpt: "A/B 검정, 가설검정, p-값, t-검정, 분산분석(ANOVA), 카이제곱, 멀티암드 밴딧까지 통계적 실험의 핵심 개념을 코드와 함께 정리했습니다."
+readTime: 12
+---
+
+2장에서 표본이 모집단을 얼마나 잘 대표하는지를 다뤘다면, 3장은 "실험을 어떻게 설계하고, 결과가 진짜 효과인지 아닌지를 어떻게 판단하는가?"를 다룹니다. 통계적 유의성 검정은 데이터 기반 의사결정의 핵심입니다.
+
+> 이 글은 *Practical Statistics for Data Scientists* 3장을 기반으로 정리했습니다.
+
+## 3.1 A/B 검정
+
+A/B 검정은 두 버전(A와 B)을 비교해 어느 쪽이 더 효과적인지를 통계적으로 판단하는 실험 방법입니다.
+
+| 용어 | 설명 |
+|------|------|
+| **처리 (treatment)** | 실험에서 대상에게 적용하는 조작 또는 개입 (예: 약물, UI 변경 등) |
+| **처리군 (treatment group)** | 처리(개입)를 실제로 받는 실험 집단 |
+| **대조군 (control group)** | 처리를 받지 않거나 표준 처리만 받는 비교 집단 |
+| **임의화 (randomization)** | 실험 대상자를 무작위로 배정하는 절차 — 편향 제거, 인과관계 추정 가능 |
+| **대상 (subject)** | 실험에 포함된 관측 단위 (예: 사람, 제품, 세포 등) |
+| **검정통계량 (test statistic)** | 데이터로부터 계산되는 수치로, 귀무가설 하 분포를 알고 있어 p-값 산출에 사용 |
+
+### 귀무가설과 대립가설
+
+$$H_0: \mu_A = \mu_B \quad \text{(두 집단의 차이가 없다)}$$
+
+$$H_1: \mu_A \neq \mu_B \quad \text{또는} \quad \mu_A > \mu_B \text{ (단측)}$$
+
+### 독립표본 t-검정 통계량
+
+$$t = \frac{\bar{x}_A - \bar{x}_B}{\sqrt{\dfrac{s_A^2}{n_A} + \dfrac{s_B^2}{n_B}}}$$
+
+```python
+import numpy as np
+from scipy import stats
+
+np.random.seed(42)
+
+# A/B 테스트 예시: 버튼 색상에 따른 클릭률
+# A: 기존 파란 버튼, B: 새로운 빨간 버튼
+# 클릭(1) / 미클릭(0) 데이터
+n_A, n_B = 1000, 1000
+click_rate_A = 0.10  # 10% 클릭률
+click_rate_B = 0.12  # 12% 클릭률 (실제 차이 존재)
+
+clicks_A = np.random.binomial(1, click_rate_A, n_A)
+clicks_B = np.random.binomial(1, click_rate_B, n_B)
+
+# 독립표본 t-검정
+t_stat, p_value = stats.ttest_ind(clicks_A, clicks_B)
+
+print(f"A 그룹 클릭률: {clicks_A.mean():.4f}")
+print(f"B 그룹 클릭률: {clicks_B.mean():.4f}")
+print(f"t 통계량: {t_stat:.4f}")
+print(f"p 값: {p_value:.4f}")
+print(f"결론: {'귀무가설 기각 (유의한 차이)' if p_value < 0.05 else '귀무가설 유지 (차이 없음)'}")
+```
+
+> **실무 적용:** 이커머스에서 버튼 색상, 카피 문구, 레이아웃 변경 등을 A/B 검정으로 검증합니다. 임의화 없이 시간대나 기기별로 나누면 편향이 발생하므로, 진정한 랜덤 배정이 필수입니다.
+
+## 3.2 가설검정
+
+| 용어 | 설명 |
+|------|------|
+| **귀무가설 ($H_0$)** | 차이나 효과가 없다고 가정하는 기본 가설. 예: "두 집단의 평균은 같다" |
+| **대립가설 ($H_1$ 또는 $H_a$)** | 귀무가설과 반대되는 주장 — 증명하고자 하는 가설 |
+| **일원검정 (one-tailed test)** | 한 방향으로만 차이가 있는지 검정. 예: $H_1: \mu > 5$ |
+| **이원검정 (two-tailed test)** | 양방향 모두 차이를 검정. 예: $H_1: \mu \neq 5$ |
+
+### 단측 vs 양측 검정 비교
+
+$$\text{일원검정: } H_0: \mu \leq 5 \quad \text{vs.} \quad H_1: \mu > 5$$
+
+$$\text{이원검정: } H_0: \mu = 5 \quad \text{vs.} \quad H_1: \mu \neq 5$$
+
+```python
+import numpy as np
+from scipy import stats
+import matplotlib.pyplot as plt
+import matplotlib
+matplotlib.rcParams['font.family'] = 'AppleGothic'
+matplotlib.rcParams['axes.unicode_minus'] = False
+
+# 일원검정 vs 이원검정 시각화
+x = np.linspace(-4, 4, 300)
+pdf = stats.norm.pdf(x)
+
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 4))
+
+# 단측 검정 (오른쪽)
+ax1.plot(x, pdf, 'b-', linewidth=2)
+ax1.fill_between(x, pdf, where=(x >= 1.645), alpha=0.4, color='red', label='기각역 (α=0.05)')
+ax1.axvline(x=1.645, color='red', linestyle='--', label='임계값 = 1.645')
+ax1.set_title('단측 검정 (H₁: μ > 0)')
+ax1.legend()
+
+# 양측 검정
+ax2.plot(x, pdf, 'b-', linewidth=2)
+ax2.fill_between(x, pdf, where=(x >= 1.96), alpha=0.4, color='red', label='기각역 (각 α/2=0.025)')
+ax2.fill_between(x, pdf, where=(x <= -1.96), alpha=0.4, color='red')
+ax2.axvline(x=1.96, color='red', linestyle='--', label='임계값 = ±1.96')
+ax2.axvline(x=-1.96, color='red', linestyle='--')
+ax2.set_title('양측 검정 (H₁: μ ≠ 0)')
+ax2.legend()
+
+plt.tight_layout()
+plt.show()
+```
+
+> **실무 적용:** 방향이 명확한 경우(신약이 기존보다 더 효과적인지)는 단측, 방향을 모르는 경우(두 알고리즘 중 어느 게 더 나은지)는 양측 검정을 사용합니다.
+
+## 3.3 재표본추출
+
+재표본추출은 분포 가정 없이 데이터로부터 직접 검정통계량의 분포를 만드는 비모수적 접근입니다.
+
+| 용어 | 설명 |
+|------|------|
+| **순열검정 (permutation test)** | 레이블을 무작위 재배열하여 귀무가설 하 분포를 생성하는 비모수 검정 |
+| **복원추출 (with replacement)** | 추출한 항목을 다시 모집단에 되돌려 놓고 추출 |
+| **비복원추출 (without replacement)** | 추출한 항목을 재선택 불가 — 순열검정에 사용 |
+
+```python
+import numpy as np
+
+np.random.seed(42)
+
+# 순열검정 예시: A/B 그룹의 전환율 차이가 우연인가?
+group_A = np.array([1, 0, 1, 0, 0, 1, 1, 0, 0, 1])  # 처리군
+group_B = np.array([0, 0, 1, 0, 0, 0, 1, 0, 0, 0])  # 대조군
+
+observed_diff = group_A.mean() - group_B.mean()
+print(f"관측된 차이: {observed_diff:.4f}")
+
+# 순열 검정: 레이블을 1000번 섞어서 귀무가설 분포 생성
+combined = np.concatenate([group_A, group_B])
+n_A = len(group_A)
+n_perm = 1000
+perm_diffs = []
+
+for _ in range(n_perm):
+    shuffled = np.random.permutation(combined)
+    perm_diff = shuffled[:n_A].mean() - shuffled[n_A:].mean()
+    perm_diffs.append(perm_diff)
+
+perm_diffs = np.array(perm_diffs)
+
+# p-값: 관측된 차이 이상의 극단적인 결과 비율
+p_value = np.mean(np.abs(perm_diffs) >= np.abs(observed_diff))
+print(f"순열검정 p-값: {p_value:.4f}")
+print(f"결론: {'유의한 차이' if p_value < 0.05 else '우연일 가능성 있음'}")
+```
+
+> **실무 적용:** 표본 수가 적거나 정규성 가정이 의심될 때 순열검정이 강력합니다. 임상시험, 제조 공정 품질 비교 등에서 자주 활용됩니다.
+
+## 3.4 통계적 유의성과 p-값
+
+| 용어 | 설명 |
+|------|------|
+| **p-값 (p-value)** | 귀무가설이 참일 때, 현재 관측값 이상으로 극단적인 결과가 나타날 확률 |
+| **유의수준 ($\alpha$)** | 귀무가설 기각의 임계값. 보통 0.05 또는 0.01 사용 |
+| **제1종 오류 (Type I error)** | 실제로 참인 귀무가설을 잘못 기각 — 오류 확률 = $\alpha$ |
+| **제2종 오류 (Type II error)** | 실제로 거짓인 귀무가설을 기각하지 못함 — 오류 확률 = $\beta$ |
+
+### 의사결정 오류 행렬
+
+| 실제 상태 \ 검정 결과 | 귀무가설 유지 | 귀무가설 기각 |
+|----------------------|-------------|-------------|
+| **귀무가설 참** | 정확함 | 제1종 오류 ($\alpha$) |
+| **귀무가설 거짓** | 제2종 오류 ($\beta$) | 정확함 (검정력 $1 - \beta$) |
+
+```python
+import numpy as np
+from scipy import stats
+import matplotlib.pyplot as plt
+import matplotlib
+matplotlib.rcParams['font.family'] = 'AppleGothic'
+matplotlib.rcParams['axes.unicode_minus'] = False
+
+# p-값의 의미 시각화
+np.random.seed(42)
+sample = np.random.normal(loc=5.3, scale=2, size=30)  # 실제 평균 5.3
+
+# 귀무가설: 모평균 = 5
+t_stat, p_value = stats.ttest_1samp(sample, popmean=5)
+
+print(f"표본 평균: {sample.mean():.4f}")
+print(f"t 통계량: {t_stat:.4f}")
+print(f"p-값: {p_value:.4f}")
+print(f"α=0.05 기준: {'귀무가설 기각' if p_value < 0.05 else '귀무가설 유지'}")
+
+# p-값의 해석 주의사항 출력
+print("\n⚠️ p-값 오해 주의:")
+print("  p=0.03 ≠ '귀무가설이 참일 확률 3%'")
+print("  p=0.03 = '귀무가설이 참이라면, 이 정도 차이가 나타날 확률 3%'")
+```
+
+> **실무 적용:** p-값은 통계적 유의성이지 실질적 중요성이 아닙니다. 표본 수가 매우 크면 아주 작은 차이도 p < 0.05가 될 수 있습니다. 항상 효과 크기(effect size)와 함께 해석해야 합니다.
+
+## 3.5 t-검정
+
+| 용어 | 설명 |
+|------|------|
+| **t-통계량** | 모표준편차를 모를 때, 표본 평균과 가설 평균 차이를 표본 표준오차로 나눈 값 |
+| **t-분포** | t-통계량이 따르는 분포 — 표본이 작을수록 꼬리가 두꺼움 |
+| **자유도 $df = n - 1$** | t-분포의 형태를 결정하는 모수 — 클수록 정규분포에 수렴 |
+| **z-검정** | 모표준편차 $\sigma$를 알 때 사용하는 정규분포 기반 검정 |
+
+### t-검정 통계량
+
+$$t = \frac{\bar{x} - \mu_0}{s / \sqrt{n}}$$
+
+$$(\bar{x}: \text{표본 평균},\ \mu_0: \text{가설 평균},\ s: \text{표본 표준편차},\ n: \text{표본 크기})$$
+
+### z-검정 통계량 (모표준편차 $\sigma$ 기지)
+
+$$z = \frac{\bar{x} - \mu_0}{\sigma / \sqrt{n}}$$
+
+```python
+import numpy as np
+from scipy import stats
+
+np.random.seed(42)
+
+# 단일 표본 t-검정: 평균 수면 시간이 7시간과 다른가?
+sleep_hours = np.random.normal(loc=6.7, scale=1.2, size=25)
+
+# 일표본 t-검정
+t_stat, p_value = stats.ttest_1samp(sleep_hours, popmean=7.0)
+
+print("=== 단일 표본 t-검정 ===")
+print(f"표본 평균: {sleep_hours.mean():.3f}시간")
+print(f"표본 표준편차: {sleep_hours.std(ddof=1):.3f}")
+print(f"t 통계량: {t_stat:.4f}")
+print(f"자유도: {len(sleep_hours) - 1}")
+print(f"p-값 (양측): {p_value:.4f}")
+
+# 독립표본 t-검정: 두 그룹 비교
+group1 = np.random.normal(5.0, 1.0, 30)
+group2 = np.random.normal(5.5, 1.0, 30)
+
+t_stat2, p_value2 = stats.ttest_ind(group1, group2)
+print("\n=== 독립표본 t-검정 ===")
+print(f"그룹1 평균: {group1.mean():.3f}, 그룹2 평균: {group2.mean():.3f}")
+print(f"t 통계량: {t_stat2:.4f}, p-값: {p_value2:.4f}")
+
+# 대응표본 t-검정: 전후 비교
+before = np.random.normal(100, 15, 20)
+after = before + np.random.normal(5, 5, 20)  # 평균 5점 향상
+
+t_stat3, p_value3 = stats.ttest_rel(before, after)
+print("\n=== 대응표본 t-검정 (전후 비교) ===")
+print(f"평균 변화: {(after - before).mean():.3f}")
+print(f"t 통계량: {t_stat3:.4f}, p-값: {p_value3:.4f}")
+```
+
+> **실무 적용:** 신약 임상시험(전후 비교), 두 마케팅 캠페인 효과 비교, 교육 프로그램 효과 측정 등에서 t-검정이 사용됩니다. 표본 수가 30 이상이면 t-검정과 z-검정의 결과가 거의 동일합니다.
+
+## 3.6 다중검정
+
+여러 가설을 동시에 검정하면 우연히 유의한 결과가 나올 확률이 높아집니다.
+
+| 용어 | 설명 |
+|------|------|
+| **다중검정 (multiple testing)** | 여러 가설을 동시에 검정 — $m$개 검정 시 $\alpha \times m$개의 거짓 양성 기대 |
+| **거짓 발견 비율 (FDR)** | 기각된 가설 중 실제로 참인 것의 비율 |
+| **p-값 조정** | 제1종 오류 누적을 보정 — Bonferroni, Benjamini-Hochberg 등 |
+| **과대적합 (overfitting)** | 모델이 데이터의 잡음까지 학습해 일반화 실패 |
+
+### 거짓 발견 비율 (FDR)
+
+$$\text{FDR} = E\left[\frac{V}{R}\right] \quad (R > 0)$$
+
+$$V: \text{거짓 양성 수},\ R: \text{기각된 가설 수}$$
+
+### 다중검정 보정 방법
+
+| 방법 | 원리 | 특징 |
+|------|------|------|
+| **Bonferroni** | 유의수준을 $\alpha / m$으로 낮춤 | 가장 보수적, 거짓 음성 증가 위험 |
+| **Benjamini-Hochberg** | FDR을 $q$ 이하로 제어 | 덜 보수적, 탐색적 분석에 적합 |
+| **Holm-Bonferroni** | 순차적 Bonferroni 보정 | Bonferroni보다 검정력 높음 |
+
+```python
+import numpy as np
+from scipy import stats
+from statsmodels.stats.multitest import multipletests
+
+np.random.seed(42)
+
+# 20개의 독립 검정 수행 (실제 차이 없음 — 귀무가설 참)
+n_tests = 20
+p_values = []
+
+for _ in range(n_tests):
+    group1 = np.random.normal(0, 1, 50)
+    group2 = np.random.normal(0, 1, 50)  # 동일한 분포
+    _, p = stats.ttest_ind(group1, group2)
+    p_values.append(p)
+
+p_values = np.array(p_values)
+
+# 보정 전
+raw_sig = np.sum(p_values < 0.05)
+print(f"보정 전 유의한 검정 수: {raw_sig}/{n_tests}")
+
+# Bonferroni 보정
+bonf_reject, bonf_p, _, _ = multipletests(p_values, method='bonferroni')
+print(f"Bonferroni 후 유의한 검정 수: {bonf_reject.sum()}/{n_tests}")
+
+# Benjamini-Hochberg (FDR 제어)
+bh_reject, bh_p, _, _ = multipletests(p_values, method='fdr_bh')
+print(f"Benjamini-Hochberg 후 유의한 검정 수: {bh_reject.sum()}/{n_tests}")
+
+print(f"\n※ 실제 차이가 없는데도 보정 전에 {raw_sig}개가 유의해 보임 (거짓 양성)")
+```
+
+> **실무 적용:** 유전자 발현 분석(수만 개의 유전자 검정), 다변량 A/B 테스트, 임상시험의 다중 평가 지표 분석에서 필수입니다.
+
+## 3.7 자유도
+
+| 상황 | 자유도 | 이유 |
+|------|--------|------|
+| **표본분산** | $n - 1$ | 평균 1개를 추정했으므로 자유도 1 감소 |
+| **단일 표본 t-검정** | $n - 1$ | 평균, 표준편차 함께 추정 |
+| **카이제곱 검정** | 범주 수 $- 1$ | 독립성 검정: $(행-1)(열-1)$ |
+| **회귀 (잔차)** | $n - k - 1$ | $k$: 설명변수 수 |
+
+### 표본분산의 자유도
+
+$$s^2 = \frac{1}{n-1} \sum_{i=1}^{n} (x_i - \bar{x})^2$$
+
+평균 $\bar{x}$가 이미 고정되어 있으므로, 마지막 값은 자동으로 결정됩니다. 따라서 자유롭게 변할 수 있는 값은 $n - 1$개입니다.
+
+```python
+import numpy as np
+from scipy import stats
+
+np.random.seed(42)
+
+# 자유도 효과 시각화: 표본 크기에 따른 t-분포
+import matplotlib.pyplot as plt
+import matplotlib
+matplotlib.rcParams['font.family'] = 'AppleGothic'
+matplotlib.rcParams['axes.unicode_minus'] = False
+
+x = np.linspace(-5, 5, 300)
+dfs = [1, 3, 10, 30]
+colors = ['red', 'orange', 'green', 'blue']
+
+plt.figure(figsize=(10, 5))
+for df, color in zip(dfs, colors):
+    plt.plot(x, stats.t.pdf(x, df), color=color, linewidth=2, label=f'df={df}')
+
+plt.plot(x, stats.norm.pdf(x), 'k--', linewidth=2, label='정규분포 (df=∞)')
+plt.title('자유도에 따른 t-분포 변화')
+plt.xlabel('t')
+plt.ylabel('확률밀도')
+plt.legend()
+plt.grid(alpha=0.3)
+plt.show()
+
+print("자유도가 작을수록 꼬리가 두꺼움 → 임계값이 더 큼 → 검정이 더 엄격")
+print(f"df=5, α=0.05 임계값: {stats.t.ppf(0.975, df=5):.4f}")
+print(f"df=30, α=0.05 임계값: {stats.t.ppf(0.975, df=30):.4f}")
+print(f"정규분포, α=0.05 임계값: {stats.norm.ppf(0.975):.4f}")
+```
+
+> **실무 적용:** 소규모 임상시험(n=10~20)이나 파일럿 연구에서는 자유도가 낮아 t-분포의 꼬리가 두껍습니다. 같은 효과 크기라도 표본이 작으면 유의성을 확보하기 더 어렵습니다.
+
+## 3.8 분산분석 (ANOVA)
+
+세 그룹 이상의 평균을 비교할 때 사용하는 총괄검정입니다.
+
+| 용어 | 설명 |
+|------|------|
+| **쌍별 비교 (pairwise comparison)** | 모든 그룹 쌍을 개별 비교 — 다중검정 보정 필요 |
+| **총괄검정 (omnibus test)** | 그룹 중 하나라도 다른지 검정 — ANOVA가 대표적 |
+| **분산분해** | 전체 변동 = 집단 간 변동 + 집단 내 변동 |
+| **F-통계량** | 집단 간 분산 / 집단 내 분산 — 클수록 그룹 간 차이 큼 |
+
+### 분산분해
+
+$$SS_{\text{total}} = SS_{\text{between}} + SS_{\text{within}}$$
+
+### F-통계량
+
+$$F = \frac{MSB}{MSW} = \frac{SS_{\text{between}} / (k-1)}{SS_{\text{within}} / (N-k)}$$
+
+$$k: \text{그룹 수},\ N: \text{전체 표본 크기}$$
+
+```python
+import numpy as np
+from scipy import stats
+import pandas as pd
+
+np.random.seed(42)
+
+# 세 광고 유형(A, B, C)에 따른 전환율 비교
+ad_A = np.random.normal(5.0, 1.5, 30)   # 전환율 (%)
+ad_B = np.random.normal(5.8, 1.5, 30)
+ad_C = np.random.normal(6.5, 1.5, 30)
+
+# 일원 ANOVA
+f_stat, p_value = stats.f_oneway(ad_A, ad_B, ad_C)
+
+print("=== 일원 분산분석 (One-way ANOVA) ===")
+print(f"F 통계량: {f_stat:.4f}")
+print(f"p-값: {p_value:.4f}")
+print(f"결론: {'그룹 간 유의한 차이 있음' if p_value < 0.05 else '차이 없음'}")
+
+# 사후 검정: Tukey HSD (어떤 그룹이 다른가?)
+from scipy.stats import tukey_hsd
+
+result = tukey_hsd(ad_A, ad_B, ad_C)
+print("\n=== Tukey HSD 사후 검정 ===")
+groups = ['A', 'B', 'C']
+for i in range(3):
+    for j in range(i+1, 3):
+        p = result.pvalue[i][j]
+        print(f"{groups[i]} vs {groups[j]}: p={p:.4f} {'*' if p < 0.05 else ''}")
+
+# 분산분해 직접 계산
+all_data = np.concatenate([ad_A, ad_B, ad_C])
+grand_mean = all_data.mean()
+group_means = [ad_A.mean(), ad_B.mean(), ad_C.mean()]
+n = 30
+
+SS_between = n * sum((m - grand_mean)**2 for m in group_means)
+SS_within = sum(np.sum((g - g.mean())**2) for g in [ad_A, ad_B, ad_C])
+SS_total = np.sum((all_data - grand_mean)**2)
+
+print(f"\n분산분해:")
+print(f"SS_total = {SS_total:.2f}")
+print(f"SS_between = {SS_between:.2f}")
+print(f"SS_within = {SS_within:.2f}")
+print(f"확인: {SS_between:.2f} + {SS_within:.2f} ≈ {SS_total:.2f}")
+```
+
+> **실무 적용:** 세 가지 이상의 UI 디자인 비교, 다수 제조 공정의 불량률 비교, 여러 교수법의 학업 성취도 비교 등에서 ANOVA를 사용합니다. ANOVA가 유의하면 사후 검정(Tukey, Bonferroni 등)으로 어느 그룹이 다른지 파악합니다.
+
+## 3.9 카이제곱 검정
+
+범주형 데이터에서 관측된 빈도와 기대 빈도의 차이를 검정합니다.
+
+| 유형 | 귀무가설 | 사용 예 |
+|------|---------|---------|
+| **적합도 검정** | 관측 분포 = 이론 분포 | 주사위가 공정한가? |
+| **독립성 검정** | 두 범주형 변수는 독립 | 성별과 구매 여부는 관계없는가? |
+| **동질성 검정** | 여러 집단의 분포가 동일 | 지역별 선호 분포가 같은가? |
+
+### 카이제곱 통계량
+
+$$\chi^2 = \sum \frac{(O_i - E_i)^2}{E_i}$$
+
+$$O_i: \text{관측도수},\ E_i: \text{기대도수}$$
+
+$$df = (\text{행} - 1)(\text{열} - 1) \quad \text{(독립성 검정)}$$
+
+```python
+import numpy as np
+from scipy import stats
+import pandas as pd
+
+# 독립성 검정: 광고 유형과 구매 여부의 관련성
+# 교차표 (contingency table)
+observed = np.array([
+    [50, 150],   # 광고 A: 구매O, 구매X
+    [80, 120],   # 광고 B: 구매O, 구매X
+    [100, 100],  # 광고 C: 구매O, 구매X
+])
+
+df_table = pd.DataFrame(
+    observed,
+    index=['광고 A', '광고 B', '광고 C'],
+    columns=['구매', '미구매']
+)
+print("관측 교차표:")
+print(df_table)
+
+chi2_stat, p_value, dof, expected = stats.chi2_contingency(observed)
+
+print(f"\nχ² 통계량: {chi2_stat:.4f}")
+print(f"자유도: {dof}")
+print(f"p-값: {p_value:.4f}")
+print(f"결론: {'광고 유형과 구매 여부는 관련있음' if p_value < 0.05 else '관련 없음'}")
+
+print("\n기대도수:")
+print(pd.DataFrame(expected.round(1), index=df_table.index, columns=df_table.columns))
+
+# 적합도 검정: 주사위가 공정한가?
+observed_dice = np.array([18, 17, 16, 19, 15, 15])  # 100번 던진 결과
+expected_dice = np.array([100/6] * 6)  # 기대값
+
+chi2_dice, p_dice = stats.chisquare(observed_dice, f_exp=expected_dice)
+print(f"\n=== 주사위 적합도 검정 ===")
+print(f"χ² 통계량: {chi2_dice:.4f}, p-값: {p_dice:.4f}")
+print(f"결론: {'불공정한 주사위' if p_dice < 0.05 else '공정한 주사위'}")
+```
+
+> **실무 적용:** 사용자 행동 분석(클릭 여부 × 디바이스 유형), 의학 연구(치료 방법 × 회복 여부), 품질 관리(불량 여부 × 생산 라인) 등 범주형 변수 간 관계 분석에 널리 쓰입니다.
+
+## 3.10 멀티암드 밴딧 알고리즘
+
+기존 A/B 검정은 실험이 끝나야 결과를 적용합니다. 멀티암드 밴딧은 **탐색(exploration)**과 **활용(exploitation)**을 동시에 수행해 손실을 줄입니다.
+
+| 용어 | 설명 |
+|------|------|
+| **멀티암드 밴딧 (MAB)** | 여러 선택지 중 반복 선택으로 누적 보상을 최대화하는 탐색–활용 문제 |
+| **손잡이 (arm)** | 선택 가능한 대안 하나 (예: 광고 A, B, C) |
+| **상금 (reward)** | 선택 결과로 얻는 보상 (예: 클릭, 구매) |
+| **후회 (regret)** | 최적 arm을 항상 선택했을 때 대비 누적 손실 |
+
+### 목표: 기대 누적 보상 최대화
+
+$$\text{maximize} \sum_{t=1}^{T} r_t$$
+
+단, 각 arm의 보상 분포는 알려지지 않으며 시행하면서 학습합니다.
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib
+matplotlib.rcParams['font.family'] = 'AppleGothic'
+matplotlib.rcParams['axes.unicode_minus'] = False
+
+np.random.seed(42)
+
+# 세 광고(arm)의 실제 클릭률 (알 수 없다고 가정)
+true_rates = [0.10, 0.15, 0.12]
+n_arms = len(true_rates)
+n_rounds = 1000
+
+# ε-탐욕 알고리즘 (epsilon-greedy)
+epsilon = 0.1
+counts = np.zeros(n_arms)    # 각 arm 선택 횟수
+rewards = np.zeros(n_arms)   # 누적 보상
+
+total_reward_bandit = []
+
+for t in range(1, n_rounds + 1):
+    if np.random.random() < epsilon:
+        # 탐색: 랜덤 선택
+        chosen = np.random.randint(n_arms)
+    else:
+        # 활용: 현재까지 가장 좋은 arm 선택
+        estimates = rewards / np.maximum(counts, 1)
+        chosen = np.argmax(estimates)
+
+    reward = np.random.binomial(1, true_rates[chosen])
+    counts[chosen] += 1
+    rewards[chosen] += reward
+    total_reward_bandit.append(reward)
+
+print("=== ε-탐욕 알고리즘 결과 ===")
+for i in range(n_arms):
+    print(f"Arm {i+1}: 선택 {int(counts[i])}회, 추정 클릭률 {rewards[i]/counts[i]:.4f} (실제: {true_rates[i]})")
+
+print(f"\n누적 보상: {sum(total_reward_bandit)}")
+print(f"최적 arm만 선택했을 경우 기대 보상: {max(true_rates) * n_rounds:.0f}")
+
+# A/B 테스트와 비교: 전체 기간을 탐색에 사용
+ab_reward = sum(np.random.binomial(1, np.random.choice(true_rates)) for _ in range(n_rounds))
+print(f"순수 A/B 테스트 기대 보상: {ab_reward} (탐색 중 손실 발생)")
+```
+
+### A/B 검정 vs 멀티암드 밴딧 비교
+
+| 항목 | A/B 검정 | 멀티암드 밴딧 |
+|------|---------|-------------|
+| **탐색 방식** | 고정 비율로 분배 | 성과에 따라 동적 조정 |
+| **결론 도출** | 실험 종료 후 | 실시간 |
+| **손실** | 열등한 arm에도 고정 노출 | 점진적으로 줄임 |
+| **적합한 상황** | 정밀한 통계 추론 필요 | 빠른 적응, 손실 최소화 |
+
+> **실무 적용:** Netflix 추천 시스템, 광고 입찰, 뉴스피드 콘텐츠 선택 등 실시간 의사결정이 필요한 환경에서 멀티암드 밴딧이 A/B 테스트를 대체합니다.
+
+## 3.11 검정력과 표본 크기
+
+| 용어 | 설명 |
+|------|------|
+| **효과크기 (effect size)** | 두 집단 차이의 실질적 크기 — 통계적 유의성과 별개 |
+| **검정력 (power)** | 실제 차이가 있을 때 귀무가설을 올바르게 기각할 확률 = $1 - \beta$ |
+| **유의수준 ($\alpha$)** | 귀무가설이 참일 때 잘못 기각할 확률 (보통 0.05) |
+
+### Cohen's d (효과크기)
+
+$$d = \frac{\mu_1 - \mu_2}{\sigma}$$
+
+| Cohen's d | 해석 |
+|-----------|------|
+| 0.2 | 작음 |
+| 0.5 | 중간 |
+| 0.8 | 큼 |
+
+### 검정력
+
+$$\text{Power} = 1 - \beta = P(\text{귀무가설 기각} \mid H_1 \text{ 참})$$
+
+```python
+import numpy as np
+from scipy import stats
+import matplotlib.pyplot as plt
+import matplotlib
+matplotlib.rcParams['font.family'] = 'AppleGothic'
+matplotlib.rcParams['axes.unicode_minus'] = False
+
+# 표본크기 계산 (원하는 검정력 달성을 위해)
+from statsmodels.stats.power import TTestIndPower
+
+analysis = TTestIndPower()
+
+# 목표: 검정력 0.8, 효과크기 0.5, α=0.05
+n_required = analysis.solve_power(effect_size=0.5, power=0.8, alpha=0.05, alternative='two-sided')
+print(f"필요 표본 크기 (그룹당): {n_required:.0f}명")
+
+# 효과크기별 필요 표본 수
+print("\n=== 효과크기별 필요 표본 수 (power=0.8, α=0.05) ===")
+for d in [0.2, 0.5, 0.8]:
+    n = analysis.solve_power(effect_size=d, power=0.8, alpha=0.05, alternative='two-sided')
+    print(f"Cohen's d={d} ({['작음', '중간', '큼'][[0.2, 0.5, 0.8].index(d)]}): 그룹당 {n:.0f}명")
+
+# 표본 수에 따른 검정력 변화
+n_range = np.arange(10, 201, 10)
+powers = [analysis.solve_power(effect_size=0.5, nobs1=n, alpha=0.05, alternative='two-sided') for n in n_range]
+
+plt.figure(figsize=(8, 4))
+plt.plot(n_range, powers, 'b-o', markersize=4)
+plt.axhline(y=0.8, color='red', linestyle='--', label='목표 검정력 0.8')
+plt.xlabel('그룹당 표본 크기 (n)')
+plt.ylabel('검정력 (Power)')
+plt.title('표본 크기와 검정력의 관계 (Cohen\'s d=0.5)')
+plt.legend()
+plt.grid(alpha=0.3)
+plt.show()
+```
+
+> **실무 적용:** A/B 테스트를 시작하기 전, "최소 몇 명의 사용자가 필요한가?"를 계산하는 것이 표본 크기 계산입니다. 검정력이 낮으면 진짜 효과를 놓칠 수 있고, 너무 크면 자원 낭비입니다. 일반적으로 $\text{Power} \geq 0.8$을 목표로 합니다.
+
+---
+
+3장 핵심 요약:
+
+- **A/B 검정**: 임의화(randomization)가 핵심 — 편향 없는 배정이 인과관계를 가능하게 함
+- **p-값**: 작을수록 귀무가설 기각 근거가 강함 — 하지만 효과크기와 함께 해석할 것
+- **다중검정**: 검정이 많아질수록 거짓 양성 누적 — Bonferroni 또는 FDR 보정 적용
+- **ANOVA**: 세 그룹 이상 비교 시 총괄 검정 후 사후 검정으로 구체적 차이 파악
+- **카이제곱**: 범주형 데이터의 독립성 및 적합도 검정
+- **멀티암드 밴딧**: A/B 검정의 한계를 극복하는 실시간 탐색–활용 균형 전략
+- **검정력**: 표본 크기 설계 시 $1 - \beta \geq 0.8$ 목표
