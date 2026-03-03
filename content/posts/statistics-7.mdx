@@ -1,0 +1,525 @@
+---
+title: "비지도 학습: 통계 기초 정리 7장"
+date: "2026-03-04"
+category: "데이터사이언스"
+tags: ["통계", "비지도학습", "PCA", "클러스터링", "Python"]
+excerpt: "PCA, K-평균, 계층적 클러스터링, 혼합 모형(GMM), 스케일링까지 비지도 학습의 핵심 개념을 코드와 함께 정리했습니다."
+readTime: 13
+---
+
+6장까지는 정답(레이블)이 있는 지도 학습을 다뤘습니다. 7장은 레이블 없이 데이터의 구조와 패턴을 스스로 발견하는 **비지도 학습(unsupervised learning)**을 다룹니다. 차원 축소, 군집화, 밀도 추정이 대표적입니다.
+
+> 이 글은 *Practical Statistics for Data Scientists* 7장을 기반으로 정리했습니다.
+
+## 7.1 주성분분석 (PCA)
+
+고차원 데이터를 정보 손실을 최소화하면서 저차원으로 압축합니다.
+
+| 용어 | 설명 |
+|------|------|
+| **주성분 (PC)** | 분산이 가장 큰 방향으로 정의된 새로운 축 — 원 변수들의 선형 결합 |
+| **부하 (loading)** | 각 원 변수가 주성분에 기여하는 계수 — 주성분의 해석에 사용 |
+| **고유값 ($\lambda_i$)** | 각 주성분이 설명하는 분산의 크기 |
+| **고유벡터** | 공분산 행렬의 고유벡터 = 주성분의 방향 벡터 |
+| **스크리그래프** | 고유값을 내림차순으로 그린 그래프 — elbow point에서 주성분 수 결정 |
+
+### 주성분 표현
+
+$$\text{PC}_1 = a_{11}x_1 + a_{12}x_2 + \cdots + a_{1p}x_p$$
+
+계수 $a_{1j}$는 고유벡터의 원소로, 변수 $x_j$가 첫 번째 주성분에 기여하는 비중입니다.
+
+### 누적 설명 분산
+
+$$\text{Cumulative Explained Variance} = \frac{\sum_{i=1}^{k} \lambda_i}{\sum_{j=1}^{p} \lambda_j}$$
+
+PCA 수행 전 표준화가 필수입니다. 변수 간 단위가 다르면 스케일이 큰 변수가 주성분을 지배합니다.
+
+$$z_j = \frac{x_j - \bar{x}_j}{s_j}$$
+
+```python
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import matplotlib
+from sklearn.decomposition import PCA
+from sklearn.preprocessing import StandardScaler
+from sklearn.datasets import load_breast_cancer
+
+matplotlib.rcParams['font.family'] = 'AppleGothic'
+matplotlib.rcParams['axes.unicode_minus'] = False
+np.random.seed(42)
+
+# 유방암 데이터 (30개 특징 → PCA로 차원 축소)
+data = load_breast_cancer()
+X, y = data.data, data.target
+
+# 표준화 (PCA 전 필수)
+scaler = StandardScaler()
+X_sc = scaler.fit_transform(X)
+
+# PCA 수행
+pca = PCA()
+pca.fit(X_sc)
+
+explained_var = pca.explained_variance_ratio_
+cumulative_var = np.cumsum(explained_var)
+
+fig, axes = plt.subplots(1, 3, figsize=(16, 5))
+
+# 1. 스크리그래프 (Scree Plot)
+axes[0].bar(range(1, 11), explained_var[:10] * 100, color='steelblue', alpha=0.8, label='개별 설명 분산')
+axes[0].plot(range(1, 11), cumulative_var[:10] * 100, 'ro-', markersize=5, label='누적 설명 분산')
+axes[0].axhline(80, color='gray', linestyle='--', alpha=0.7, label='80% 기준선')
+axes[0].set_xlabel('주성분 번호')
+axes[0].set_ylabel('설명 분산 (%)')
+axes[0].set_title('스크리그래프')
+axes[0].legend()
+axes[0].grid(alpha=0.3)
+
+n_components_80 = np.argmax(cumulative_var >= 0.80) + 1
+print(f"80% 분산 설명에 필요한 주성분 수: {n_components_80}개 (전체 {X.shape[1]}개 중)")
+
+# 2. 2D 시각화 (PC1 vs PC2)
+pca_2d = PCA(n_components=2)
+X_pca = pca_2d.fit_transform(X_sc)
+
+colors = ['red' if label == 0 else 'blue' for label in y]
+axes[1].scatter(X_pca[:, 0], X_pca[:, 1], c=colors, alpha=0.6, s=20)
+axes[1].set_xlabel(f'PC1 ({explained_var[0]*100:.1f}% 설명)')
+axes[1].set_ylabel(f'PC2 ({explained_var[1]*100:.1f}% 설명)')
+axes[1].set_title('PCA 2D 시각화 (빨강=악성, 파랑=양성)')
+axes[1].grid(alpha=0.3)
+
+# 3. 부하(Loading) 히트맵 (상위 10개 변수 × PC1~3)
+loadings = pd.DataFrame(
+    pca.components_[:3].T,
+    columns=['PC1', 'PC2', 'PC3'],
+    index=data.feature_names
+)
+top_features = loadings['PC1'].abs().nlargest(10).index
+
+im = axes[2].imshow(loadings.loc[top_features].values, cmap='coolwarm',
+                    aspect='auto', vmin=-1, vmax=1)
+axes[2].set_xticks([0, 1, 2])
+axes[2].set_xticklabels(['PC1', 'PC2', 'PC3'])
+axes[2].set_yticks(range(len(top_features)))
+axes[2].set_yticklabels(top_features, fontsize=8)
+axes[2].set_title('부하(Loading) 히트맵\n(PC1 기여도 상위 10개 변수)')
+plt.colorbar(im, ax=axes[2])
+
+plt.tight_layout()
+plt.show()
+
+# PC1 기여도 상위 5개 변수
+print("\nPC1 부하 상위 5개 변수 (분산 방향에 가장 크게 기여):")
+print(loadings['PC1'].abs().nlargest(5).round(4))
+```
+
+> **실무 적용:** 얼굴 인식(Eigenfaces), 유전자 발현 분석, 고차원 텍스트 임베딩 시각화, 다중공선성 문제 해결에 사용됩니다. 주성분 수는 누적 설명 분산 80~95% 또는 스크리그래프의 엘보 포인트를 기준으로 선택합니다.
+
+## 7.2 K-평균 클러스터링
+
+데이터를 $K$개의 클러스터로 나누는 가장 대표적인 군집화 알고리즘입니다.
+
+| 용어 | 설명 |
+|------|------|
+| **클러스터 (cluster)** | 유사한 데이터 포인트들의 그룹 |
+| **클러스터 중심 (centroid)** | 클러스터 내 모든 포인트의 평균 위치 |
+| **관성 (inertia)** | 클러스터 내 포인트와 중심 간 거리 제곱합 — 낮을수록 좋음 |
+
+### K-평균 알고리즘
+
+**1단계** — 초기 중심점 $K$개 무작위 선택
+
+**2단계** — 각 포인트를 가장 가까운 중심에 할당:
+$$\text{cluster}(x_i) = \arg\min_k \|x_i - \mu_k\|^2$$
+
+**3단계** — 클러스터 중심 재계산:
+$$\mu_k = \frac{1}{|C_k|} \sum_{x_i \in C_k} x_i$$
+
+**4단계** — 중심이 더 이상 변하지 않을 때까지 2–3 반복
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib
+from sklearn.cluster import KMeans
+from sklearn.preprocessing import StandardScaler
+from sklearn.datasets import make_blobs
+from sklearn.metrics import silhouette_score
+
+matplotlib.rcParams['font.family'] = 'AppleGothic'
+matplotlib.rcParams['axes.unicode_minus'] = False
+np.random.seed(42)
+
+# 예시 데이터
+X, y_true = make_blobs(n_samples=400, centers=4, cluster_std=0.8, random_state=42)
+X = StandardScaler().fit_transform(X)
+
+# 최적 K 찾기: 엘보법 + 실루엣 계수
+k_range = range(2, 11)
+inertias, silhouettes = [], []
+
+for k in k_range:
+    km = KMeans(n_clusters=k, random_state=42, n_init=10)
+    labels = km.fit_predict(X)
+    inertias.append(km.inertia_)
+    silhouettes.append(silhouette_score(X, labels))
+
+fig, axes = plt.subplots(1, 3, figsize=(16, 4))
+
+# 1. 엘보법 (관성)
+axes[0].plot(k_range, inertias, 'bo-', markersize=6, linewidth=2)
+axes[0].set_xlabel('클러스터 수 K')
+axes[0].set_ylabel('관성 (Inertia)')
+axes[0].set_title('엘보법 — 관성 감소')
+axes[0].grid(alpha=0.3)
+
+# 2. 실루엣 계수
+best_k = k_range[np.argmax(silhouettes)]
+axes[1].plot(k_range, silhouettes, 'ro-', markersize=6, linewidth=2)
+axes[1].axvline(best_k, color='gray', linestyle='--', label=f'최적 K={best_k}')
+axes[1].set_xlabel('클러스터 수 K')
+axes[1].set_ylabel('실루엣 계수')
+axes[1].set_title('실루엣 계수로 최적 K 선택')
+axes[1].legend()
+axes[1].grid(alpha=0.3)
+
+# 3. 최적 K로 클러스터링 결과
+km_best = KMeans(n_clusters=best_k, random_state=42, n_init=10)
+labels = km_best.fit_predict(X)
+centers = km_best.cluster_centers_
+
+scatter = axes[2].scatter(X[:, 0], X[:, 1], c=labels, cmap='tab10', alpha=0.6, s=20)
+axes[2].scatter(centers[:, 0], centers[:, 1], c='black', marker='X',
+                s=200, linewidths=1.5, label='중심점')
+axes[2].set_title(f'K-평균 결과 (K={best_k})')
+axes[2].legend()
+axes[2].grid(alpha=0.3)
+
+plt.tight_layout()
+plt.show()
+
+print(f"최적 K: {best_k}")
+print(f"실루엣 계수: {max(silhouettes):.4f}  (1에 가까울수록 클러스터 간 분리 잘 됨)")
+print(f"관성: {km_best.inertia_:.2f}")
+
+# K-평균의 한계: 초기값 민감도
+print("\n=== K-평균 초기값 민감도 (n_init=1 반복 5회) ===")
+for _ in range(5):
+    km_tmp = KMeans(n_clusters=4, n_init=1, random_state=None)
+    km_tmp.fit(X)
+    print(f"  관성: {km_tmp.inertia_:.2f}")
+print("→ KMeans(n_init=10) 권장: 여러 초기값 중 최선 선택")
+```
+
+### 실루엣 계수
+
+$$s(i) = \frac{b(i) - a(i)}{\max(a(i), b(i))}$$
+
+$a(i)$: 같은 클러스터 내 평균 거리, $b(i)$: 가장 가까운 다른 클러스터까지 평균 거리.
+$-1 \leq s(i) \leq 1$ — 1에 가까울수록 잘 군집됨.
+
+> **실무 적용:** 고객 세분화(RFM 분석), 이미지 색상 압축, 문서 군집화, 지리 데이터 클러스터링에 활용됩니다. K-평균은 구형(spherical) 클러스터에 잘 작동하지만, 비구형이거나 밀도가 다른 클러스터에는 DBSCAN이나 계층적 클러스터링이 더 적합합니다.
+
+## 7.3 계층적 클러스터링
+
+사전에 $K$를 지정하지 않고, 데이터 간 거리를 바탕으로 계층적 구조를 만들며 군집화합니다.
+
+| 링크 방법 | 수식 | 특징 |
+|---------|------|------|
+| **단일 연결** | $\min\{d(x,y) \mid x \in A, y \in B\}$ | 긴 사슬 형태 클러스터 |
+| **완전 연결** | $\max\{d(x,y) \mid x \in A, y \in B\}$ | 밀집된 구형 클러스터 |
+| **평균 연결** | $\frac{1}{\lvert A \rvert \lvert B \rvert}\sum_{x \in A}\sum_{y \in B} d(x,y)$ | 균형 잡힌 결과 |
+| **Ward 연결** | 병합 시 증가하는 총 분산 최소화 | 가장 많이 사용됨 |
+
+병합형(agglomerative, bottom-up)이 일반적입니다. 각 데이터를 개별 클러스터로 시작해 가장 가까운 것끼리 병합합니다.
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib
+from scipy.cluster.hierarchy import dendrogram, linkage, fcluster
+from sklearn.preprocessing import StandardScaler
+from sklearn.datasets import make_blobs
+from sklearn.metrics import silhouette_score
+
+matplotlib.rcParams['font.family'] = 'AppleGothic'
+matplotlib.rcParams['axes.unicode_minus'] = False
+np.random.seed(42)
+
+X, _ = make_blobs(n_samples=150, centers=3, cluster_std=0.7, random_state=42)
+X_sc = StandardScaler().fit_transform(X)
+
+# 링크 방법 비교
+methods = ['single', 'complete', 'average', 'ward']
+method_names = ['단일 연결', '완전 연결', '평균 연결', 'Ward']
+
+fig, axes = plt.subplots(2, 4, figsize=(20, 8))
+
+for i, (method, name) in enumerate(zip(methods, method_names)):
+    Z = linkage(X_sc, method=method)
+    labels = fcluster(Z, t=3, criterion='maxclust')
+
+    # 덴드로그램
+    dendrogram(Z, ax=axes[0, i], truncate_mode='lastp', p=12,
+               show_contracted=True, no_labels=True, color_threshold=None)
+    axes[0, i].set_title(f'{name}\n덴드로그램')
+    axes[0, i].set_xlabel('데이터 포인트')
+    axes[0, i].set_ylabel('거리')
+
+    # 클러스터 결과
+    axes[1, i].scatter(X_sc[:, 0], X_sc[:, 1], c=labels, cmap='tab10', alpha=0.7, s=30)
+    sil = silhouette_score(X_sc, labels)
+    axes[1, i].set_title(f'클러스터 결과\n실루엣={sil:.3f}')
+    axes[1, i].grid(alpha=0.3)
+
+plt.tight_layout()
+plt.show()
+
+# Ward 링크 — 덴드로그램에서 K 선택하는 방법 시각화
+Z_ward = linkage(X_sc, method='ward')
+plt.figure(figsize=(10, 5))
+dend = dendrogram(Z_ward, truncate_mode='lastp', p=15, show_contracted=True)
+
+# 최적 절단 높이 찾기 (병합 거리의 최대 점프)
+last_merges = Z_ward[-10:, 2]  # 마지막 10번의 병합 거리
+acceleration = np.diff(last_merges, 2)
+k_suggested = acceleration.argmax() + 2
+print(f"덴드로그램 가속도 기준 제안 K: {k_suggested}")
+plt.axhline(last_merges[-k_suggested], color='red', linestyle='--',
+            label=f'K={k_suggested} 절단선')
+plt.xlabel('클러스터 (병합 과정)')
+plt.ylabel('병합 거리 (Ward 연결)')
+plt.title('계층적 클러스터링 덴드로그램 — 빨간선에서 절단 → K 결정')
+plt.legend()
+plt.show()
+```
+
+> **실무 적용:** 유전자 발현 히트맵 시각화, 언어 계통 분류, 시장 세분화에 활용됩니다. K-평균과 달리 결과가 덴드로그램으로 시각화되어 클러스터 구조를 이해하기 쉽습니다. 단, $O(n^2)$ 시간 복잡도로 대용량 데이터에는 느립니다.
+
+## 7.4 모델 기반 클러스터링 (GMM)
+
+클러스터를 확률분포로 모델링합니다. K-평균과 달리 각 점이 여러 클러스터에 부분적으로 속할 수 있습니다.
+
+| 용어 | 설명 |
+|------|------|
+| **혼합 모형** | 전체 분포 = 여러 분포의 가중 합 |
+| **EM 알고리즘** | E-step(책임도 계산) + M-step(파라미터 갱신) 반복 |
+| **책임도 ($\gamma_{ik}$)** | 데이터 $x_i$가 클러스터 $k$에 속할 확률 |
+| **BIC / AIC** | 최적 클러스터 수 선택 기준 (낮을수록 좋음) |
+
+### 가우시안 혼합 모형 (GMM)
+
+$$f(x) = \sum_{k=1}^{K} \pi_k \cdot \mathcal{N}(x \mid \mu_k, \Sigma_k)$$
+
+$\pi_k$: 클러스터 $k$의 혼합 비율 ($\sum \pi_k = 1$)
+
+### 다변량 정규분포의 PDF
+
+$$f(x) = \frac{1}{(2\pi)^{p/2}|\Sigma|^{1/2}} \exp\!\left(-\frac{1}{2}(x-\mu)^\top \Sigma^{-1}(x-\mu)\right)$$
+
+### EM 알고리즘
+
+**E-step**: 책임도(책임 확률) 계산
+$$\gamma_{ik} = \frac{\pi_k f_k(x_i \mid \theta_k)}{\sum_{j=1}^{K} \pi_j f_j(x_i \mid \theta_j)}$$
+
+**M-step**: 책임도 기반으로 $\pi_k$, $\mu_k$, $\Sigma_k$ 갱신 → 수렴까지 반복
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib
+from sklearn.mixture import GaussianMixture
+from sklearn.preprocessing import StandardScaler
+from sklearn.datasets import make_blobs
+
+matplotlib.rcParams['font.family'] = 'AppleGothic'
+matplotlib.rcParams['axes.unicode_minus'] = False
+np.random.seed(42)
+
+# 비구형 클러스터 데이터 (GMM이 K-평균보다 유리)
+X1 = np.random.multivariate_normal([0, 0], [[1, 0.8], [0.8, 1]], 200)
+X2 = np.random.multivariate_normal([4, 0], [[1, -0.6], [-0.6, 1]], 200)
+X3 = np.random.multivariate_normal([2, 3], [[0.5, 0], [0, 2]], 200)
+X = np.vstack([X1, X2, X3])
+
+# BIC/AIC로 최적 K 선택
+k_range = range(1, 9)
+bic_scores, aic_scores = [], []
+
+for k in k_range:
+    gmm = GaussianMixture(n_components=k, random_state=42, n_init=5)
+    gmm.fit(X)
+    bic_scores.append(gmm.bic(X))
+    aic_scores.append(gmm.aic(X))
+
+fig, axes = plt.subplots(1, 3, figsize=(16, 5))
+
+# BIC / AIC
+axes[0].plot(k_range, bic_scores, 'b-o', markersize=6, label='BIC')
+axes[0].plot(k_range, aic_scores, 'r-o', markersize=6, label='AIC')
+axes[0].axvline(np.argmin(bic_scores) + 1, color='blue', linestyle='--',
+                label=f'최적 K(BIC)={np.argmin(bic_scores)+1}')
+axes[0].set_xlabel('K (클러스터 수)')
+axes[0].set_ylabel('정보기준 점수 (낮을수록 좋음)')
+axes[0].set_title('BIC / AIC로 최적 K 선택')
+axes[0].legend()
+axes[0].grid(alpha=0.3)
+
+# GMM vs K-평균 비교
+from sklearn.cluster import KMeans
+
+best_k = np.argmin(bic_scores) + 1
+gmm_best = GaussianMixture(n_components=best_k, random_state=42, n_init=5)
+km_best = KMeans(n_clusters=best_k, random_state=42, n_init=10)
+
+gmm_labels = gmm_best.fit_predict(X)
+km_labels  = km_best.fit_predict(X)
+
+for ax, labels, title in [
+    (axes[1], km_labels,  f'K-평균 (K={best_k})'),
+    (axes[2], gmm_labels, f'GMM (K={best_k})'),
+]:
+    ax.scatter(X[:, 0], X[:, 1], c=labels, cmap='tab10', alpha=0.5, s=15)
+    ax.set_title(title)
+    ax.grid(alpha=0.3)
+
+plt.tight_layout()
+plt.show()
+
+# GMM 소프트 소속 확률 (K-평균과의 차이)
+probs = gmm_best.predict_proba(X[:5])
+print("=== GMM 소프트 소속 확률 (처음 5개 포인트) ===")
+print(f"{'포인트':<6}", end='')
+for k in range(best_k):
+    print(f"  클러스터{k+1}", end='')
+print()
+for i, p in enumerate(probs):
+    print(f"  {i+1}   ", end='')
+    for prob in p:
+        print(f"  {prob:.3f}   ", end='')
+    print()
+print("\n→ K-평균: 하나의 클러스터에만 확정 소속")
+print("→ GMM: 각 클러스터에 속할 확률을 연속적으로 표현 (소프트 소속)")
+```
+
+> **실무 적용:** 사용자 행동 세분화(부드러운 경계), 이상 탐지(낮은 밀도 영역 = 이상값), 음성 인식(HMM의 관측 모델)에 사용됩니다. GMM은 K-평균의 하드 소속과 달리 소프트 소속을 제공하며, 타원형 클러스터에도 잘 작동합니다.
+
+## 7.5 스케일링과 범주형 변수
+
+비지도 학습은 거리 기반 알고리즘이 많아 스케일링이 특히 중요합니다.
+
+| 방법 | 수식 | 특징 |
+|------|------|------|
+| **표준화 (Z-score)** | $(x - \mu) / \sigma$ | 평균 0, 표준편차 1 — 이상값에 민감 |
+| **최소-최대 정규화** | $(x - \min) / (\max - \min)$ | 범위 $[0, 1]$ — 이상값에 민감 |
+| **Robust 스케일링** | $(x - Q_2) / (Q_3 - Q_1)$ | IQR 기반 — 이상값에 강함 |
+| **고워 거리** | 수치+범주 혼합 처리 | 혼합형 데이터에 적합 |
+
+### 최소-최대 정규화
+
+$$x'_j = \frac{x_j - \min(x_j)}{\max(x_j) - \min(x_j)}$$
+
+### 고워 거리 (Gower Distance)
+
+수치형, 범주형, 이진형을 동시에 처리하는 거리:
+
+$$D_{ij} = \frac{1}{p} \sum_{k=1}^{p} d_{ij}^{(k)}, \quad d_{ij}^{(k)} = 1 - s_{ij}^{(k)}$$
+
+범주형 변수: 같으면 $d=0$, 다르면 $d=1$. 수치형 변수: 정규화된 차이.
+
+```python
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import matplotlib
+from sklearn.preprocessing import StandardScaler, MinMaxScaler, RobustScaler
+from sklearn.cluster import KMeans
+from sklearn.metrics import silhouette_score
+
+matplotlib.rcParams['font.family'] = 'AppleGothic'
+matplotlib.rcParams['axes.unicode_minus'] = False
+np.random.seed(42)
+
+# 스케일링 방법 비교
+np.random.seed(42)
+n = 200
+X_raw = np.column_stack([
+    np.random.normal(1000, 500, n),   # 연소득 (만원) — 큰 스케일
+    np.random.normal(35, 10, n),      # 나이 — 중간 스케일
+    np.random.normal(0.5, 0.1, n),    # 구매 비율 — 작은 스케일
+])
+# 이상값 추가
+X_raw[[0, 10, 20]] = [[5000, 80, 0.95], [100, 18, 0.1], [4500, 75, 0.9]]
+
+scalers = {
+    '원본 (스케일링 없음)': None,
+    '표준화 (Z-score)':     StandardScaler(),
+    '최소-최대 정규화':     MinMaxScaler(),
+    'Robust 스케일링':      RobustScaler(),
+}
+
+fig, axes = plt.subplots(1, 4, figsize=(18, 4))
+
+for ax, (name, scaler) in zip(axes, scalers.items()):
+    X_plot = scaler.fit_transform(X_raw) if scaler else X_raw
+    km = KMeans(n_clusters=3, random_state=42, n_init=10)
+    labels = km.fit_predict(X_plot)
+    sil = silhouette_score(X_plot, labels)
+
+    ax.scatter(X_plot[:, 0], X_plot[:, 1], c=labels, cmap='tab10', alpha=0.6, s=20)
+    ax.set_xlabel('변수1 (소득)' if not scaler else '변수1 (스케일됨)')
+    ax.set_ylabel('변수2 (나이)' if not scaler else '변수2 (스케일됨)')
+    ax.set_title(f'{name}\n실루엣={sil:.3f}')
+    ax.grid(alpha=0.3)
+
+plt.tight_layout()
+plt.show()
+
+# 고워 거리: 혼합형 데이터 처리 예시
+print("=== 고워 거리 (혼합형 데이터) ===")
+df_mixed = pd.DataFrame({
+    '나이':   [25, 30, 35, 50],
+    '연소득': [3000, 4500, 3200, 8000],
+    '성별':   ['남', '여', '남', '여'],   # 범주형
+    '회원등급': ['일반', '우수', '일반', 'VIP'],  # 범주형
+})
+print(df_mixed)
+print("\n→ 수치형(나이, 소득)은 정규화 후 차이, 범주형(성별, 등급)은 같으면 0 다르면 1")
+print("→ 고워 거리로 모든 변수를 같은 스케일에서 통합 처리")
+
+try:
+    from gower import gower_matrix
+    dist_matrix = gower_matrix(df_mixed)
+    print("\n고워 거리 행렬:")
+    print(pd.DataFrame(dist_matrix, columns=range(4), index=range(4)).round(3))
+except ImportError:
+    print("\n※ pip install gower 후 사용 가능")
+
+# 스케일링 방법 선택 가이드
+print("\n=== 스케일링 방법 선택 가이드 ===")
+guide = {
+    'StandardScaler': '이상값 없고 정규분포에 가까울 때 — PCA, 로지스틱회귀, SVM',
+    'MinMaxScaler': '특정 범위([0,1])가 필요할 때 — 이미지 픽셀, 신경망 입력',
+    'RobustScaler': '이상값이 많을 때 — 재무 데이터, 의료 데이터',
+    'Gower Distance': '수치+범주 혼합 데이터 — 고객 프로파일 클러스터링',
+}
+for method, desc in guide.items():
+    print(f"  {method:<20}: {desc}")
+```
+
+> **실무 적용:** 고객 데이터는 연령(수치), 지역(범주), 구매 여부(이진) 등 혼합형인 경우가 많습니다. 이때 고워 거리로 통합 처리하거나, 범주형을 인코딩 후 Robust 스케일링을 적용합니다. 스케일링 방법 선택이 클러스터링 결과에 큰 영향을 줍니다.
+
+---
+
+7장 핵심 요약:
+
+- **PCA**: 공분산 행렬의 고유벡터 방향으로 투영 → 분산 보존 차원 축소 — 표준화 필수
+- **K-평균**: 중심 반복 갱신으로 군집화 — 초기값 민감, 구형 클러스터에 적합
+- **최적 K 선택**: 엘보법(관성) + 실루엣 계수를 함께 확인
+- **계층적 클러스터링**: 덴드로그램으로 구조 시각화 — K를 미리 지정 불필요, 대용량 비효율
+- **GMM**: 확률적 소프트 소속 — 타원형 클러스터에 강함, BIC/AIC로 K 선택
+- **스케일링**: 거리 기반 알고리즘에 필수 — 이상값 유무에 따라 방법 선택
+- **고워 거리**: 수치+범주 혼합 데이터를 통합 처리하는 거리 척도
