@@ -43,11 +43,13 @@ export async function generateMetadata({
       publishedTime: post.date,
       tags: post.tags,
       locale: 'ko_KR',
+      images: [{ url: '/soong.png', width: 1200, height: 630 }],
     },
     twitter: {
       card: 'summary_large_image',
       title: post.title,
       description: post.excerpt,
+      images: ['/soong.png'],
     },
   }
 }
