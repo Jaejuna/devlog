@@ -27,6 +27,13 @@ type BlockquoteProps = DetailedHTMLProps<
   HTMLQuoteElement
 >
 
+type TableProps = DetailedHTMLProps<HTMLAttributes<HTMLTableElement>, HTMLTableElement>
+type THeadProps = DetailedHTMLProps<HTMLAttributes<HTMLTableSectionElement>, HTMLTableSectionElement>
+type TBodyProps = DetailedHTMLProps<HTMLAttributes<HTMLTableSectionElement>, HTMLTableSectionElement>
+type TrProps = DetailedHTMLProps<HTMLAttributes<HTMLTableRowElement>, HTMLTableRowElement>
+type ThProps = DetailedHTMLProps<HTMLAttributes<HTMLTableCellElement>, HTMLTableCellElement>
+type TdProps = DetailedHTMLProps<HTMLAttributes<HTMLTableCellElement>, HTMLTableCellElement>
+
 function AnchorIcon() {
   return (
     <span className="inline-block ml-2 opacity-0 group-hover:opacity-100 transition-opacity text-gray-400">
@@ -107,6 +114,53 @@ const mdxComponents: MDXComponents = {
     >
       {children}
     </blockquote>
+  ),
+
+  table: ({ children, ...props }: TableProps) => (
+    <div className="my-6 overflow-x-auto">
+      <table
+        className="w-full border-collapse text-sm"
+        {...props}
+      >
+        {children}
+      </table>
+    </div>
+  ),
+
+  thead: ({ children, ...props }: THeadProps) => (
+    <thead className="bg-gray-100 dark:bg-gray-800" {...props}>
+      {children}
+    </thead>
+  ),
+
+  tbody: ({ children, ...props }: TBodyProps) => (
+    <tbody className="divide-y divide-gray-200 dark:divide-gray-700" {...props}>
+      {children}
+    </tbody>
+  ),
+
+  tr: ({ children, ...props }: TrProps) => (
+    <tr className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors" {...props}>
+      {children}
+    </tr>
+  ),
+
+  th: ({ children, ...props }: ThProps) => (
+    <th
+      className="px-4 py-2.5 text-left font-semibold text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700"
+      {...props}
+    >
+      {children}
+    </th>
+  ),
+
+  td: ({ children, ...props }: TdProps) => (
+    <td
+      className="px-4 py-2.5 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700"
+      {...props}
+    >
+      {children}
+    </td>
   ),
 }
 

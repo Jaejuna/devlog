@@ -17,7 +17,7 @@ export default function CodeBlock({ children }: { children: ReactNode }) {
     <div className="relative group my-6">
       <pre
         ref={preRef}
-        className="overflow-x-auto rounded-xl bg-gray-900 dark:bg-gray-800 p-4 text-sm leading-relaxed"
+        className="overflow-x-auto rounded-xl bg-gray-900 dark:bg-gray-800 p-4 text-sm leading-relaxed text-gray-100"
       >
         {children}
       </pre>
