@@ -20,7 +20,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="ko">
+    <html lang="ko" className="dark">
       <head>
         {/* AdSense 글로벌 스크립트 — 프로덕션 + 환경변수 설정 시에만 삽입 */}
         {adsenseId && process.env.NODE_ENV === 'production' && (
