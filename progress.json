@@ -14,7 +14,7 @@
     { "id": "3-2", "title": "홈 페이지 레이아웃 (2컬럼)", "done": true },
     { "id": "3-3", "title": "상단 AdBanner 삽입", "done": true },
     { "id": "4-1", "title": "상세 페이지 레이아웃", "done": true },
-    { "id": "4-2", "title": "MDX 렌더링 커스텀 컴포넌트", "done": false },
+    { "id": "4-2", "title": "MDX 렌더링 커스텀 컴포넌트", "done": true },
     { "id": "4-3", "title": "목차(ToC) 컴포넌트", "done": false },
     { "id": "4-4", "title": "상세 페이지 내 광고 삽입", "done": false },
     { "id": "4-5", "title": "이전/다음 포스트 네비게이션", "done": false },

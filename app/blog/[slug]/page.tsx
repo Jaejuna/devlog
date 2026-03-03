@@ -4,6 +4,12 @@ import type { Metadata } from 'next'
 import Badge from '@/components/ui/Badge'
 import Tag from '@/components/ui/Tag'
 import AdSidebar from '@/components/ads/AdSidebar'
+import { MDXRemote } from 'next-mdx-remote/rsc'
+import rehypeHighlight from 'rehype-highlight'
+import rehypeSlug from 'rehype-slug'
+import rehypeAutolinkHeadings from 'rehype-autolink-headings'
+import remarkGfm from 'remark-gfm'
+import mdxComponents from '@/components/blog/MdxComponents'
 
 interface BlogPostPageProps {
   params: { slug: string }
@@ -35,7 +41,7 @@ function formatDate(dateString: string): string {
   })
 }
 
-export default function BlogPostPage({ params }: BlogPostPageProps) {
+export default async function BlogPostPage({ params }: BlogPostPageProps) {
   const post = getPostBySlug(params.slug)
 
   if (!post) notFound()
@@ -65,14 +71,22 @@ export default function BlogPostPage({ params }: BlogPostPageProps) {
             </div>
           </header>
 
-          {/* MDX 본문 (다음 태스크에서 렌더링 구현) */}
-          <div className="prose prose-gray dark:prose-invert max-w-none">
-            <p className="text-gray-500 dark:text-gray-400 italic">
-              [본문 렌더링 — 4-2 태스크에서 구현]
-            </p>
-            <pre className="whitespace-pre-wrap text-sm text-gray-700 dark:text-gray-300">
-              {post.content}
-            </pre>
+          {/* MDX 본문 */}
+          <div className="prose prose-gray dark:prose-invert max-w-none prose-headings:scroll-mt-20">
+            <MDXRemote
+              source={post.content}
+              components={mdxComponents}
+              options={{
+                mdxOptions: {
+                  remarkPlugins: [remarkGfm],
+                  rehypePlugins: [
+                    rehypeSlug,
+                    [rehypeAutolinkHeadings, { behavior: 'wrap' }],
+                    rehypeHighlight,
+                  ],
+                },
+              }}
+            />
           </div>
         </article>
 
