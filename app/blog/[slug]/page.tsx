@@ -94,7 +94,36 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
     .filter((p) => p.category === post.category && p.slug !== post.slug)
     .slice(0, 3)
 
+  const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL ?? 'https://devlog.dev'
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BlogPosting',
+    headline: post.title,
+    description: post.excerpt,
+    datePublished: post.date,
+    dateModified: post.date,
+    author: {
+      '@type': 'Person',
+      name: 'devlog',
+      url: BASE_URL,
+    },
+    publisher: {
+      '@type': 'Organization',
+      name: 'devlog',
+      url: BASE_URL,
+    },
+    url: `${BASE_URL}/blog/${post.slug}`,
+    keywords: post.tags.join(', '),
+    articleSection: post.category,
+    inLanguage: 'ko',
+  }
+
   return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
     <div className="max-w-6xl mx-auto px-4 py-8">
       <div className="flex flex-col lg:flex-row gap-8">
         {/* Main Content */}
@@ -202,5 +231,6 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
         </aside>
       </div>
     </div>
+    </>
   )
 }
