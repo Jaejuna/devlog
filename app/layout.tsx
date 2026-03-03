@@ -5,11 +5,19 @@ import Header from '@/components/layout/Header'
 import Footer from '@/components/layout/Footer'
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL ?? 'https://devlog.dev'),
   title: {
     default: 'devlog — 개발자 블로그',
     template: '%s | devlog',
   },
   description: '개발 경험과 면접 준비 콘텐츠를 다루는 개인 기술 블로그',
+  openGraph: {
+    images: [{ url: '/soong.png', width: 1200, height: 630 }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    images: ['/soong.png'],
+  },
 }
 
 const adsenseId = process.env.NEXT_PUBLIC_ADSENSE_ID
