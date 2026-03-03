@@ -11,6 +11,7 @@ import rehypeAutolinkHeadings from 'rehype-autolink-headings'
 import remarkGfm from 'remark-gfm'
 import mdxComponents from '@/components/blog/MdxComponents'
 import TableOfContents, { extractHeadings } from '@/components/blog/TableOfContents'
+import AdBanner from '@/components/ads/AdBanner'
 
 interface BlogPostPageProps {
   params: { slug: string }
@@ -42,12 +43,35 @@ function formatDate(dateString: string): string {
   })
 }
 
+function splitAtFirstH2(content: string): [string, string] {
+  // 두 번째 ## 헤딩 위치를 찾아 분리
+  let count = 0
+  let splitIndex = -1
+  const lines = content.split('\n')
+  let charIndex = 0
+
+  for (const line of lines) {
+    if (line.startsWith('## ')) {
+      count++
+      if (count === 2) {
+        splitIndex = charIndex
+        break
+      }
+    }
+    charIndex += line.length + 1
+  }
+
+  if (splitIndex === -1) return [content, '']
+  return [content.slice(0, splitIndex), content.slice(splitIndex)]
+}
+
 export default async function BlogPostPage({ params }: BlogPostPageProps) {
   const post = getPostBySlug(params.slug)
 
   if (!post) notFound()
 
   const headings = extractHeadings(post.content)
+  const [contentPart1, contentPart2] = splitAtFirstH2(post.content)
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
@@ -74,10 +98,10 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
             </div>
           </header>
 
-          {/* MDX 본문 */}
+          {/* MDX 본문 — Part 1 */}
           <div className="prose prose-gray dark:prose-invert max-w-none prose-headings:scroll-mt-20">
             <MDXRemote
-              source={post.content}
+              source={contentPart1}
               components={mdxComponents}
               options={{
                 mdxOptions: {
@@ -89,6 +113,44 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
                   ],
                 },
               }}
+            />
+          </div>
+
+          {/* 본문 중간 광고 (첫 번째 h2 이후) */}
+          {contentPart2 && (
+            <div className="my-8">
+              <AdBanner
+                adClient={process.env.NEXT_PUBLIC_ADSENSE_ID ?? ''}
+                adSlot={process.env.NEXT_PUBLIC_AD_SLOT_BANNER ?? ''}
+              />
+            </div>
+          )}
+
+          {/* MDX 본문 — Part 2 */}
+          {contentPart2 && (
+            <div className="prose prose-gray dark:prose-invert max-w-none prose-headings:scroll-mt-20">
+              <MDXRemote
+                source={contentPart2}
+                components={mdxComponents}
+                options={{
+                  mdxOptions: {
+                    remarkPlugins: [remarkGfm],
+                    rehypePlugins: [
+                      rehypeSlug,
+                      [rehypeAutolinkHeadings, { behavior: 'wrap' }],
+                      rehypeHighlight,
+                    ],
+                  },
+                }}
+              />
+            </div>
+          )}
+
+          {/* 본문 하단 광고 */}
+          <div className="mt-12 mb-6">
+            <AdBanner
+              adClient={process.env.NEXT_PUBLIC_ADSENSE_ID ?? ''}
+              adSlot={process.env.NEXT_PUBLIC_AD_SLOT_BANNER ?? ''}
             />
           </div>
         </article>
