@@ -51,12 +51,12 @@ export default function TableOfContents({ headings }: TableOfContentsProps) {
             <a
               href={`#${item.id}`}
               onClick={(e) => {
-                e.preventDefault()
-                document.getElementById(item.id)?.scrollIntoView({
-                  behavior: 'smooth',
-                  block: 'start',
-                })
-                setActiveId(item.id)
+                const el = document.getElementById(item.id)
+                if (el) {
+                  e.preventDefault()
+                  el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                  setActiveId(item.id)
+                }
               }}
               className={`block py-0.5 transition-colors ${
                 activeId === item.id

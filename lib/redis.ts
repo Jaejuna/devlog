@@ -49,3 +49,20 @@ export async function getTotalViews(slugs: string[]): Promise<number> {
     return 0
   }
 }
+
+export async function getViewsMap(slugs: string[]): Promise<Record<string, number>> {
+  if (!REDIS_URL || !REDIS_TOKEN || slugs.length === 0) return {}
+  try {
+    const res = await fetch(`${REDIS_URL}/pipeline`, {
+      method: 'POST',
+      headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+      body: JSON.stringify([['MGET', ...slugs.map((s) => `views:${s}`)]]),
+      next: { revalidate: 60 },
+    })
+    const data = await res.json()
+    const values: (string | null)[] = data[0]?.result ?? []
+    return Object.fromEntries(slugs.map((slug, i) => [slug, Number(values[i] ?? 0)]))
+  } catch {
+    return {}
+  }
+}

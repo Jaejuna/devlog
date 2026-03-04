@@ -1,4 +1,5 @@
 import { getAllPosts } from '@/lib/mdx'
+import { getViewsMap } from '@/lib/redis'
 import PostList from '@/components/blog/PostList'
 import AdSidebar from '@/components/ads/AdSidebar'
 import AdBanner from '@/components/ads/AdBanner'
@@ -36,7 +37,7 @@ interface HomePageProps {
   }
 }
 
-export default function HomePage({ searchParams }: HomePageProps) {
+export default async function HomePage({ searchParams }: HomePageProps) {
   const allPosts = getAllPosts()
 
   // 카테고리/태그 필터링
@@ -54,8 +55,11 @@ export default function HomePage({ searchParams }: HomePageProps) {
   const categories = Array.from(new Set(allPosts.map((p) => p.category)))
   const allTags = Array.from(new Set(allPosts.flatMap((p) => p.tags)))
 
-  // 인기글 (최근 4개 — 조회수 없으면 날짜순)
-  const popularPosts = allPosts.slice(0, 4)
+  // 인기글 — 조회수 기준 상위 4개, Redis 미설정 시 날짜순
+  const viewsMap = await getViewsMap(allPosts.map((p) => p.slug))
+  const popularPosts = [...allPosts]
+    .sort((a, b) => (viewsMap[b.slug] ?? 0) - (viewsMap[a.slug] ?? 0))
+    .slice(0, 4)
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">

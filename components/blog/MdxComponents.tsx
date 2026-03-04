@@ -1,5 +1,6 @@
 import type { MDXComponents } from 'mdx/types'
-import type { DetailedHTMLProps, HTMLAttributes } from 'react'
+import type { DetailedHTMLProps, HTMLAttributes, ImgHTMLAttributes } from 'react'
+import Image from 'next/image'
 import CodeBlock from './CodeBlock'
 
 type HeadingProps = DetailedHTMLProps<
@@ -31,6 +32,8 @@ type UlProps = DetailedHTMLProps<HTMLAttributes<HTMLUListElement>, HTMLUListElem
 type OlProps = DetailedHTMLProps<HTMLAttributes<HTMLOListElement>, HTMLOListElement>
 type LiProps = DetailedHTMLProps<HTMLAttributes<HTMLLIElement>, HTMLLIElement>
 
+type ImgProps = DetailedHTMLProps<ImgHTMLAttributes<HTMLImageElement>, HTMLImageElement>
+
 type TableProps = DetailedHTMLProps<HTMLAttributes<HTMLTableElement>, HTMLTableElement>
 type THeadProps = DetailedHTMLProps<HTMLAttributes<HTMLTableSectionElement>, HTMLTableSectionElement>
 type TBodyProps = DetailedHTMLProps<HTMLAttributes<HTMLTableSectionElement>, HTMLTableSectionElement>
@@ -47,6 +50,22 @@ function AnchorIcon() {
 }
 
 const mdxComponents: MDXComponents = {
+  img: ({ src, alt }: ImgProps) => {
+    if (!src) return null
+    return (
+      <span className="block my-6">
+        <Image
+          src={src}
+          alt={alt ?? ''}
+          width={800}
+          height={450}
+          className="rounded-lg w-full h-auto"
+          style={{ width: '100%', height: 'auto' }}
+        />
+      </span>
+    )
+  },
+
   h2: ({ id, children, ...props }: HeadingProps) => (
     <h2
       id={id}
