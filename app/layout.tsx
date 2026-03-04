@@ -12,7 +12,7 @@ export const metadata: Metadata = {
     default: 'devlog — 개발자 블로그',
     template: '%s | devlog',
   },
-  description: '개발 경험과 면접 준비 콘텐츠를 다루는 개인 기술 블로그',
+  description: '게임과 영화를 좋아하는 개발자의 개발, AI 기술 블로그',
   verification: {
     google: 'sxvIVKBQt9YBYmJTtpKUGnFWNhhRuNdJMjDEWYPjqkQ',
   },
@@ -49,6 +49,9 @@ export default function RootLayout({
   return (
     <html lang="ko" suppressHydrationWarning>
       <head>
+        {/* AdSense 소유권 확인 */}
+        <meta name="google-adsense-account" content="ca-pub-4027542037390876" />
+
         {/* Theme init — must run before paint to prevent flash */}
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
 
