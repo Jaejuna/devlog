@@ -6,7 +6,7 @@ import Link from 'next/link'
 
 export const metadata: Metadata = {
   title: '소개',
-  description: '개발자 블로그 devlog.의 소개 페이지입니다.',
+  description: 'devlog.의 소개 페이지입니다.',
 }
 
 const techStack = [

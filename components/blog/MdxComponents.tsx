@@ -50,7 +50,7 @@ function AnchorIcon() {
 }
 
 const mdxComponents: MDXComponents = {
-  img: ({ src, alt }: ImgProps) => {
+  img: ({ src, alt, style }: ImgProps) => {
     if (!src) return null
     return (
       <span className="block my-6">
@@ -59,8 +59,8 @@ const mdxComponents: MDXComponents = {
           alt={alt ?? ''}
           width={800}
           height={450}
-          className="rounded-lg w-full h-auto"
-          style={{ width: '100%', height: 'auto' }}
+          className="rounded-lg h-auto"
+          style={{ width: '70%', height: 'auto', ...style }}
         />
       </span>
     )
