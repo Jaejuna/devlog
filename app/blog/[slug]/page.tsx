@@ -18,6 +18,7 @@ import AdBanner from '@/components/ads/AdBanner'
 import PostNavigation from '@/components/blog/PostNavigation'
 import RelatedPosts from '@/components/blog/RelatedPosts'
 import ReadingProgress from '@/components/blog/ReadingProgress'
+import ViewCounter from '@/components/blog/ViewCounter'
 
 interface BlogPostPageProps {
   params: { slug: string }
@@ -154,6 +155,8 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
               <time dateTime={post.date}>{formatDate(post.date)}</time>
               <span>·</span>
               <span>{post.readTime}분 읽기</span>
+              <span>·</span>
+              <ViewCounter slug={params.slug} />
             </div>
           </header>
 

@@ -27,6 +27,10 @@ type BlockquoteProps = DetailedHTMLProps<
   HTMLQuoteElement
 >
 
+type UlProps = DetailedHTMLProps<HTMLAttributes<HTMLUListElement>, HTMLUListElement>
+type OlProps = DetailedHTMLProps<HTMLAttributes<HTMLOListElement>, HTMLOListElement>
+type LiProps = DetailedHTMLProps<HTMLAttributes<HTMLLIElement>, HTMLLIElement>
+
 type TableProps = DetailedHTMLProps<HTMLAttributes<HTMLTableElement>, HTMLTableElement>
 type THeadProps = DetailedHTMLProps<HTMLAttributes<HTMLTableSectionElement>, HTMLTableSectionElement>
 type TBodyProps = DetailedHTMLProps<HTMLAttributes<HTMLTableSectionElement>, HTMLTableSectionElement>
@@ -106,6 +110,30 @@ const mdxComponents: MDXComponents = {
       </a>
     )
   },
+
+  ul: ({ children, ...props }: UlProps) => (
+    <ul
+      className="list-disc list-outside pl-6 my-4 space-y-1.5 text-gray-700 dark:text-gray-300"
+      {...props}
+    >
+      {children}
+    </ul>
+  ),
+
+  ol: ({ children, ...props }: OlProps) => (
+    <ol
+      className="list-decimal list-outside pl-6 my-4 space-y-1.5 text-gray-700 dark:text-gray-300"
+      {...props}
+    >
+      {children}
+    </ol>
+  ),
+
+  li: ({ children, ...props }: LiProps) => (
+    <li className="pl-1 leading-relaxed" {...props}>
+      {children}
+    </li>
+  ),
 
   blockquote: ({ children, ...props }: BlockquoteProps) => (
     <blockquote

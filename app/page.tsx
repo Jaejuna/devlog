@@ -7,6 +7,7 @@ import Tag from '@/components/ui/Tag'
 import Link from 'next/link'
 import type { Metadata } from 'next'
 import SidebarSearch from '@/components/blog/SidebarSearch'
+import TotalViews from '@/components/blog/TotalViews'
 
 export const metadata: Metadata = {
   title: 'devlog — 개발자 블로그',
@@ -159,6 +160,9 @@ export default function HomePage({ searchParams }: HomePageProps) {
               adSlot={process.env.NEXT_PUBLIC_AD_SLOT_SIDEBAR}
               sticky
             />
+
+            {/* 전체 조회수 */}
+            <TotalViews />
 
             {/* 인기글 */}
             <div>
