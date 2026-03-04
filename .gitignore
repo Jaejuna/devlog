@@ -16,15 +16,6 @@ node_modules/
 .DS_Store
 *.pem
 
-# Images
-*.jpg
-*.jpeg
-*.png
-*.gif
-*.webp
-*.svg
-*.ico
-*.avif
 
 # Debug
 npm-debug.log*
