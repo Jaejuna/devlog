@@ -10,7 +10,7 @@ interface TagPageProps {
 export async function generateStaticParams() {
   const posts = getAllPosts()
   const tags = Array.from(new Set(posts.flatMap((p) => p.tags)))
-  return tags.map((tag) => ({ name: encodeURIComponent(tag) }))
+  return tags.map((tag) => ({ name: tag }))
 }
 
 export async function generateMetadata({
