@@ -23,7 +23,7 @@ export default function Footer() {
           {/* Social Links */}
           <div className="flex items-center gap-4">
             <a
-              href="https://github.com"
+              href="https://github.com/Jaejuna"
               target="_blank"
               rel="noopener noreferrer"
               aria-label="GitHub"
@@ -40,7 +40,7 @@ export default function Footer() {
               </svg>
             </a>
             <a
-              href="mailto:contact@devlog.dev"
+              href="mailto:anayana9988@gmail.com"
               aria-label="이메일"
               className="text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
             >
