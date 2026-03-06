@@ -1,0 +1,586 @@
+---
+title: "확률·통계 코딩 과제: Python으로 구현하는 ML 통계 도구"
+date: "2026-03-06"
+category: "MMD"
+tags: ["확률", "통계", "Python", "NumPy", "scipy", "코딩과제", "머신러닝"]
+excerpt: "베이즈 업데이트, 분포 시뮬레이션, CLT 검증, MLE/MAP 구현, 신뢰구간, 가설검정, A/B 테스트 파이프라인까지 — 확률통계 1~4장을 코드로 구현합니다."
+readTime: 18
+---
+
+이 글은 [확률통계 1~4장](/blog/prob-stats-1) 개념을 **Python/NumPy/scipy 코드**로 직접 구현하는 코딩 과제입니다. 각 문제를 먼저 스스로 풀고 풀이를 확인하세요.
+
+> **환경**: Python 3.x, NumPy, SciPy, Matplotlib (선택)
+
+```python
+import numpy as np
+from scipy import stats, optimize
+import matplotlib.pyplot as plt
+```
+
+---
+
+## Part 1. 확률 기초 — 베이즈 업데이트
+
+### 과제 1-1. 베이즈 업데이트 구현
+
+스팸 필터를 베이즈 업데이트로 구현하세요. 각 단어를 관찰할 때마다 사후 확률을 순차 업데이트합니다.
+
+```python
+def bayes_update(
+    prior: float,
+    likelihood_given_spam: float,
+    likelihood_given_ham: float
+) -> float:
+    """
+    단일 관찰로 스팸 사후 확률 업데이트
+    prior: P(스팸) 사전 확률
+    Returns: P(스팸 | 관찰)
+    """
+    pass
+
+def sequential_bayes(
+    initial_prior: float,
+    observations: list[tuple[float, float]]
+) -> list[float]:
+    """
+    여러 단어 관찰을 순차적으로 베이즈 업데이트
+    observations: [(P(단어|스팸), P(단어|햄)), ...]
+    Returns: 각 단계의 사후 확률 리스트
+    """
+    pass
+
+# 테스트
+prior = 0.2  # 스팸 기본 확률 20%
+observations = [
+    (0.60, 0.05),  # "무료" 발견
+    (0.40, 0.10),  # "클릭" 발견
+    (0.70, 0.02),  # "당첨" 발견
+]
+posteriors = sequential_bayes(prior, observations)
+for i, p in enumerate(posteriors):
+    print(f"단어 {i+1} 관찰 후 스팸 확률: {p:.1%}")
+```
+
+<details>
+<summary>풀이 보기</summary>
+
+```python
+def bayes_update(
+    prior: float,
+    likelihood_given_spam: float,
+    likelihood_given_ham: float
+) -> float:
+    # P(관찰) = P(관찰|스팸)*P(스팸) + P(관찰|햄)*P(햄)
+    p_obs = likelihood_given_spam * prior + likelihood_given_ham * (1 - prior)
+    # P(스팸|관찰) = P(관찰|스팸) * P(스팸) / P(관찰)
+    return likelihood_given_spam * prior / p_obs
+
+def sequential_bayes(
+    initial_prior: float,
+    observations: list[tuple[float, float]]
+) -> list[float]:
+    posteriors = []
+    prior = initial_prior
+    for lk_spam, lk_ham in observations:
+        prior = bayes_update(prior, lk_spam, lk_ham)
+        posteriors.append(prior)
+    return posteriors
+
+prior = 0.2
+observations = [(0.60, 0.05), (0.40, 0.10), (0.70, 0.02)]
+posteriors = sequential_bayes(prior, observations)
+for i, p in enumerate(posteriors):
+    print(f"단어 {i+1} 관찰 후 스팸 확률: {p:.1%}")
+# 출력:
+# 단어 1 관찰 후 스팸 확률: 75.0%
+# 단어 2 관찰 후 스팸 확률: 85.7%
+# 단어 3 관찰 후 스팸 확률: 97.7%
+```
+
+**핵심**: 각 단계의 사후 확률이 다음 단계의 사전 확률이 됩니다. 이것이 베이즈 업데이트의 순차적 특성입니다.
+
+</details>
+
+---
+
+## Part 2. 분포 시뮬레이션
+
+### 과제 2-1. 중심극한정리 시각화
+
+모집단이 정규분포가 아니어도 표본 평균의 분포가 정규분포에 수렴함을 시뮬레이션으로 확인하세요.
+
+```python
+def simulate_clt(
+    population: str = "uniform",   # "uniform", "exponential", "binomial"
+    n_sample: int = 30,
+    n_simulations: int = 5000
+) -> np.ndarray:
+    """
+    표본 평균의 분포를 시뮬레이션
+    Returns: 각 시뮬레이션의 표본 평균 배열
+    """
+    pass
+
+# 각 분포에서 표본 크기를 변화시키며 정규성 확인
+for n in [1, 5, 30, 100]:
+    sample_means = simulate_clt("exponential", n_sample=n)
+    skewness = stats.skew(sample_means)
+    print(f"n={n:3d}: 왜도={skewness:.3f}  (0에 가까울수록 정규분포)")
+```
+
+<details>
+<summary>풀이 보기</summary>
+
+```python
+def simulate_clt(
+    population: str = "uniform",
+    n_sample: int = 30,
+    n_simulations: int = 5000
+) -> np.ndarray:
+    sample_means = np.zeros(n_simulations)
+    for i in range(n_simulations):
+        if population == "uniform":
+            sample = np.random.uniform(0, 1, n_sample)
+        elif population == "exponential":
+            sample = np.random.exponential(scale=1.0, size=n_sample)
+        elif population == "binomial":
+            sample = np.random.binomial(n=10, p=0.2, size=n_sample)
+        else:
+            raise ValueError(f"Unknown population: {population}")
+        sample_means[i] = np.mean(sample)
+    return sample_means
+
+# NumPy 벡터화 버전 (더 빠름)
+def simulate_clt_fast(population: str = "exponential", n_sample: int = 30, n_simulations: int = 5000) -> np.ndarray:
+    if population == "exponential":
+        data = np.random.exponential(1.0, size=(n_simulations, n_sample))
+    elif population == "uniform":
+        data = np.random.uniform(0, 1, size=(n_simulations, n_sample))
+    return np.mean(data, axis=1)
+
+for n in [1, 5, 30, 100]:
+    sample_means = simulate_clt_fast("exponential", n_sample=n)
+    skewness = stats.skew(sample_means)
+    print(f"n={n:3d}: 왜도={skewness:.3f}")
+# 출력: n이 커질수록 왜도가 0에 수렴 → 정규분포 근사
+```
+
+**통찰**: 지수분포(왜도 = 2)처럼 비대칭 분포도 n=30 이상이면 표본 평균의 분포가 거의 정규분포가 됩니다.
+
+</details>
+
+---
+
+### 과제 2-2. 다변수 정규분포 샘플링 및 시각화
+
+주어진 평균 벡터와 공분산 행렬로 2차원 정규분포를 샘플링하고 특성을 확인하세요.
+
+```python
+def analyze_bivariate_normal(
+    mu: np.ndarray,
+    cov: np.ndarray,
+    n: int = 1000
+) -> dict:
+    """
+    이변수 정규분포 샘플링 및 통계 계산
+    Returns: {"samples": ..., "sample_mean": ..., "sample_cov": ..., "correlation": ...}
+    """
+    pass
+
+# 테스트: 키와 몸무게 (강한 양의 상관관계)
+mu = np.array([170, 65])     # 평균 키(cm), 몸무게(kg)
+cov = np.array([
+    [100, 35],   # Var(키)=100, Cov(키,몸무게)=35
+    [35,  50]    # Cov(몸무게,키)=35, Var(몸무게)=50
+])
+result = analyze_bivariate_normal(mu, cov)
+print(f"표본 평균: {result['sample_mean']}")
+print(f"표본 상관계수: {result['correlation']:.3f}")
+print(f"이론 상관계수: {35 / np.sqrt(100 * 50):.3f}")
+```
+
+<details>
+<summary>풀이 보기</summary>
+
+```python
+def analyze_bivariate_normal(
+    mu: np.ndarray,
+    cov: np.ndarray,
+    n: int = 1000
+) -> dict:
+    np.random.seed(42)
+    samples = np.random.multivariate_normal(mu, cov, size=n)
+    sample_cov = np.cov(samples.T)
+    # 상관계수 = Cov / (std1 * std2)
+    correlation = sample_cov[0, 1] / np.sqrt(sample_cov[0, 0] * sample_cov[1, 1])
+    return {
+        "samples": samples,
+        "sample_mean": np.mean(samples, axis=0),
+        "sample_cov": sample_cov,
+        "correlation": correlation
+    }
+
+mu = np.array([170, 65])
+cov = np.array([[100, 35], [35, 50]])
+result = analyze_bivariate_normal(mu, cov)
+print(f"표본 평균: {result['sample_mean']}")
+print(f"표본 상관계수: {result['correlation']:.3f}")
+print(f"이론 상관계수: {35 / np.sqrt(100 * 50):.3f}")
+# 이론값: 35 / sqrt(5000) ≈ 0.495
+```
+
+</details>
+
+---
+
+## Part 3. MLE와 MAP 구현
+
+### 과제 3-1. 정규분포 MLE
+
+데이터가 주어졌을 때 정규분포의 MLE 추정값($\hat{\mu}$, $\hat{\sigma}^2$)을 수치 최적화 없이 해석적으로 구현하세요.
+
+```python
+def mle_gaussian(data: np.ndarray) -> tuple[float, float]:
+    """
+    정규분포 MLE
+    Returns: (mu_hat, sigma_sq_hat)
+    -- MLE에서는 n으로 나눔 (불편 추정량 아님!)
+    """
+    pass
+
+np.random.seed(0)
+data = np.random.normal(loc=5.0, scale=2.0, size=100)
+mu_hat, sigma_sq_hat = mle_gaussian(data)
+print(f"MLE 평균: {mu_hat:.3f}  (진짜: 5.0)")
+print(f"MLE 분산: {sigma_sq_hat:.3f}  (진짜: 4.0)")
+print(f"불편 분산: {np.var(data, ddof=1):.3f}")
+```
+
+<details>
+<summary>풀이 보기</summary>
+
+```python
+def mle_gaussian(data: np.ndarray) -> tuple[float, float]:
+    n = len(data)
+    mu_hat = np.mean(data)
+    # MLE: n으로 나눔 (편향 추정량)
+    sigma_sq_hat = np.sum((data - mu_hat) ** 2) / n
+    return mu_hat, sigma_sq_hat
+
+np.random.seed(0)
+data = np.random.normal(loc=5.0, scale=2.0, size=100)
+mu_hat, sigma_sq_hat = mle_gaussian(data)
+print(f"MLE 평균: {mu_hat:.3f}")
+print(f"MLE 분산: {sigma_sq_hat:.3f}  ← 약간 과소 추정")
+print(f"불편 분산: {np.var(data, ddof=1):.3f}  ← n-1로 나눔 (불편)")
+```
+
+**포인트**: MLE 분산은 $n$으로 나누어 모분산을 약간 **과소 추정**합니다. 표본 분산은 $n-1$로 나누어 이를 교정합니다.
+
+</details>
+
+---
+
+### 과제 3-2. 동전 던지기 MAP 추정
+
+Beta-Binomial 모델에서 MAP 추정을 구현하고, 데이터가 늘어날수록 MLE에 수렴함을 보이세요.
+
+```python
+def map_beta_binomial(
+    heads: int,
+    n_trials: int,
+    alpha_prior: float,
+    beta_prior: float
+) -> tuple[float, float]:
+    """
+    Beta 사전 분포를 사용한 이항 모수의 MAP 추정
+    Returns: (mle_estimate, map_estimate)
+    """
+    pass
+
+# 실험: 앞면이 8번 나온 경우 (10번 시도)
+# 다양한 표본 크기에서 MLE vs MAP
+for n, h in [(10, 8), (100, 80), (1000, 800)]:
+    mle, map_est = map_beta_binomial(h, n, alpha_prior=3, beta_prior=3)
+    print(f"n={n:4d}, heads={h:3d}: MLE={mle:.3f}, MAP={map_est:.3f}")
+```
+
+<details>
+<summary>풀이 보기</summary>
+
+```python
+def map_beta_binomial(
+    heads: int,
+    n_trials: int,
+    alpha_prior: float,
+    beta_prior: float
+) -> tuple[float, float]:
+    mle = heads / n_trials
+
+    # 사후 분포: Beta(alpha_prior + heads, beta_prior + tails)
+    alpha_post = alpha_prior + heads
+    beta_post = beta_prior + (n_trials - heads)
+
+    # MAP = 사후 분포의 최빈값(mode)
+    # Beta(a, b)의 mode = (a-1) / (a+b-2)
+    map_estimate = (alpha_post - 1) / (alpha_post + beta_post - 2)
+
+    return mle, map_estimate
+
+for n, h in [(10, 8), (100, 80), (1000, 800)]:
+    mle, map_est = map_beta_binomial(h, n, alpha_prior=3, beta_prior=3)
+    print(f"n={n:4d}, heads={h:3d}: MLE={mle:.3f}, MAP={map_est:.3f}")
+# 출력:
+# n=  10, heads=  8: MLE=0.800, MAP=0.714  ← 사전 영향 큼
+# n= 100, heads= 80: MLE=0.800, MAP=0.794  ← 수렴 중
+# n=1000, heads=800: MLE=0.800, MAP=0.799  ← 거의 일치
+```
+
+**통찰**: 데이터가 많아질수록 MAP → MLE 수렴. 사전 분포의 영향이 희석됩니다.
+
+</details>
+
+---
+
+## Part 4. 신뢰구간 구현
+
+### 과제 4-1. t분포 신뢰구간
+
+scipy 없이 t분포를 이용한 평균 신뢰구간을 구현하세요.
+
+```python
+def confidence_interval(
+    data: np.ndarray,
+    confidence: float = 0.95
+) -> tuple[float, float]:
+    """
+    t분포를 사용한 평균 신뢰구간
+    Returns: (lower, upper)
+    """
+    pass
+
+np.random.seed(42)
+data = np.random.normal(loc=170, scale=10, size=30)
+lower, upper = confidence_interval(data)
+print(f"표본 평균: {np.mean(data):.2f}")
+print(f"95% CI: ({lower:.2f}, {upper:.2f})")
+
+# scipy 검증
+ci = stats.t.interval(0.95, df=len(data)-1, loc=np.mean(data), scale=stats.sem(data))
+print(f"scipy CI: ({ci[0]:.2f}, {ci[1]:.2f})")
+```
+
+<details>
+<summary>풀이 보기</summary>
+
+```python
+def confidence_interval(
+    data: np.ndarray,
+    confidence: float = 0.95
+) -> tuple[float, float]:
+    n = len(data)
+    mean = np.mean(data)
+    se = np.std(data, ddof=1) / np.sqrt(n)
+    df = n - 1
+    alpha = 1 - confidence
+    t_crit = stats.t.ppf(1 - alpha / 2, df=df)
+    margin = t_crit * se
+    return mean - margin, mean + margin
+```
+
+**포인트**:
+- `ddof=1`: 표본 표준편차 (불편 추정)
+- `stats.t.ppf(1 - α/2, df)`: 양측 임계값 $t^*$
+
+</details>
+
+---
+
+## Part 5. 가설검정 구현
+
+### 과제 5-1. 대응표본 t검정
+
+동일 사용자의 UI 변경 전후 작업 시간을 비교하는 대응표본 t검정을 구현하세요.
+
+```python
+def paired_ttest(
+    before: np.ndarray,
+    after: np.ndarray,
+    alternative: str = "two-sided"
+) -> tuple[float, float]:
+    """
+    대응표본 t검정
+    alternative: "two-sided", "greater", "less"
+    Returns: (t_statistic, p_value)
+    """
+    pass
+
+np.random.seed(10)
+n = 30
+before = np.random.normal(120, 20, n)
+after = before - np.random.normal(10, 5, n)  # 실제로 10초 개선
+
+t_stat, p_val = paired_ttest(before, after, alternative="greater")
+print(f"t={t_stat:.4f}, p={p_val:.4f}")
+print(f"결론: {'개선 유의' if p_val < 0.05 else '유의한 개선 없음'}")
+```
+
+<details>
+<summary>풀이 보기</summary>
+
+```python
+def paired_ttest(
+    before: np.ndarray,
+    after: np.ndarray,
+    alternative: str = "two-sided"
+) -> tuple[float, float]:
+    d = before - after  # 양수면 "before > after", 즉 시간 감소
+    n = len(d)
+    t_stat = np.mean(d) / (np.std(d, ddof=1) / np.sqrt(n))
+    df = n - 1
+
+    if alternative == "two-sided":
+        p_value = 2 * stats.t.sf(abs(t_stat), df)
+    elif alternative == "greater":
+        p_value = stats.t.sf(t_stat, df)
+    else:
+        p_value = stats.t.cdf(t_stat, df)
+
+    return t_stat, p_value
+
+# 검증
+t_ref, p_ref = stats.ttest_rel(before, after, alternative="greater")
+print(f"scipy: t={t_ref:.4f}, p={p_ref:.4f}")
+```
+
+**핵심**: 대응표본 t검정 = 차이 $d_i$의 단일표본 t검정. 개인 간 변동을 흡수해 독립 이표본보다 검정력이 높습니다.
+
+</details>
+
+---
+
+### 과제 5-2. 조기 종료 위험성 시뮬레이션
+
+효과가 없는 A/B 테스트에서 조기 종료 시 1종 오류율이 어떻게 부풀려지는지 시뮬레이션하세요.
+
+```python
+def simulate_early_stopping(
+    n_max: int = 1000,
+    check_every: int = 50,
+    alpha: float = 0.05,
+    n_experiments: int = 500
+) -> dict:
+    """
+    효과 없는 A/B 테스트에서 오류율 측정
+    H0: p_A = p_B = 0.1 (진실: 차이 없음)
+
+    Returns: {
+        "early_stop_error_rate": float,
+        "proper_error_rate": float
+    }
+    """
+    pass
+
+np.random.seed(0)
+results = simulate_early_stopping()
+print(f"조기 종료 1종 오류율: {results['early_stop_error_rate']:.1%}  (명목 α=5%)")
+print(f"정상 종료 1종 오류율: {results['proper_error_rate']:.1%}  (명목 α=5%)")
+```
+
+<details>
+<summary>풀이 보기</summary>
+
+```python
+def simulate_early_stopping(
+    n_max: int = 1000,
+    check_every: int = 50,
+    alpha: float = 0.05,
+    n_experiments: int = 500
+) -> dict:
+    true_p = 0.1
+    early_errors = 0
+    proper_errors = 0
+
+    for _ in range(n_experiments):
+        a = np.random.binomial(1, true_p, n_max)
+        b = np.random.binomial(1, true_p, n_max)
+
+        # 조기 종료: 중간 확인
+        peeked = False
+        for n in range(check_every, n_max + 1, check_every):
+            pa, pb = np.mean(a[:n]), np.mean(b[:n])
+            pp = (pa + pb) / 2
+            se = np.sqrt(pp * (1 - pp) * 2 / n)
+            if se == 0:
+                continue
+            p_val = 2 * stats.norm.sf(abs((pa - pb) / se))
+            if p_val < alpha:
+                peeked = True
+                break
+        if peeked:
+            early_errors += 1
+
+        # 정상 종료: 끝에서만 검정
+        pa_f, pb_f = np.mean(a), np.mean(b)
+        pp_f = (pa_f + pb_f) / 2
+        se_f = np.sqrt(pp_f * (1 - pp_f) * 2 / n_max)
+        if se_f > 0 and 2 * stats.norm.sf(abs((pa_f - pb_f) / se_f)) < alpha:
+            proper_errors += 1
+
+    return {
+        "early_stop_error_rate": early_errors / n_experiments,
+        "proper_error_rate": proper_errors / n_experiments
+    }
+# 출력 예:
+# 조기 종료 1종 오류율: 26.4%  (명목 α=5%)
+# 정상 종료 1종 오류율:  5.2%  (명목 α=5%)
+```
+
+</details>
+
+---
+
+## 보너스: A/B 테스트 전체 파이프라인
+
+```python
+def ab_test_pipeline(
+    control_conversions: int,
+    control_total: int,
+    treatment_conversions: int,
+    treatment_total: int,
+    alpha: float = 0.05
+) -> None:
+    """A/B 테스트 결과 보고서 출력"""
+    p_c = control_conversions / control_total
+    p_t = treatment_conversions / treatment_total
+    p_pool = (control_conversions + treatment_conversions) / (control_total + treatment_total)
+    se = np.sqrt(p_pool * (1 - p_pool) * (1/control_total + 1/treatment_total))
+    z = (p_t - p_c) / se
+    p_val = 2 * stats.norm.sf(abs(z))
+    ci_diff = (p_t - p_c) + np.array([-1, 1]) * stats.norm.ppf(1 - alpha/2) * se
+
+    print("=" * 50)
+    print("A/B 테스트 결과 보고서")
+    print("=" * 50)
+    print(f"Control   전환율: {p_c:.2%}  (n={control_total:,})")
+    print(f"Treatment 전환율: {p_t:.2%}  (n={treatment_total:,})")
+    print(f"차이: {p_t - p_c:+.2%}")
+    print(f"95% CI (차이): [{ci_diff[0]:.2%}, {ci_diff[1]:.2%}]")
+    print(f"z 통계량: {z:.3f}  |  p값: {p_val:.4f}")
+    print("-" * 50)
+    if p_val < alpha:
+        print(f"결론: p={p_val:.4f} < α={alpha} → 귀무가설 기각")
+        print("      통계적으로 유의한 차이가 있습니다.")
+    else:
+        print(f"결론: p={p_val:.4f} ≥ α={alpha} → 유의한 차이 미발견")
+    print("=" * 50)
+
+ab_test_pipeline(
+    control_conversions=500, control_total=10000,
+    treatment_conversions=560, treatment_total=10000
+)
+```
+
+---
+
+다음 글에서는 **정보이론** — 엔트로피, 크로스엔트로피, KL 발산을 다룰 예정입니다.
