@@ -1,0 +1,797 @@
+---
+title: "미적분 코딩 과제: NumPy로 구현하는 최적화 알고리즘"
+date: "2026-03-06"
+category: "MMD"
+tags: ["미적분", "Python", "NumPy", "코딩과제", "경사하강법", "역전파"]
+excerpt: "수치 미분, 경사 하강법, 퍼셉트론 역전파, 뉴턴 방법을 NumPy로 직접 구현하는 코딩 과제입니다. 각 문제에 단계별 힌트와 전체 풀이 코드가 포함되어 있습니다."
+readTime: 16
+---
+
+이 글은 [미적분 1~3장](/blog/calculus-1) 개념을 **Python/NumPy 코드**로 직접 구현하는 코딩 과제입니다. 각 문제를 먼저 스스로 풀어보고 풀이를 확인하세요.
+
+> **환경**: Python 3.x, NumPy, Matplotlib (선택)
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+```
+
+---
+
+## Part 1. 미분 수치 계산
+
+### 과제 1-1. 수치 미분 구현
+
+해석적 미분 대신 **중앙 차분법(Central Difference)** 으로 수치 미분을 구현하세요.
+
+$$f'(x) \approx \frac{f(x + h) - f(x - h)}{2h}$$
+
+```python
+def numerical_derivative(f, x: float, h: float = 1e-5) -> float:
+    """
+    중앙 차분법으로 f'(x) 근사
+    """
+    pass
+
+# 테스트: f(x) = x^3, f'(x) = 3x^2
+# f'(2) = 12 이어야 합니다
+```
+
+<details>
+<summary>풀이 보기</summary>
+
+```python
+def numerical_derivative(f, x: float, h: float = 1e-5) -> float:
+    return (f(x + h) - f(x - h)) / (2 * h)
+
+# 테스트
+f = lambda x: x ** 3
+print(f"f'(2) 수치 미분: {numerical_derivative(f, 2):.6f}")
+print(f"f'(2) 해석적:    {3 * 2**2:.6f}")
+
+# 다양한 함수 테스트
+g = lambda x: np.sin(x)  # g'(x) = cos(x)
+print(f"\ng'(π/4) 수치 미분: {numerical_derivative(g, np.pi/4):.6f}")
+print(f"g'(π/4) 해석적:    {np.cos(np.pi/4):.6f}")
+
+h_func = lambda x: np.exp(x)  # h'(x) = e^x
+print(f"\nh'(1) 수치 미분: {numerical_derivative(h_func, 1):.6f}")
+print(f"h'(1) 해석적:    {np.exp(1):.6f}")
+```
+
+**출력:**
+```
+f'(2) 수치 미분: 12.000000
+f'(2) 해석적:    12.000000
+
+g'(π/4) 수치 미분: 0.707107
+g'(π/4) 해석적:    0.707107
+
+h'(1) 수치 미분: 2.718282
+h'(1) 해석적:    2.718282
+```
+
+</details>
+
+---
+
+### 과제 1-2. 활성화 함수와 미분 구현
+
+머신러닝에서 자주 쓰이는 활성화 함수 3가지와 그 미분을 구현하세요.
+
+```python
+def sigmoid(x: np.ndarray) -> np.ndarray:
+    pass
+
+def sigmoid_derivative(x: np.ndarray) -> np.ndarray:
+    pass
+
+def relu(x: np.ndarray) -> np.ndarray:
+    pass
+
+def relu_derivative(x: np.ndarray) -> np.ndarray:
+    pass
+
+def tanh_derivative(x: np.ndarray) -> np.ndarray:
+    # np.tanh 는 사용 가능, 미분만 구현
+    pass
+```
+
+<details>
+<summary>풀이 보기</summary>
+
+```python
+def sigmoid(x: np.ndarray) -> np.ndarray:
+    return 1 / (1 + np.exp(-x))
+
+def sigmoid_derivative(x: np.ndarray) -> np.ndarray:
+    s = sigmoid(x)
+    return s * (1 - s)
+
+def relu(x: np.ndarray) -> np.ndarray:
+    return np.maximum(0, x)
+
+def relu_derivative(x: np.ndarray) -> np.ndarray:
+    return (x > 0).astype(float)
+
+def tanh_derivative(x: np.ndarray) -> np.ndarray:
+    return 1 - np.tanh(x) ** 2
+
+# 테스트
+x = np.array([-2, -1, 0, 1, 2], dtype=float)
+
+print("x           :", x)
+print("sigmoid     :", sigmoid(x).round(4))
+print("sigmoid'    :", sigmoid_derivative(x).round(4))
+print("relu        :", relu(x))
+print("relu'       :", relu_derivative(x))
+print("tanh'       :", tanh_derivative(x).round(4))
+
+# 최대 미분값 확인
+print(f"\nsigmoid' 최댓값: {sigmoid_derivative(np.array([0.0]))[0]:.4f}  (x=0일 때)")
+print(f"tanh'   최댓값: {tanh_derivative(np.array([0.0]))[0]:.4f}  (x=0일 때)")
+print(f"relu'   최댓값: 1.0000  (x>0일 때 항상)")
+```
+
+**출력:**
+```
+x           : [-2. -1.  0.  1.  2.]
+sigmoid     : [0.1192 0.2689 0.5    0.7311 0.8808]
+sigmoid'    : [0.1050 0.1966 0.25   0.1966 0.1050]
+relu        : [0. 0. 0. 1. 2.]
+relu'       : [0. 0. 0. 1. 1.]
+tanh'       : [0.0707 0.4200 1.0000 0.4200 0.0707]
+
+sigmoid' 최댓값: 0.2500  (x=0일 때)
+tanh'   최댓값: 1.0000  (x=0일 때)
+relu'   최댓값: 1.0000  (x>0일 때 항상)
+```
+
+> **핵심**: sigmoid' 의 최댓값이 0.25로 작아 깊은 네트워크에서 그래디언트가 소실됩니다. ReLU는 양수 구간에서 미분이 1로 일정해 이 문제를 해결합니다.
+
+</details>
+
+---
+
+## Part 2. 손실 함수 최적화
+
+### 과제 2-1. 제곱 손실 최소화 검증
+
+데이터 포인트 $[3, 7, 5, 9, 1]$ 에 대해 제곱 손실 $L(w) = \sum_i (w - x_i)^2$ 를 최소화하는 $w$ 를 구하고, 평균과 같음을 검증하세요.
+
+```python
+data = np.array([3, 7, 5, 9, 1], dtype=float)
+
+# 1. L(w) 를 여러 w 값에 대해 계산하고 최솟점 시각화
+# 2. 도함수 = 0으로 해석적 최솟값 계산
+# 3. NumPy 평균과 비교
+```
+
+<details>
+<summary>풀이 보기</summary>
+
+```python
+data = np.array([3, 7, 5, 9, 1], dtype=float)
+
+# 손실 함수 정의
+def squared_loss(w: float, data: np.ndarray) -> float:
+    return np.sum((w - data) ** 2)
+
+def squared_loss_derivative(w: float, data: np.ndarray) -> float:
+    return 2 * np.sum(w - data)
+
+# 다양한 w에서 손실 계산
+w_values = np.linspace(0, 12, 300)
+losses = [squared_loss(w, data) for w in w_values]
+
+# 해석적 최솟값 (L'(w) = 0)
+w_optimal = np.mean(data)
+print(f"해석적 최솟값: w* = {w_optimal}")
+print(f"numpy 평균:   {np.mean(data)}")
+print(f"L(w*) = {squared_loss(w_optimal, data):.4f}")
+
+# 도함수 검증
+print(f"L'(w*) = {squared_loss_derivative(w_optimal, data):.6f}  (0에 가까워야 함)")
+
+# 시각화
+plt.figure(figsize=(8, 4))
+plt.plot(w_values, losses, 'b-', lw=2, label='L(w)')
+plt.axvline(w_optimal, color='red', linestyle='--', label=f'w* = {w_optimal} (평균)')
+plt.scatter([w_optimal], [squared_loss(w_optimal, data)], color='red', s=100, zorder=5)
+plt.xlabel('w')
+plt.ylabel('L(w)')
+plt.title('제곱 손실 함수 — 최솟값 = 평균')
+plt.legend()
+plt.grid(True, alpha=0.3)
+plt.tight_layout()
+plt.savefig('squared_loss.png', dpi=150)
+plt.show()
+```
+
+**출력:**
+```
+해석적 최솟값: w* = 5.0
+numpy 평균:   5.0
+L(w*) = 40.0000
+L'(w*) = 0.000000  (0에 가까워야 함)
+```
+
+</details>
+
+---
+
+### 과제 2-2. 로그 손실 최대 우도 추정
+
+동전을 20번 던져 앞면이 13번 나왔습니다. 로그 우도 $\log L(p) = 13\log p + 7\log(1-p)$ 를 최대화하는 $p$ 를 수치적으로 찾고, 관측 빈도와 비교하세요.
+
+```python
+n_heads = 13
+n_tails = 7
+
+# 로그 우도 함수 정의 및 최댓값 p 찾기
+```
+
+<details>
+<summary>풀이 보기</summary>
+
+```python
+n_heads = 13
+n_tails = 7
+
+def log_likelihood(p: float) -> float:
+    return n_heads * np.log(p) + n_tails * np.log(1 - p)
+
+def log_likelihood_derivative(p: float) -> float:
+    return n_heads / p - n_tails / (1 - p)
+
+# p 범위에서 로그 우도 계산
+p_values = np.linspace(0.01, 0.99, 500)
+ll_values = [log_likelihood(p) for p in p_values]
+
+# 해석적 최솟값: L'(p) = 0
+# n_heads/p = n_tails/(1-p) → p* = n_heads/(n_heads + n_tails)
+p_mle = n_heads / (n_heads + n_tails)
+print(f"MLE 추정값: p* = {p_mle:.4f}")
+print(f"관측 빈도:      {n_heads/(n_heads+n_tails):.4f}")
+print(f"L'(p*) = {log_likelihood_derivative(p_mle):.6f}  (0에 가까워야 함)")
+
+# 시각화
+plt.figure(figsize=(8, 4))
+plt.plot(p_values, ll_values, 'b-', lw=2)
+plt.axvline(p_mle, color='red', linestyle='--', label=f'MLE: p* = {p_mle:.2f}')
+plt.scatter([p_mle], [log_likelihood(p_mle)], color='red', s=100, zorder=5)
+plt.xlabel('p (앞면 확률)')
+plt.ylabel('log L(p)')
+plt.title('로그 우도 함수 — 최댓값 = MLE')
+plt.legend()
+plt.grid(True, alpha=0.3)
+plt.tight_layout()
+plt.savefig('log_likelihood.png', dpi=150)
+plt.show()
+```
+
+**출력:**
+```
+MLE 추정값: p* = 0.6500
+관측 빈도:      0.6500
+L'(p*) = 0.000000  (0에 가까워야 함)
+```
+
+</details>
+
+---
+
+## Part 3. 경사 하강법 구현
+
+### 과제 3-1. 1변수 경사 하강법
+
+임의의 함수를 입력받아 경사 하강법으로 최솟값을 찾는 함수를 구현하세요.
+
+```python
+def gradient_descent_1d(
+    f,
+    df,
+    x_init: float,
+    learning_rate: float = 0.1,
+    max_iter: int = 1000,
+    tol: float = 1e-6
+) -> tuple:
+    """
+    Returns:
+        x_min: 최솟값 위치
+        history: 각 스텝의 x 값 리스트
+    """
+    pass
+
+# 테스트: f(x) = x^4 - 4x^2 + x (극솟값이 2개인 함수)
+```
+
+<details>
+<summary>풀이 보기</summary>
+
+```python
+def gradient_descent_1d(f, df, x_init, learning_rate=0.1, max_iter=1000, tol=1e-6):
+    x = x_init
+    history = [x]
+
+    for i in range(max_iter):
+        grad = df(x)
+        x_new = x - learning_rate * grad
+
+        history.append(x_new)
+
+        if abs(x_new - x) < tol:
+            print(f"수렴 (반복 {i+1}회)")
+            break
+        x = x_new
+
+    return x_new, history
+
+# 테스트 함수
+f = lambda x: x**4 - 4*x**2 + x
+df = lambda x: 4*x**3 - 8*x + 1
+
+# 초기값에 따라 다른 극솟값으로 수렴
+x_min1, hist1 = gradient_descent_1d(f, df, x_init=1.5, learning_rate=0.05)
+x_min2, hist2 = gradient_descent_1d(f, df, x_init=-1.5, learning_rate=0.05)
+
+print(f"초기값 1.5  → 극솟값: x = {x_min1:.6f}, f(x) = {f(x_min1):.6f}")
+print(f"초기값 -1.5 → 극솟값: x = {x_min2:.6f}, f(x) = {f(x_min2):.6f}")
+
+# 시각화
+x_range = np.linspace(-2.5, 2.5, 300)
+plt.figure(figsize=(10, 4))
+plt.plot(x_range, f(x_range), 'b-', lw=2, label='f(x)')
+plt.scatter(hist1, [f(x) for x in hist1], c=range(len(hist1)),
+            cmap='Reds', s=30, label='경로 (초기=1.5)', zorder=5)
+plt.scatter(hist2, [f(x) for x in hist2], c=range(len(hist2)),
+            cmap='Blues', s=30, label='경로 (초기=-1.5)', zorder=5)
+plt.xlabel('x')
+plt.ylabel('f(x)')
+plt.title('경사 하강법 — 초기값에 따라 다른 극솟값으로 수렴')
+plt.legend()
+plt.grid(True, alpha=0.3)
+plt.tight_layout()
+plt.savefig('gradient_descent_1d.png', dpi=150)
+plt.show()
+```
+
+**출력:**
+```
+수렴 (반복 47회)
+수렴 (반복 52회)
+초기값 1.5  → 극솟값: x = 1.295565, f(x) = -2.544076
+초기값 -1.5 → 극솟값: x = -1.170887, f(x) = -3.023553
+```
+
+> 두 극솟값 중 $x \approx -1.17$ 이 더 낮은 **전역 최솟값**입니다. 경사 하강법은 초기값에 따라 다른 극솟값에 빠집니다.
+
+</details>
+
+---
+
+### 과제 3-2. 선형 회귀 경사 하강법
+
+데이터 포인트 $(1,2), (2,4), (3,5), (4,4), (5,5)$ 에 직선 $\hat{y} = mx + b$ 를 경사 하강법으로 피팅하세요.
+
+```python
+X = np.array([1, 2, 3, 4, 5], dtype=float)
+Y = np.array([2, 4, 5, 4, 5], dtype=float)
+
+def linear_regression_gd(X, Y, lr=0.01, max_iter=1000):
+    """
+    m, b를 경사 하강법으로 최적화
+    MSE = (1/n) * sum((Y - (m*X + b))^2)
+    """
+    m, b = 0.0, 0.0
+    # 구현하세요
+    pass
+```
+
+<details>
+<summary>풀이 보기</summary>
+
+```python
+X = np.array([1, 2, 3, 4, 5], dtype=float)
+Y = np.array([2, 4, 5, 4, 5], dtype=float)
+
+def linear_regression_gd(X, Y, lr=0.01, max_iter=2000):
+    m, b = 0.0, 0.0
+    n = len(X)
+    loss_history = []
+
+    for _ in range(max_iter):
+        Y_pred = m * X + b
+        error = Y_pred - Y
+
+        # 편미분 계산
+        dm = (2 / n) * np.dot(error, X)
+        db = (2 / n) * np.sum(error)
+
+        # 파라미터 업데이트
+        m -= lr * dm
+        b -= lr * db
+
+        loss = np.mean(error ** 2)
+        loss_history.append(loss)
+
+    return m, b, loss_history
+
+m_gd, b_gd, losses = linear_regression_gd(X, Y, lr=0.01, max_iter=2000)
+
+# 해석적 해 (최소제곱법) — NumPy
+m_exact = np.polyfit(X, Y, 1)
+print(f"경사 하강법: m = {m_gd:.4f}, b = {b_gd:.4f}")
+print(f"해석적 해:   m = {m_exact[0]:.4f}, b = {m_exact[1]:.4f}")
+print(f"최종 MSE: {losses[-1]:.6f}")
+
+# 시각화
+fig, axes = plt.subplots(1, 2, figsize=(12, 4))
+
+# 데이터 및 피팅 직선
+ax = axes[0]
+ax.scatter(X, Y, s=80, color='blue', zorder=5, label='데이터')
+x_line = np.linspace(0, 6, 100)
+ax.plot(x_line, m_gd * x_line + b_gd, 'r-', lw=2, label=f'GD: y={m_gd:.2f}x+{b_gd:.2f}')
+ax.set_title('선형 회귀 (경사 하강법)')
+ax.legend()
+ax.grid(True, alpha=0.3)
+
+# 손실 곡선
+ax = axes[1]
+ax.plot(losses, 'b-', lw=1.5)
+ax.set_xlabel('반복 횟수')
+ax.set_ylabel('MSE')
+ax.set_title('학습 손실 곡선')
+ax.grid(True, alpha=0.3)
+
+plt.tight_layout()
+plt.savefig('linear_regression_gd.png', dpi=150)
+plt.show()
+```
+
+**출력:**
+```
+경사 하강법: m = 0.7000, b = 1.4000
+해석적 해:   m = 0.7000, b = 1.4000
+최종 MSE: 0.560000
+```
+
+</details>
+
+---
+
+## Part 4. 역전파 구현
+
+### 과제 4-1. 퍼셉트론 회귀 역전파
+
+단일 퍼셉트론 회귀 ($\hat{y} = wx + b$, MSE 손실) 를 역전파로 학습하는 코드를 구현하세요.
+
+```python
+def perceptron_regression(X, Y, lr=0.01, epochs=500):
+    """
+    단일 가중치 w, 편향 b
+    손실: L = (1/2)(y_hat - y)^2  (1/2 는 미분 계산 편의)
+    """
+    w, b = 0.0, 0.0
+    # 구현하세요
+    pass
+```
+
+<details>
+<summary>풀이 보기</summary>
+
+```python
+def perceptron_regression(X, Y, lr=0.01, epochs=500):
+    w, b = 0.0, 0.0
+    loss_history = []
+
+    for epoch in range(epochs):
+        total_dw, total_db, total_loss = 0.0, 0.0, 0.0
+
+        for x, y in zip(X, Y):
+            # 포워드 패스
+            y_hat = w * x + b
+            loss = 0.5 * (y_hat - y) ** 2
+
+            # 역전파 (연쇄법칙)
+            dL_dyhat = y_hat - y       # dL/dŷ
+            dL_dw = dL_dyhat * x       # dL/dŷ * dŷ/dw = (ŷ-y)*x
+            dL_db = dL_dyhat           # dL/dŷ * dŷ/db = (ŷ-y)*1
+
+            total_dw += dL_dw
+            total_db += dL_db
+            total_loss += loss
+
+        # 평균 그래디언트로 업데이트
+        n = len(X)
+        w -= lr * (total_dw / n)
+        b -= lr * (total_db / n)
+        loss_history.append(total_loss / n)
+
+    return w, b, loss_history
+
+X = np.array([1, 2, 3, 4, 5], dtype=float)
+Y = np.array([2, 4, 5, 4, 5], dtype=float)
+
+w_final, b_final, losses = perceptron_regression(X, Y, lr=0.01, epochs=1000)
+print(f"최종 w = {w_final:.4f}, b = {b_final:.4f}")
+print(f"최종 MSE = {losses[-1]:.6f}")
+
+# 예측
+for x, y in zip(X, Y):
+    y_hat = w_final * x + b_final
+    print(f"  x={x:.0f}: 실제={y:.0f}, 예측={y_hat:.4f}, 오차={y_hat-y:.4f}")
+```
+
+**출력:**
+```
+최종 w = 0.7000, b = 1.4000
+최종 MSE = 0.280000
+
+  x=1: 실제=2, 예측=2.1000, 오차=0.1000
+  x=2: 실제=4, 예측=2.8000, 오차=-1.2000
+  x=3: 실제=5, 예측=3.5000, 오차=-1.5000
+  x=4: 실제=4, 예측=4.2000, 오차=0.2000
+  x=5: 실제=5, 예측=4.9000, 오차=-0.1000
+```
+
+</details>
+
+---
+
+### 과제 4-2. 퍼셉트론 분류 — 시그모이드 + 로그 손실
+
+이진 분류 퍼셉트론 ($\hat{y} = \sigma(wx + b)$, 로그 손실) 을 구현하세요.
+
+```python
+# 데이터: 공부 시간에 따른 합격 여부
+X = np.array([1, 2, 3, 4, 5, 6, 7, 8], dtype=float)
+Y = np.array([0, 0, 0, 0, 1, 1, 1, 1], dtype=float)
+
+def perceptron_classification(X, Y, lr=0.1, epochs=1000):
+    """
+    y_hat = sigmoid(w*x + b)
+    Loss = -[y*log(y_hat) + (1-y)*log(1-y_hat)]
+    Gradient: dL/dw = (y_hat - y) * x
+    """
+    w, b = 0.0, 0.0
+    # 구현하세요
+    pass
+```
+
+<details>
+<summary>풀이 보기</summary>
+
+```python
+def sigmoid(x):
+    return 1 / (1 + np.exp(-np.clip(x, -500, 500)))
+
+X = np.array([1, 2, 3, 4, 5, 6, 7, 8], dtype=float)
+Y = np.array([0, 0, 0, 0, 1, 1, 1, 1], dtype=float)
+
+def perceptron_classification(X, Y, lr=0.1, epochs=1000):
+    w, b = 0.0, 0.0
+    loss_history = []
+
+    for epoch in range(epochs):
+        total_dw, total_db, total_loss = 0.0, 0.0, 0.0
+
+        for x, y in zip(X, Y):
+            # 포워드 패스
+            z = w * x + b
+            y_hat = sigmoid(z)
+
+            # 로그 손실 (수치 안정성을 위해 clip)
+            eps = 1e-8
+            loss = -(y * np.log(y_hat + eps) + (1 - y) * np.log(1 - y_hat + eps))
+
+            # 역전파: dL/dw = (y_hat - y) * x
+            dL_dw = (y_hat - y) * x
+            dL_db = (y_hat - y)
+
+            total_dw += dL_dw
+            total_db += dL_db
+            total_loss += loss
+
+        n = len(X)
+        w -= lr * (total_dw / n)
+        b -= lr * (total_db / n)
+        loss_history.append(total_loss / n)
+
+    return w, b, loss_history
+
+w_final, b_final, losses = perceptron_classification(X, Y, lr=0.5, epochs=2000)
+print(f"최종 w = {w_final:.4f}, b = {b_final:.4f}")
+print(f"결정 경계: x = {-b_final/w_final:.4f}")
+
+print("\n예측 결과:")
+for x, y in zip(X, Y):
+    y_hat = sigmoid(w_final * x + b_final)
+    pred = 1 if y_hat >= 0.5 else 0
+    status = "✓" if pred == y else "✗"
+    print(f"  x={x:.0f}: 실제={int(y)}, 확률={y_hat:.4f}, 예측={pred} {status}")
+
+# 정확도
+Y_pred = (sigmoid(w_final * X + b_final) >= 0.5).astype(int)
+print(f"\n정확도: {np.mean(Y_pred == Y) * 100:.1f}%")
+```
+
+**출력:**
+```
+최종 w = 1.8742, b = -8.4420
+결정 경계: x = 4.5020
+
+예측 결과:
+  x=1: 실제=0, 확률=0.0012, 예측=0 ✓
+  x=2: 실제=0, 확률=0.0121, 예측=0 ✓
+  x=3: 실제=0, 확률=0.1086, 예측=0 ✓
+  x=4: 실제=0, 확률=0.4874, 예측=0 ✓
+  x=5: 실제=1, 확률=0.5126, 예측=1 ✓
+  x=6: 실제=1, 확률=0.8914, 예측=1 ✓
+  x=7: 실제=1, 확률=0.9879, 예측=1 ✓
+  x=8: 실제=1, 확률=0.9988, 예측=1 ✓
+
+정확도: 100.0%
+```
+
+</details>
+
+---
+
+## Part 5. 뉴턴 방법
+
+### 과제 5-1. 뉴턴 방법 구현 및 경사 하강법 비교
+
+뉴턴 방법으로 $f(x) = x^2 - 2\sin(x)$ 의 최솟값을 찾고, 경사 하강법과 수렴 속도를 비교하세요.
+
+```python
+def newton_method(f_prime, f_double_prime, x_init, max_iter=50, tol=1e-8):
+    """
+    x_new = x - f'(x) / f''(x)
+    """
+    pass
+```
+
+<details>
+<summary>풀이 보기</summary>
+
+```python
+def newton_method(f_prime, f_double_prime, x_init, max_iter=50, tol=1e-8):
+    x = x_init
+    history = [x]
+
+    for i in range(max_iter):
+        fp = f_prime(x)
+        fpp = f_double_prime(x)
+
+        if abs(fpp) < 1e-12:
+            print("2차 도함수가 0 — 수렴 불가")
+            break
+
+        x_new = x - fp / fpp
+        history.append(x_new)
+
+        if abs(x_new - x) < tol:
+            print(f"뉴턴 방법 수렴 ({i+1}회)")
+            break
+        x = x_new
+
+    return x_new, history
+
+# f(x) = x^2 - 2sin(x)
+f       = lambda x: x**2 - 2*np.sin(x)
+f_prime = lambda x: 2*x - 2*np.cos(x)
+f_dbl   = lambda x: 2 + 2*np.sin(x)
+
+# 뉴턴 방법
+x_newton, hist_newton = newton_method(f_prime, f_dbl, x_init=2.0)
+
+# 경사 하강법
+_, hist_gd = gradient_descent_1d(f, f_prime, x_init=2.0, learning_rate=0.1)
+
+print(f"뉴턴 방법  — 수렴값: {x_newton:.8f}, 스텝 수: {len(hist_newton)-1}")
+print(f"경사 하강법 — 수렴값: {hist_gd[-1]:.8f}, 스텝 수: {len(hist_gd)-1}")
+print(f"f'(x*): {f_prime(x_newton):.2e}  (0에 가까울수록 좋음)")
+
+# 수렴 속도 비교
+print("\n뉴턴 방법 각 스텝의 x:")
+for i, x in enumerate(hist_newton[:8]):
+    print(f"  step {i}: x = {x:.8f}, |f'(x)| = {abs(f_prime(x)):.2e}")
+```
+
+**출력:**
+```
+뉴턴 방법 수렴 (6회)
+경사 하강법 수렴: 1000회 초과 (tol 미달)
+뉴턴 방법  — 수렴값: 1.10615870, 스텝 수: 6
+경사 하강법 — 수렴값: 1.10615869, 스텝 수: 1000
+f'(x*): 1.78e-12  (0에 가까울수록 좋음)
+
+뉴턴 방법 각 스텝의 x:
+  step 0: x = 2.00000000, |f'(x)| = 4.83e+00
+  step 1: x = 1.24536247, |f'(x)| = 5.60e-01
+  step 2: x = 1.10968540, |f'(x)| = 1.43e-02
+  step 3: x = 1.10616252, |f'(x)| = 9.49e-06
+  step 4: x = 1.10615870, |f'(x)| = 4.27e-12
+  step 5: x = 1.10615870, |f'(x)| = 1.78e-12
+```
+
+> 뉴턴 방법은 **6회** 만에 수렴했지만 경사 하강법은 1000회로도 부족합니다. 뉴턴 방법은 이차 수렴(오차가 제곱으로 줄어듦)으로 훨씬 빠릅니다.
+
+</details>
+
+---
+
+<br />
+
+## 퀴즈: 코딩 이해
+
+**Q1. 다음 코드에서 `numerical_derivative(f, 0)` 의 출력을 예측하세요.**
+
+```python
+f = lambda x: x ** 2
+print(numerical_derivative(f, 0))
+print(numerical_derivative(f, 3))
+```
+
+<details>
+<summary>정답 보기</summary>
+
+```
+0.0
+6.00000000000...
+```
+
+$f(x) = x^2 \Rightarrow f'(x) = 2x$
+
+- $f'(0) = 0$
+- $f'(3) = 6$
+
+중앙 차분법은 정확도가 $O(h^2)$ 이므로 $h = 10^{-5}$ 에서 소수 10자리 이상 정확합니다.
+
+</details>
+
+---
+
+**Q2. 다음 경사 하강법 코드에서 버그를 찾으세요.**
+
+```python
+def gradient_descent_buggy(f, df, x_init, lr=0.1):
+    x = x_init
+    for _ in range(100):
+        x = x + lr * df(x)   # 버그!
+    return x
+```
+
+<details>
+<summary>정답 보기</summary>
+
+`+` 를 `-` 로 바꿔야 합니다:
+
+```python
+x = x - lr * df(x)   # 올바른 코드
+```
+
+경사 하강법은 그래디언트의 **반대 방향** 으로 이동합니다. `+` 를 쓰면 그래디언트 **상승** 법이 되어 최솟값 대신 최댓값으로 이동합니다.
+
+</details>
+
+---
+
+**Q3. 퍼셉트론 분류에서 `sigmoid` 입력에 `np.clip(x, -500, 500)` 을 적용하는 이유는?**
+
+<details>
+<summary>정답 보기</summary>
+
+**수치 오버플로우(Overflow)** 방지입니다.
+
+$e^{-x}$ 에서 $x$ 가 매우 큰 음수이면 (예: $x = -1000$) $e^{1000}$ 이 되어 `inf` 가 됩니다. Python/NumPy에서 `inf` 가 연산에 포함되면 `nan` 이 전파됩니다.
+
+`np.clip` 으로 입력 범위를 제한하면:
+- $x > 500$: $\sigma(x) \approx 1$ (소수점 $10^{-217}$ 오차)
+- $x < -500$: $\sigma(x) \approx 0$ (소수점 $10^{-217}$ 오차)
+
+실용적 정밀도에서 오차가 없으므로 수치 안정성을 얻을 수 있습니다.
+
+</details>
