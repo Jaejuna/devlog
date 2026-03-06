@@ -38,6 +38,9 @@ export async function generateMetadata({
   return {
     title: post.title,
     description: post.excerpt,
+    alternates: {
+      canonical: `${process.env.NEXT_PUBLIC_BASE_URL ?? 'https://j-devlog.space'}/blog/${params.slug}`,
+    },
     openGraph: {
       title: post.title,
       description: post.excerpt,
@@ -46,7 +49,7 @@ export async function generateMetadata({
       tags: post.tags,
       locale: 'ko_KR',
       siteName: 'devlog',
-      url: `${process.env.NEXT_PUBLIC_BASE_URL ?? 'https://devlog-two.vercel.app'}/blog/${params.slug}`,
+      url: `${process.env.NEXT_PUBLIC_BASE_URL ?? 'https://j-devlog.space'}/blog/${params.slug}`,
       images: [{ url: '/soong.png', width: 1200, height: 630 }],
     },
     twitter: {
@@ -103,7 +106,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
     .filter((p) => p.category === post.category && p.slug !== post.slug)
     .slice(0, 3)
 
-  const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL ?? 'https://devlog.dev'
+  const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL ?? 'https://j-devlog.space'
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'BlogPosting',

@@ -1,7 +1,7 @@
 import { MetadataRoute } from 'next'
 import { getAllPosts } from '@/lib/mdx'
 
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL ?? 'https://devlog.dev'
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL ?? 'https://j-devlog.space'
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const posts = getAllPosts()
