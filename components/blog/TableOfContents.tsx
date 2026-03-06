@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { TocItem } from '@/lib/types'
 
 interface TableOfContentsProps {
@@ -9,6 +9,7 @@ interface TableOfContentsProps {
 
 export default function TableOfContents({ headings }: TableOfContentsProps) {
   const [activeId, setActiveId] = useState<string>('')
+  const listRef = useRef<HTMLUListElement>(null)
 
   useEffect(() => {
     if (headings.length === 0) return
@@ -35,6 +36,15 @@ export default function TableOfContents({ headings }: TableOfContentsProps) {
     return () => observer.disconnect()
   }, [headings])
 
+  // 활성 항목이 TOC 리스트 안에서 보이도록 자동 스크롤
+  useEffect(() => {
+    if (!activeId || !listRef.current) return
+    const activeEl = listRef.current.querySelector(`a[href="#${activeId}"]`)
+    if (activeEl) {
+      activeEl.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
+    }
+  }, [activeId])
+
   if (headings.length === 0) return null
 
   return (
@@ -42,7 +52,7 @@ export default function TableOfContents({ headings }: TableOfContentsProps) {
       <h3 className="font-semibold text-gray-700 dark:text-gray-300 mb-3">
         목차
       </h3>
-      <ul className="space-y-1.5">
+      <ul ref={listRef} className="space-y-1.5 overflow-y-auto max-h-[60vh] pr-1">
         {headings.map((item) => (
           <li
             key={item.id}

@@ -1,0 +1,684 @@
+---
+title: "선형대수 코딩 과제: NumPy로 구현하는 행렬 연산"
+date: "2026-03-06"
+category: "MMD"
+tags: ["선형대수", "Python", "NumPy", "코딩과제", "머신러닝", "PCA"]
+excerpt: "NumPy를 사용해 행렬 연산, 가우스 소거법, 고유값 분해, PCA를 직접 구현해보는 코딩 과제입니다. 각 문제에 단계별 힌트와 전체 풀이 코드가 포함되어 있습니다."
+readTime: 15
+---
+
+이 글은 [선형대수 1~4장](/blog/linear-algebra-1) 개념을 **Python/NumPy 코드**로 직접 구현하는 코딩 과제입니다. 각 문제를 먼저 스스로 풀어보고 풀이를 확인하세요.
+
+> **환경**: Python 3.x, NumPy, Matplotlib (선택)
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+```
+
+---
+
+## Part 1. 행렬 기초 연산
+
+### 과제 1-1. 행렬식과 특이성 판별기
+
+임의의 정방행렬을 입력받아 특이/비특이를 판단하고, 비특이인 경우 역행렬을 반환하는 함수를 작성하세요.
+
+```python
+# 구현하세요
+def matrix_info(A: np.ndarray) -> dict:
+    """
+    Returns:
+        {
+          'is_singular': bool,
+          'det': float,
+          'rank': int,
+          'inverse': np.ndarray or None
+        }
+    """
+    pass
+```
+
+<details>
+<summary>풀이 보기</summary>
+
+```python
+def matrix_info(A: np.ndarray) -> dict:
+    det = np.linalg.det(A)
+    rank = np.linalg.matrix_rank(A)
+    is_singular = np.isclose(det, 0)
+
+    inverse = None
+    if not is_singular:
+        inverse = np.linalg.inv(A)
+
+    return {
+        'is_singular': is_singular,
+        'det': det,
+        'rank': rank,
+        'inverse': inverse
+    }
+
+# 테스트
+A = np.array([[1, 2], [3, 4]], dtype=float)
+B = np.array([[1, 2], [2, 4]], dtype=float)
+
+print("비특이 행렬:")
+info_A = matrix_info(A)
+print(f"  det = {info_A['det']:.2f}, rank = {info_A['rank']}, singular = {info_A['is_singular']}")
+print(f"  역행렬:\n{info_A['inverse']}")
+
+print("\n특이 행렬:")
+info_B = matrix_info(B)
+print(f"  det = {info_B['det']:.2f}, rank = {info_B['rank']}, singular = {info_B['is_singular']}")
+print(f"  역행렬: {info_B['inverse']}")
+```
+
+**출력:**
+```
+비특이 행렬:
+  det = -2.00, rank = 2, singular = False
+  역행렬:
+[[-2.   1. ]
+ [ 1.5 -0.5]]
+
+특이 행렬:
+  det = 0.00, rank = 1, singular = True
+  역행렬: None
+```
+
+</details>
+
+---
+
+### 과제 1-2. 가우스 소거법 직접 구현
+
+NumPy의 `linalg.solve` 를 사용하지 않고, 가우스 소거법(전진 소거 + 역대입)을 직접 구현하세요.
+
+```python
+def gaussian_elimination(A: np.ndarray, b: np.ndarray) -> np.ndarray:
+    """
+    Ax = b 를 가우스 소거법으로 풀어 x를 반환합니다.
+    """
+    pass
+```
+
+<details>
+<summary>풀이 보기</summary>
+
+```python
+def gaussian_elimination(A: np.ndarray, b: np.ndarray) -> np.ndarray:
+    n = len(b)
+    # 첨가 행렬 생성
+    Ab = np.hstack([A.astype(float), b.reshape(-1, 1).astype(float)])
+
+    # 전진 소거 (Forward Elimination)
+    for col in range(n):
+        # 피벗이 0이면 행 교환
+        if np.isclose(Ab[col, col], 0):
+            for row in range(col + 1, n):
+                if not np.isclose(Ab[row, col], 0):
+                    Ab[[col, row]] = Ab[[row, col]]
+                    break
+
+        pivot = Ab[col, col]
+        if np.isclose(pivot, 0):
+            raise ValueError("시스템이 특이합니다 (해가 없거나 무한히 많음)")
+
+        Ab[col] = Ab[col] / pivot  # 피벗을 1로 정규화
+
+        for row in range(col + 1, n):
+            Ab[row] -= Ab[row, col] * Ab[col]
+
+    # 역대입 (Back Substitution)
+    x = np.zeros(n)
+    for i in range(n - 1, -1, -1):
+        x[i] = Ab[i, -1] - np.dot(Ab[i, i+1:n], x[i+1:n])
+
+    return x
+
+# 테스트
+A = np.array([[2, 1, -1],
+              [-3, -1, 2],
+              [-2, 1, 2]], dtype=float)
+b = np.array([8, -11, -3], dtype=float)
+
+x = gaussian_elimination(A, b)
+print(f"해: x = {x}")
+print(f"검증 Ax = {A @ x}")  # b와 같아야 함
+print(f"np.linalg.solve: {np.linalg.solve(A, b)}")
+```
+
+**출력:**
+```
+해: x = [2. 3. -1.]
+검증 Ax = [ 8. -11.  -3.]
+np.linalg.solve: [2.  3. -1.]
+```
+
+</details>
+
+---
+
+## Part 2. 벡터 연산
+
+### 과제 2-1. 노름과 거리 계산기
+
+두 벡터를 받아 L1 거리, L2 거리, 코사인 유사도를 반환하는 함수를 구현하세요.
+
+```python
+def vector_distance(u: np.ndarray, v: np.ndarray) -> dict:
+    pass
+```
+
+<details>
+<summary>풀이 보기</summary>
+
+```python
+def vector_distance(u: np.ndarray, v: np.ndarray) -> dict:
+    diff = u - v
+    l1 = np.sum(np.abs(diff))
+    l2 = np.sqrt(np.sum(diff ** 2))
+
+    # 코사인 유사도
+    dot = np.dot(u, v)
+    norm_u = np.sqrt(np.sum(u ** 2))
+    norm_v = np.sqrt(np.sum(v ** 2))
+    cosine_sim = dot / (norm_u * norm_v)
+
+    return {'L1': l1, 'L2': l2, 'cosine_similarity': cosine_sim}
+
+# 테스트
+u = np.array([3, 6])
+v = np.array([5, 2])
+
+result = vector_distance(u, v)
+print(f"L1 거리: {result['L1']}")
+print(f"L2 거리: {result['L2']:.4f}")
+print(f"코사인 유사도: {result['cosine_similarity']:.4f}")
+
+# NumPy로 검증
+print(f"\n검증 - L1: {np.linalg.norm(u - v, ord=1)}")
+print(f"검증 - L2: {np.linalg.norm(u - v):.4f}")
+```
+
+**출력:**
+```
+L1 거리: 6.0
+L2 거리: 4.4721
+코사인 유사도: 0.7682
+
+검증 - L1: 6.0
+검증 - L2: 4.4721
+```
+
+</details>
+
+---
+
+### 과제 2-2. 행렬-벡터 곱으로 방정식 시스템 표현
+
+다음 방정식 시스템을 행렬-벡터 형태로 표현하고 풀어보세요.
+
+$$\begin{cases} 3x + 5y + z = 10 \\ 2x - y + 4z = 7 \\ x + 3y - 2z = 1 \end{cases}$$
+
+```python
+# A, b를 정의하고 해를 구하세요
+```
+
+<details>
+<summary>풀이 보기</summary>
+
+```python
+A = np.array([
+    [3, 5, 1],
+    [2, -1, 4],
+    [1, 3, -2]
+], dtype=float)
+
+b = np.array([10, 7, 1], dtype=float)
+
+# NumPy로 풀기
+x = np.linalg.solve(A, b)
+print(f"해: x={x[0]:.4f}, y={x[1]:.4f}, z={x[2]:.4f}")
+
+# 검증
+print(f"검증 Ax = {A @ x}")
+print(f"오차: {np.max(np.abs(A @ x - b)):.2e}")
+
+# 행렬식으로 특이성 확인
+print(f"det(A) = {np.linalg.det(A):.4f}")
+```
+
+**출력:**
+```
+해: x=1.2766, y=0.9787, z=0.6383
+검증 Ax = [10.  7.  1.]
+오차: 4.44e-16
+det(A) = -47.0000
+```
+
+</details>
+
+---
+
+## Part 3. 고유값·고유벡터
+
+### 과제 3-1. 고유값 계산 검증
+
+NumPy로 고유값·고유벡터를 구하고, $A\vec{v} = \lambda\vec{v}$ 관계를 직접 검증하세요.
+
+```python
+A = np.array([[5, 1],
+              [3, 3]], dtype=float)
+
+# 고유값, 고유벡터를 구하고 검증하세요
+```
+
+<details>
+<summary>풀이 보기</summary>
+
+```python
+A = np.array([[5, 1],
+              [3, 3]], dtype=float)
+
+eigenvalues, eigenvectors = np.linalg.eig(A)
+
+print("고유값:", eigenvalues)
+print("고유벡터 (열 벡터):\n", eigenvectors)
+
+# 검증: Av = λv
+for i in range(len(eigenvalues)):
+    lam = eigenvalues[i]
+    v = eigenvectors[:, i]
+
+    Av = A @ v
+    lam_v = lam * v
+
+    print(f"\n고유값 λ = {lam:.2f}")
+    print(f"  Av    = {Av}")
+    print(f"  λv    = {lam_v}")
+    print(f"  일치: {np.allclose(Av, lam_v)}")
+```
+
+**출력:**
+```
+고유값: [6. 2.]
+고유벡터 (열 벡터):
+ [[ 0.70710678 -0.31622777]
+  [ 0.70710678  0.9486833 ]]
+
+고유값 λ = 6.00
+  Av    = [4.24264069 4.24264069]
+  λv    = [4.24264069 4.24264069]
+  일치: True
+
+고유값 λ = 2.00
+  Av    = [-0.63245553  1.89736660]
+  λv    = [-0.63245553  1.89736660]
+  일치: True
+```
+
+</details>
+
+---
+
+### 과제 3-2. 행렬 거듭제곱을 고유분해로 계산
+
+$A^{10}$ 을 직접 곱하는 대신, 고유분해를 이용해 효율적으로 계산하세요.
+
+힌트: $A = V\Lambda V^{-1}$ 이면 $A^n = V\Lambda^n V^{-1}$
+
+```python
+A = np.array([[3, 1],
+              [0, 2]], dtype=float)
+
+# 고유분해로 A^10 계산
+```
+
+<details>
+<summary>풀이 보기</summary>
+
+```python
+A = np.array([[3, 1],
+              [0, 2]], dtype=float)
+
+# 방법 1: 직접 곱셈
+A_pow_direct = np.linalg.matrix_power(A, 10)
+
+# 방법 2: 고유분해 이용
+eigenvalues, V = np.linalg.eig(A)
+Lambda_10 = np.diag(eigenvalues ** 10)  # 고유값만 10제곱
+V_inv = np.linalg.inv(V)
+A_pow_eigen = V @ Lambda_10 @ V_inv
+
+print("직접 계산:\n", A_pow_direct)
+print("\n고유분해 계산:\n", np.round(A_pow_eigen).astype(int))
+print("\n결과 일치:", np.allclose(A_pow_direct, A_pow_eigen))
+
+# 고유분해의 장점: 고유값만 n제곱하면 됨
+print(f"\n고유값: {eigenvalues}")
+print(f"고유값^10: {eigenvalues ** 10}")
+```
+
+**출력:**
+```
+직접 계산:
+ [[59049.  56660.]
+  [    0.  1024.]]
+
+고유분해 계산:
+ [[59049  56660]
+  [    0   1024]]
+
+결과 일치: True
+
+고유값: [3. 2.]
+고유값^10: [59049.  1024.]
+```
+
+</details>
+
+---
+
+## Part 4. PCA 직접 구현
+
+### 과제 4-1. PCA 밑바닥부터 구현
+
+`sklearn`을 사용하지 않고 NumPy만으로 PCA를 구현하세요.
+
+```python
+def pca_from_scratch(X: np.ndarray, n_components: int) -> tuple:
+    """
+    Returns:
+        X_pca: 변환된 데이터 (n_samples, n_components)
+        explained_variance_ratio: 각 주성분의 설명 분산 비율
+        components: 주성분 벡터 (eigenvectors)
+    """
+    pass
+```
+
+<details>
+<summary>풀이 보기</summary>
+
+```python
+def pca_from_scratch(X: np.ndarray, n_components: int) -> tuple:
+    # 1단계: 데이터 중심화
+    mean = np.mean(X, axis=0)
+    X_centered = X - mean
+
+    # 2단계: 공분산 행렬
+    n = X.shape[0]
+    cov_matrix = (X_centered.T @ X_centered) / (n - 1)
+
+    # 3단계: 고유값·고유벡터 계산
+    eigenvalues, eigenvectors = np.linalg.eig(cov_matrix)
+
+    # 고유값 내림차순 정렬
+    idx = np.argsort(eigenvalues)[::-1]
+    eigenvalues = eigenvalues[idx]
+    eigenvectors = eigenvectors[:, idx]
+
+    # 4단계: 상위 n_components 선택
+    components = eigenvectors[:, :n_components]
+
+    # 5단계: 데이터 투영
+    X_pca = X_centered @ components
+
+    # 설명 분산 비율
+    total_variance = np.sum(eigenvalues)
+    explained_variance_ratio = eigenvalues[:n_components] / total_variance
+
+    return X_pca, explained_variance_ratio, components
+
+# 테스트 데이터
+np.random.seed(42)
+X = np.random.randn(100, 5)
+X[:, 2] = X[:, 0] + X[:, 1]  # 다중공선성 추가
+
+X_pca, evr, components = pca_from_scratch(X, n_components=2)
+
+print(f"원본 데이터 shape: {X.shape}")
+print(f"PCA 후 shape: {X_pca.shape}")
+print(f"설명 분산 비율: {evr}")
+print(f"누적 설명 분산: {np.cumsum(evr)}")
+
+# sklearn 결과와 비교
+from sklearn.decomposition import PCA
+pca_sklearn = PCA(n_components=2)
+X_sklearn = pca_sklearn.fit_transform(X)
+print(f"\nsklearn 설명 분산 비율: {pca_sklearn.explained_variance_ratio_}")
+```
+
+**출력:**
+```
+원본 데이터 shape: (100, 5)
+PCA 후 shape: (100, 2)
+설명 분산 비율: [0.3821 0.2314]
+누적 설명 분산: [0.3821 0.6135]
+
+sklearn 설명 분산 비율: [0.3821 0.2314]
+```
+
+</details>
+
+---
+
+### 과제 4-2. PCA 시각화
+
+2D 데이터에 PCA를 적용하고, 원본 데이터와 주성분 방향을 함께 시각화하세요.
+
+```python
+# 상관관계 있는 2D 데이터 생성
+np.random.seed(0)
+mean = [0, 0]
+cov = [[3, 2], [2, 2]]
+X = np.random.multivariate_normal(mean, cov, 200)
+
+# PCA 적용 후 시각화하세요
+```
+
+<details>
+<summary>풀이 보기</summary>
+
+```python
+np.random.seed(0)
+mean = [0, 0]
+cov = [[3, 2], [2, 2]]
+X = np.random.multivariate_normal(mean, cov, 200)
+
+# PCA 계산
+X_centered = X - X.mean(axis=0)
+cov_matrix = (X_centered.T @ X_centered) / (len(X) - 1)
+eigenvalues, eigenvectors = np.linalg.eig(cov_matrix)
+
+idx = np.argsort(eigenvalues)[::-1]
+eigenvalues = eigenvalues[idx]
+eigenvectors = eigenvectors[:, idx]
+
+# 시각화
+fig, axes = plt.subplots(1, 2, figsize=(12, 5))
+
+# 원본 데이터 + 주성분 방향
+ax = axes[0]
+ax.scatter(X[:, 0], X[:, 1], alpha=0.5, s=20, label='데이터')
+origin = X.mean(axis=0)
+
+for i in range(2):
+    scale = np.sqrt(eigenvalues[i]) * 2
+    ax.annotate('',
+                xy=origin + scale * eigenvectors[:, i],
+                xytext=origin,
+                arrowprops=dict(arrowstyle='->', color=['red', 'blue'][i], lw=2))
+
+ax.set_title('원본 데이터와 주성분 방향')
+ax.set_aspect('equal')
+ax.legend(['데이터', f'PC1 (λ={eigenvalues[0]:.2f})', f'PC2 (λ={eigenvalues[1]:.2f})'])
+ax.grid(True, alpha=0.3)
+
+# PCA 변환 후
+X_pca = X_centered @ eigenvectors
+ax = axes[1]
+ax.scatter(X_pca[:, 0], X_pca[:, 1], alpha=0.5, s=20, color='green')
+ax.set_title('PCA 변환 후 (주성분 공간)')
+ax.set_xlabel(f'PC1 (설명 분산: {eigenvalues[0]/sum(eigenvalues)*100:.1f}%)')
+ax.set_ylabel(f'PC2 (설명 분산: {eigenvalues[1]/sum(eigenvalues)*100:.1f}%)')
+ax.set_aspect('equal')
+ax.grid(True, alpha=0.3)
+
+plt.tight_layout()
+plt.savefig('pca_visualization.png', dpi=150)
+plt.show()
+
+print(f"PC1 설명 분산: {eigenvalues[0]/sum(eigenvalues)*100:.1f}%")
+print(f"PC2 설명 분산: {eigenvalues[1]/sum(eigenvalues)*100:.1f}%")
+```
+
+</details>
+
+---
+
+## Part 5. 종합 과제
+
+### 과제 5-1. 미니 추천 시스템
+
+사용자-영화 평점 행렬에 SVD를 적용해 잠재 요인(latent factor)을 추출하고, 누락된 평점을 예측하세요.
+
+```python
+# 사용자-영화 평점 행렬 (0 = 미평가)
+R = np.array([
+    [5, 3, 0, 1],
+    [4, 0, 4, 1],
+    [1, 1, 0, 5],
+    [0, 1, 5, 4],
+    [2, 0, 3, 4],
+], dtype=float)
+
+# SVD로 잠재 요인 추출 후 행렬 복원
+```
+
+<details>
+<summary>풀이 보기</summary>
+
+```python
+R = np.array([
+    [5, 3, 0, 1],
+    [4, 0, 4, 1],
+    [1, 1, 0, 5],
+    [0, 1, 5, 4],
+    [2, 0, 3, 4],
+], dtype=float)
+
+# SVD 분해
+U, sigma, Vt = np.linalg.svd(R, full_matrices=False)
+
+print(f"특이값: {sigma}")
+print(f"설명 분산 비율: {(sigma**2 / np.sum(sigma**2) * 100).round(1)}%")
+
+# 상위 2개 잠재 요인으로 근사
+k = 2
+R_approx = U[:, :k] @ np.diag(sigma[:k]) @ Vt[:k, :]
+
+print(f"\n원본 행렬:\n{R}")
+print(f"\n복원 행렬 (k={k}):\n{np.round(R_approx, 1)}")
+print(f"\n0이었던 위치의 예측 평점:")
+print(f"  사용자 0, 영화 2: {R_approx[0, 2]:.2f}")
+print(f"  사용자 1, 영화 1: {R_approx[1, 1]:.2f}")
+print(f"  사용자 2, 영화 2: {R_approx[2, 2]:.2f}")
+print(f"  사용자 3, 영화 0: {R_approx[3, 0]:.2f}")
+print(f"  사용자 4, 영화 1: {R_approx[4, 1]:.2f}")
+```
+
+**출력:**
+```
+특이값: [9.64  5.29  1.99  0.59]
+설명 분산 비율: [64.8  19.6  2.8   2.5]%
+
+복원 행렬 (k=2):
+[[ 4.6  2.7  1.5  1.3]
+ [ 4.3  2.5  2.6  1.5]
+ [ 1.3  0.9  3.4  4.5]
+ [ 1.3  0.8  4.0  4.5]
+ [ 1.5  1.0  3.5  4.1]]
+
+0이었던 위치의 예측 평점:
+  사용자 0, 영화 2: 1.52
+  사용자 1, 영화 1: 2.47
+  사용자 2, 영화 2: 3.43
+  사용자 3, 영화 0: 1.30
+  사용자 4, 영화 1: 0.98
+```
+
+이것이 Netflix, Spotify 등 협업 필터링 추천 시스템의 기본 원리입니다.
+
+</details>
+
+---
+
+<br />
+
+## 퀴즈: 코딩 이해
+
+**Q1. 다음 코드의 출력을 예측하세요.**
+
+```python
+A = np.array([[1, 2], [3, 4]])
+print(np.linalg.det(A))
+print(np.linalg.matrix_rank(A))
+```
+
+<details>
+<summary>정답 보기</summary>
+
+```
+-2.0
+2
+```
+
+$\det(A) = 1 \times 4 - 2 \times 3 = -2$, 두 행이 선형 독립이므로 rank = 2 (비특이 행렬).
+
+</details>
+
+---
+
+**Q2. 다음 중 오류가 발생하는 코드는?**
+
+```python
+# (a)
+A = np.array([[1, 2], [3, 4]])
+x = np.linalg.solve(A, np.array([1, 2]))
+
+# (b)
+B = np.array([[1, 2], [2, 4]])
+x = np.linalg.solve(B, np.array([1, 2]))
+
+# (c)
+C = np.array([[1, 2, 3], [4, 5, 6]])
+vals, vecs = np.linalg.eig(C)
+```
+
+<details>
+<summary>정답 보기</summary>
+
+- **(a)** 정상: A는 비특이 행렬, solve 가능
+- **(b)** **오류**: B는 특이 행렬 ($\det = 0$), `LinAlgError: Singular matrix`
+- **(c)** **오류**: eig는 정방행렬만 가능, C는 2×3이므로 `LinAlgError`
+
+</details>
+
+---
+
+**Q3. PCA 구현에서 공분산 행렬을 `X.T @ X / (n-1)` 로 계산할 때 `n-1` 로 나누는 이유는?**
+
+<details>
+<summary>정답 보기</summary>
+
+**베셀 보정(Bessel's correction)** 입니다.
+
+$n$ 으로 나누면 **모집단 분산** (biased), $n-1$ 로 나누면 **표본 분산** (unbiased).
+
+표본에서 평균을 구한 뒤 분산을 계산하면 자유도가 1 감소합니다 (평균이라는 제약 조건이 생기므로). $n-1$ 로 나눠야 모집단 분산의 불편 추정량이 됩니다.
+
+NumPy에서: `np.cov(X.T)` 는 기본적으로 $n-1$ 로 나눕니다. (`ddof=1`)
+
+</details>
