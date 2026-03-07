@@ -47,27 +47,27 @@ readTime: 11
 집을 짓는 위치 $x$ 를 정할 때, 전력선 $a, b, c$ 까지의 연결 비용을 최소화하고 싶습니다.
 
 **비용 함수 (Cost Function):**
-
+<br />
 $$C(x) = (x-a)^2 + (x-b)^2 + (x-c)^2$$
-
+<br />
 거리의 제곱을 사용하는 이유:
 - 절댓값보다 **미분이 쉬움**
 - 음수/양수 방향 모두 동일하게 패널티 부여
 
 **최솟값 찾기** — 도함수 = 0:
-
+<br />
 $$C'(x) = 2(x-a) + 2(x-b) + 2(x-c) = 0$$
-
+<br />
 $$3x = a + b + c$$
-
+<br />
 $$\boxed{x = \frac{a+b+c}{3}}$$
-
+<br />
 **결론**: 제곱 손실을 최소화하는 최적 위치는 **평균(mean)** 입니다. 선형 회귀가 MSE를 최소화하면 계수가 최소제곱 추정량이 되는 것도 같은 원리입니다.
 
 ### $n$개로 일반화
 
 $$C(x) = \sum_{i=1}^n (x - x_i)^2 \quad \Rightarrow \quad x^* = \frac{1}{n}\sum_{i=1}^n x_i$$
-
+<br />
 **머신러닝 해석**: MSE(평균 제곱 오차)를 손실 함수로 쓰면, 이를 최소화하는 예측값은 항상 정답의 **평균**입니다.
 
 ---
@@ -79,33 +79,33 @@ $$C(x) = \sum_{i=1}^n (x - x_i)^2 \quad \Rightarrow \quad x^* = \frac{1}{n}\sum_
 동전을 10번 던져 앞면(H)이 7번, 뒷면(T)이 3번 나왔습니다. 이 동전의 앞면 확률 $p$ 를 추정하고 싶습니다.
 
 **우도(Likelihood):**
-
+<br />
 $$L(p) = p^7 (1-p)^3$$
-
+<br />
 이 $L(p)$ 를 최대화하는 $p$ 를 찾는 것이 **최대 우도 추정(MLE)** 입니다.
 
 **문제**: 확률의 곱은 숫자가 매우 작아집니다 (예: $0.7^7 \times 0.3^3 \approx 0.0022$). 더 많은 데이터가 있으면 컴퓨터가 처리할 수 없을 정도로 작아집니다.
 
 **해결책 — 로그 변환:**
-
+<br />
 $$\log L(p) = 7\log p + 3\log(1-p)$$
-
+<br />
 로그의 성질로 **곱 → 합**으로 바뀌어 계산이 안정됩니다.
 
 **미분해서 최솟값 찾기:**
-
+<br />
 $$\frac{d}{dp}\log L = \frac{7}{p} - \frac{3}{1-p} = 0$$
-
+<br />
 $$7(1-p) = 3p \quad \Rightarrow \quad p = \frac{7}{10} = 0.7$$
-
+<br />
 **결론**: MLE로 추정한 확률은 관측 빈도($\frac{7}{10}$)와 일치합니다.
 
 ### 네거티브 로그 손실 (Negative Log-Loss)
 
 분류 모델에서 손실 함수로 로그 손실을 쓸 때 **음의 부호**를 붙입니다:
-
+<br />
 $$\text{Loss} = -\log L(p) = -[y\log p + (1-y)\log(1-p)]$$
-
+<br />
 이유:
 - $0 < p < 1$ 일 때 $\log p < 0$ → 로그 손실은 음수
 - 음수를 붙여 **양수로 만들고** 최소화
@@ -127,23 +127,23 @@ $$\text{Loss} = -\log L(p) = -[y\log p + (1-y)\log(1-p)]$$
 ### 편미분 계산
 
 $$f(x, y) = 3x^2y^3$$
-
+<br />
 **$x$에 대한 편미분** ($y$를 상수 취급):
-
+<br />
 $$\frac{\partial f}{\partial x} = 6xy^3$$
-
+<br />
 **$y$에 대한 편미분** ($x$를 상수 취급):
-
+<br />
 $$\frac{\partial f}{\partial y} = 9x^2y^2$$
-
+<br />
 **표기법**: $\frac{\partial f}{\partial x}$ 또는 $f_x$ (라운드 d, partial d)
 
 ### 편미분 예시
 
 $$f(x, y) = x^2y + 3x + y^2$$
-
+<br />
 $$\frac{\partial f}{\partial x} = 2xy + 3$$
-
+<br />
 $$\frac{\partial f}{\partial y} = x^2 + 2y$$
 
 > **핵심**: $x$에 대해 편미분할 때, $y$가 포함된 항은 상수처럼 취급합니다. $y^2$는 $x$에 대해 상수이므로 미분하면 0.
@@ -153,23 +153,23 @@ $$\frac{\partial f}{\partial y} = x^2 + 2y$$
 ## 그래디언트 (Gradient)
 
 **그래디언트** $\nabla f$ 는 모든 편미분을 모아 만든 **벡터**입니다.
-
+<br />
 $$\nabla f = \begin{bmatrix} \frac{\partial f}{\partial x_1} \\ \frac{\partial f}{\partial x_2} \\ \vdots \\ \frac{\partial f}{\partial x_n} \end{bmatrix}$$
-
+<br />
 2변수 함수 $f(x, y)$ 의 경우:
-
+<br />
 $$\nabla f = \begin{bmatrix} \frac{\partial f}{\partial x} \\ \frac{\partial f}{\partial y} \end{bmatrix}$$
 
 ### 예시
 
 $$f(x, y) = x^2 + y^2$$
-
+<br />
 $$\nabla f = \begin{bmatrix} 2x \\ 2y \end{bmatrix}$$
-
+<br />
 $(2, 3)$ 에서의 그래디언트:
-
+<br />
 $$\nabla f(2, 3) = \begin{bmatrix} 4 \\ 6 \end{bmatrix}$$
-
+<br />
 **기하학적 의미**: 그래디언트는 함수가 **가장 가파르게 증가하는 방향**을 가리킵니다. 반대 방향(-그래디언트)이 가장 빠르게 감소하는 방향입니다.
 
 ---
@@ -179,7 +179,7 @@ $$\nabla f(2, 3) = \begin{bmatrix} 4 \\ 6 \end{bmatrix}$$
 ### 해석적 방법 (Analytical Method)
 
 다변수 함수의 최솟값은 **모든 편미분 = 0** 인 점에서 발생합니다.
-
+<br />
 $$\nabla f = \vec{0} \quad \Leftrightarrow \quad \frac{\partial f}{\partial x_1} = \frac{\partial f}{\partial x_2} = \cdots = 0$$
 
 ### 선형 회귀 예시
@@ -187,19 +187,19 @@ $$\nabla f = \vec{0} \quad \Leftrightarrow \quad \frac{\partial f}{\partial x_1}
 데이터 포인트 $(1, 1), (2, 2), (3, 3)$ 에 직선 $y = mx + b$ 를 피팅할 때:
 
 **손실 함수 (MSE):**
-
+<br />
 $$E(m, b) = (m + b - 1)^2 + (2m + b - 2)^2 + (3m + b - 3)^2$$
-
+<br />
 **편미분:**
-
+<br />
 $$\frac{\partial E}{\partial m} = 28m + 12b - 42 = 0$$
-
+<br />
 $$\frac{\partial E}{\partial b} = 12m + 6b - 20 = 0$$
-
+<br />
 **연립방정식 풀기:**
-
+<br />
 $$m = 1, \quad b = \frac{2}{3}$$
-
+<br />
 이것이 **최소제곱법(Least Squares)** 의 해석적 해입니다.
 
 > **실무에서는?** 데이터가 많고 파라미터가 많으면 해석적으로 풀기가 어렵습니다. 이때 **경사 하강법(Gradient Descent)** 을 사용합니다.
@@ -231,9 +231,9 @@ $$m = 1, \quad b = \frac{2}{3}$$
 <summary>정답 보기</summary>
 
 $y$를 상수 취급:
-
+<br />
 $$\frac{\partial f}{\partial x} = 2xy + 6$$
-
+<br />
 </details>
 
 ---
@@ -242,13 +242,13 @@ $$\frac{\partial f}{\partial x} = 2xy + 6$$
 
 <details>
 <summary>정답 보기</summary>
-
+<br />
 $$\frac{\partial f}{\partial x} = ye^{xy}$$
-
+<br />
 $$\frac{\partial f}{\partial y} = xe^{xy} + 2y$$
-
+<br />
 $$\nabla f = \begin{bmatrix} ye^{xy} \\ xe^{xy} + 2y \end{bmatrix}$$
-
+<br />
 </details>
 
 ---
@@ -257,11 +257,11 @@ $$\nabla f = \begin{bmatrix} ye^{xy} \\ xe^{xy} + 2y \end{bmatrix}$$
 
 <details>
 <summary>정답 보기</summary>
-
+<br />
 $$L'(w) = 2(w-3) + 2(w-7) + 2(w-5) = 0$$
-
+<br />
 $$6w = 30 \quad \Rightarrow \quad w = 5$$
-
+<br />
 3, 7, 5의 **평균**입니다. 제곱 손실의 최솟값은 항상 평균임을 확인할 수 있습니다.
 
 </details>

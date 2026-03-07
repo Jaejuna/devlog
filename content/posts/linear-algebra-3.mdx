@@ -30,7 +30,7 @@ readTime: 13
 - **방향(Direction)**: 화살표가 가리키는 방향
 
 머신러닝에서 데이터 하나의 인스턴스(관측값)는 보통 **벡터**로 표현됩니다.
-
+<br />
 $$\vec{v} = \begin{bmatrix} 3 \\ 4 \end{bmatrix}$$
 
 ---
@@ -42,17 +42,17 @@ $$\vec{v} = \begin{bmatrix} 3 \\ 4 \end{bmatrix}$$
 ### L1-노름 (맨해튼 노름)
 
 좌표의 절댓값을 모두 더한 값입니다. 격자 도시에서 블록을 따라 이동하는 거리와 같습니다.
-
+<br />
 $$\|\vec{v}\|_1 = |v_1| + |v_2| + \cdots + |v_n|$$
-
+<br />
 $$\vec{v} = (3, 4) \Rightarrow \|\vec{v}\|_1 = 3 + 4 = 7$$
 
 ### L2-노름 (유클리드 노름)
 
 좌표의 제곱합의 제곱근입니다. 피타고라스 정리로 빗변을 구하는 것과 같습니다.
-
+<br />
 $$\|\vec{v}\|_2 = \sqrt{v_1^2 + v_2^2 + \cdots + v_n^2}$$
-
+<br />
 $$\vec{v} = (3, 4) \Rightarrow \|\vec{v}\|_2 = \sqrt{9 + 16} = \sqrt{25} = 5$$
 
 > **실무에서는?** L2-노름은 정규화(regularization)에서 가중치의 크기를 제한할 때(L2 regularization, Ridge) 사용하고, L1-노름은 희소성(sparsity)을 유도하는 L1 regularization(Lasso)에서 사용합니다.
@@ -62,13 +62,13 @@ $$\vec{v} = (3, 4) \Rightarrow \|\vec{v}\|_2 = \sqrt{9 + 16} = \sqrt{25} = 5$$
 ## 벡터의 합과 차
 
 대응하는 좌표끼리 더하거나 빼면 됩니다.
-
+<br />
 $$\vec{u} = (1, 3), \quad \vec{v} = (6, 2)$$
-
+<br />
 $$\vec{u} + \vec{v} = (1+6,\ 3+2) = (7, 5)$$
-
+<br />
 $$\vec{u} - \vec{v} = (1-6,\ 3-2) = (-5, 1)$$
-
+<br />
 기하학적으로 $\vec{u} + \vec{v}$ 는 두 벡터가 만드는 **평행사변형의 대각선**입니다.
 
 ---
@@ -76,13 +76,13 @@ $$\vec{u} - \vec{v} = (1-6,\ 3-2) = (-5, 1)$$
 ## 벡터 간 거리
 
 두 벡터의 **차(difference)** 를 구한 뒤, L1 또는 L2 노름을 적용합니다.
-
+<br />
 $$\vec{u} = (3, 6), \quad \vec{v} = (5, 2)$$
-
+<br />
 $$\vec{u} - \vec{v} = (-2, 4)$$
-
+<br />
 $$\text{L1 거리} = |-2| + |4| = 6$$
-
+<br />
 $$\text{L2 거리} = \sqrt{(-2)^2 + 4^2} = \sqrt{4 + 16} = \sqrt{20}$$
 
 ---
@@ -90,13 +90,13 @@ $$\text{L2 거리} = \sqrt{(-2)^2 + 4^2} = \sqrt{4 + 16} = \sqrt{20}$$
 ## 스칼라 곱 (Scalar Multiplication)
 
 벡터의 각 좌표에 스칼라(상수)를 곱합니다.
-
+<br />
 $$k \cdot \vec{v} = k \cdot \begin{bmatrix} v_1 \\ v_2 \end{bmatrix} = \begin{bmatrix} k v_1 \\ k v_2 \end{bmatrix}$$
-
+<br />
 - **양수 스칼라**: 같은 방향으로 크기만 변함
 - **음수 스칼라**: 방향이 반대로 바뀌고 크기가 변함
 - **스칼라 = 0**: 영벡터(zero vector)가 됨
-
+<br />
 $$\vec{u} = (3, 5),\quad 6\vec{u} = (18, 30)$$
 
 ---
@@ -104,17 +104,17 @@ $$\vec{u} = (3, 5),\quad 6\vec{u} = (18, 30)$$
 ## 점곱 (Dot Product)
 
 대응하는 좌표를 곱해서 모두 더합니다. 결과는 **스칼라**입니다.
-
+<br />
 $$\vec{a} \cdot \vec{b} = a_1 b_1 + a_2 b_2 + \cdots + a_n b_n$$
-
+<br />
 $$\vec{u} = (1, 2, 3),\quad \vec{v} = (0, 3, 5)$$
-
+<br />
 $$\vec{u} \cdot \vec{v} = (1 \cdot 0) + (2 \cdot 3) + (3 \cdot 5) = 0 + 6 + 15 = 21$$
 
 ### 기하학적 점곱
 
 점곱은 두 벡터의 **각도**와 밀접한 관계가 있습니다.
-
+<br />
 $$\vec{a} \cdot \vec{b} = \|\vec{a}\|_2 \cdot \|\vec{b}\|_2 \cdot \cos\theta$$
 
 | $\cos\theta$ 값 | 각도 | 점곱 부호 |
@@ -132,11 +132,11 @@ $$\vec{a} \cdot \vec{b} = \|\vec{a}\|_2 \cdot \|\vec{b}\|_2 \cdot \cos\theta$$
 ## 행렬과 벡터의 곱
 
 행렬의 각 **행(row)** 과 벡터의 점곱을 계산합니다.
-
+<br />
 $$\begin{bmatrix} a & b \\ c & d \end{bmatrix} \begin{bmatrix} x \\ y \end{bmatrix} = \begin{bmatrix} ax + by \\ cx + dy \end{bmatrix}$$
-
+<br />
 **예시:**
-
+<br />
 $$\begin{bmatrix} 3 & 5 & 1 \\ 2 & -1 & 4 \end{bmatrix} \begin{bmatrix} x \\ y \\ z \end{bmatrix} = \begin{bmatrix} 3x + 5y + z \\ 2x - y + 4z \end{bmatrix}$$
 
 > **주의**: 행렬의 **열(column) 수**가 벡터의 **길이**와 반드시 일치해야 합니다.
@@ -148,9 +148,9 @@ $$\begin{bmatrix} 3 & 5 & 1 \\ 2 & -1 & 4 \end{bmatrix} \begin{bmatrix} x \\ y \
 ## 선형 변환 (Linear Transformation)
 
 선형 변환은 평면의 각 점을 **구조적인 방식**으로 다른 점으로 보내는 함수입니다.
-
+<br />
 $$T: \mathbb{R}^n \rightarrow \mathbb{R}^m$$
-
+<br />
 행렬-벡터 곱 $A\vec{x}$ 가 바로 선형 변환입니다. 행렬 $A$ 가 변환 규칙을 정의합니다.
 
 ### 행렬로 선형 변환 찾기
@@ -161,7 +161,7 @@ $$T: \mathbb{R}^n \rightarrow \mathbb{R}^m$$
 - **2열**: $T(0, 1)$ 의 결과
 
 **예시:** $T(1, 0) = (4, 1)$, $T(0, 1) = (1, 2)$ 이면
-
+<br />
 $$A = \begin{bmatrix} 4 & 1 \\ 1 & 2 \end{bmatrix}$$
 
 ---
@@ -169,17 +169,17 @@ $$A = \begin{bmatrix} 4 & 1 \\ 1 & 2 \end{bmatrix}$$
 ## 행렬 곱셈 (Matrix Multiplication)
 
 행렬 곱셈은 **두 선형 변환을 합성**하는 연산입니다. 변환 $B$ 를 먼저 적용하고, 그 다음 $A$ 를 적용한 결과가 $AB$ 입니다.
-
+<br />
 $$C = AB$$
-
+<br />
 $C$ 의 $(i, j)$ 원소는 $A$ 의 $i$번째 **행**과 $B$ 의 $j$번째 **열**의 점곱입니다.
-
+<br />
 $$C_{ij} = \sum_k A_{ik} B_{kj}$$
-
+<br />
 **예시:**
-
+<br />
 $$A = \begin{bmatrix} 1 & 2 \\ 2 & -1 \\ 0 & 2 \end{bmatrix}, \quad B = \begin{bmatrix} 3 & 1 \\ 1 & -2 \end{bmatrix}$$
-
+<br />
 $$AB = \begin{bmatrix} (1\cdot3 + 2\cdot1) & (1\cdot1 + 2\cdot(-2)) \\ (2\cdot3 + (-1)\cdot1) & (2\cdot1 + (-1)\cdot(-2)) \\ (0\cdot3 + 2\cdot1) & (0\cdot1 + 2\cdot(-2)) \end{bmatrix} = \begin{bmatrix} 5 & -3 \\ 5 & 4 \\ 2 & -4 \end{bmatrix}$$
 
 > **주의**: $AB \neq BA$ — 행렬 곱셈은 **교환법칙이 성립하지 않습니다.**
@@ -191,13 +191,13 @@ $$AB = \begin{bmatrix} (1\cdot3 + 2\cdot1) & (1\cdot1 + 2\cdot(-2)) \\ (2\cdot3 
 ## 단위 행렬 (Identity Matrix)
 
 대각 원소가 모두 1이고 나머지는 0인 행렬입니다.
-
+<br />
 $$I = \begin{bmatrix} 1 & 0 \\ 0 & 1 \end{bmatrix}, \quad I = \begin{bmatrix} 1 & 0 & 0 \\ 0 & 1 & 0 \\ 0 & 0 & 1 \end{bmatrix}$$
-
+<br />
 단위 행렬을 선형 변환으로 적용하면 벡터/행렬이 **그대로** 유지됩니다.
-
+<br />
 $$IA = AI = A$$
-
+<br />
 숫자에서 $1 \times a = a$ 와 동일한 역할입니다.
 
 ---
@@ -205,30 +205,30 @@ $$IA = AI = A$$
 ## 역행렬 (Inverse Matrix)
 
 행렬 $A$ 의 역행렬 $A^{-1}$ 은 다음을 만족합니다.
-
+<br />
 $$A \cdot A^{-1} = A^{-1} \cdot A = I$$
-
+<br />
 선형 변환으로 보면, 역행렬은 원래 변환을 **되돌리는(undo)** 변환입니다.
 
 ### 역행렬 구하기
 
 선형방정식 시스템을 풀면 역행렬을 구할 수 있습니다.
-
+<br />
 $$A = \begin{bmatrix} 2 & 1 \\ 1 & 4 \end{bmatrix}, \quad A^{-1} = \begin{bmatrix} a & b \\ c & d \end{bmatrix}$$
-
+<br />
 $A \cdot A^{-1} = I$ 조건에서:
-
+<br />
 $$\begin{cases} 2a + c = 1 \\ a + 4c = 0 \end{cases} \Rightarrow a = \frac{4}{7},\ c = -\frac{1}{7}$$
-
+<br />
 $$\begin{cases} 2b + d = 0 \\ b + 4d = 1 \end{cases} \Rightarrow b = -\frac{1}{7},\ d = \frac{2}{7}$$
-
+<br />
 $$A^{-1} = \frac{1}{7}\begin{bmatrix} 4 & -1 \\ -1 & 2 \end{bmatrix}$$
 
 ### 어떤 행렬이 역행렬을 가지는가?
 
 - **비특이 행렬(Non-singular)**: 역행렬 존재 ($\det \neq 0$)
 - **특이 행렬(Singular)**: 역행렬 **없음** ($\det = 0$)
-
+<br />
 $$\det(A) = 0 \Rightarrow A^{-1} \text{ 존재하지 않음}$$
 
 > 역행렬은 방정식 시스템을 행렬 형태로 풀 때 사용됩니다: $A\vec{x} = \vec{b}$ → $\vec{x} = A^{-1}\vec{b}$
@@ -242,7 +242,7 @@ $$\det(A) = 0 \Rightarrow A^{-1} \text{ 존재하지 않음}$$
 ### 퍼셉트론 (Perceptron)
 
 퍼셉트론은 가장 단순한 형태의 뉴럴 네트워크입니다. 입력 데이터를 행렬 곱으로 계산하고, 결과가 임계값(threshold)을 초과하면 1(활성화), 아니면 0을 출력합니다.
-
+<br />
 $$\text{출력} = \begin{cases} 1 & \text{if } \vec{w} \cdot \vec{x} \geq \text{threshold} \\ 0 & \text{otherwise} \end{cases}$$
 
 | 구성 요소 | 행렬/벡터 역할 |
@@ -262,9 +262,9 @@ $$\text{출력} = \begin{cases} 1 & \text{if } \vec{w} \cdot \vec{x} \geq \text{
 | 1 | 1 | 1 |
 
 가중치를 복권=1점, 시험=1점, 임계값=1.5로 설정하면:
-
+<br />
 $$\vec{w} = (1, 1), \quad \text{threshold} = 1.5$$
-
+<br />
 - $(0, 0)$: $0 < 1.5$ → 0 ✓
 - $(1, 0)$: $1 < 1.5$ → 0 ✓
 - $(0, 1)$: $1 < 1.5$ → 0 ✓
@@ -275,9 +275,9 @@ $$\vec{w} = (1, 1), \quad \text{threshold} = 1.5$$
 ### 더 큰 모델에서
 
 여러 개의 데이터 인스턴스를 한 번에 처리할 때는 **행렬 곱셈**을 사용합니다.
-
+<br />
 $$X \cdot W = \text{예측값 행렬}$$
-
+<br />
 - $X$: 데이터 행렬 (각 행이 하나의 데이터 인스턴스)
 - $W$: 가중치 행렬 (모델 파라미터)
 
@@ -307,16 +307,16 @@ $$X \cdot W = \text{예측값 행렬}$$
 ## 퀴즈
 
 **Q1. 다음 벡터의 L1-노름과 L2-노름을 구하세요.**
-
+<br />
 $$\vec{v} = (-3, 4)$$
-
+<br />
 <details>
 <summary>정답 보기</summary>
-
+<br />
 $$\|\vec{v}\|_1 = |-3| + |4| = 3 + 4 = 7$$
-
+<br />
 $$\|\vec{v}\|_2 = \sqrt{(-3)^2 + 4^2} = \sqrt{9 + 16} = \sqrt{25} = 5$$
-
+<br />
 </details>
 
 ---
@@ -325,9 +325,9 @@ $$\|\vec{v}\|_2 = \sqrt{(-3)^2 + 4^2} = \sqrt{9 + 16} = \sqrt{25} = 5$$
 
 <details>
 <summary>정답 보기</summary>
-
+<br />
 $$\vec{u} \cdot \vec{v} = (2 \cdot 1) + ((-1) \cdot 4) + (3 \cdot (-2)) = 2 - 4 - 6 = -8$$
-
+<br />
 점곱이 음수이므로 두 벡터의 사잇각은 **90°보다 큽니다.**
 
 </details>
@@ -335,14 +335,14 @@ $$\vec{u} \cdot \vec{v} = (2 \cdot 1) + ((-1) \cdot 4) + (3 \cdot (-2)) = 2 - 4 
 ---
 
 **Q3. 다음 행렬 곱셈을 계산하세요.**
-
+<br />
 $$\begin{bmatrix} 2 & 0 \\ 1 & 3 \end{bmatrix} \begin{bmatrix} 1 & 4 \\ 2 & -1 \end{bmatrix}$$
-
+<br />
 <details>
 <summary>정답 보기</summary>
-
+<br />
 $$\begin{bmatrix} (2\cdot1 + 0\cdot2) & (2\cdot4 + 0\cdot(-1)) \\ (1\cdot1 + 3\cdot2) & (1\cdot4 + 3\cdot(-1)) \end{bmatrix} = \begin{bmatrix} 2 & 8 \\ 7 & 1 \end{bmatrix}$$
-
+<br />
 </details>
 
 ---
@@ -353,22 +353,22 @@ $$\begin{bmatrix} (2\cdot1 + 0\cdot2) & (2\cdot4 + 0\cdot(-1)) \\ (1\cdot1 + 3\c
 <summary>정답 보기</summary>
 
 1열 = $T(1, 0) = (2, -1)$, 2열 = $T(0, 1) = (3, 4)$
-
+<br />
 $$A = \begin{bmatrix} 2 & 3 \\ -1 & 4 \end{bmatrix}$$
-
+<br />
 </details>
 
 ---
 
 **Q5. 다음 행렬의 역행렬이 존재하는지 판단하고, 존재한다면 구하세요.**
-
+<br />
 $$A = \begin{bmatrix} 2 & 4 \\ 1 & 2 \end{bmatrix}$$
-
+<br />
 <details>
 <summary>정답 보기</summary>
-
+<br />
 $$\det(A) = (2 \times 2) - (4 \times 1) = 4 - 4 = 0$$
-
+<br />
 행렬식이 0이므로 $A$ 는 **특이 행렬**이며, **역행렬이 존재하지 않습니다.**
 
 </details>

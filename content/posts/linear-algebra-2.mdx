@@ -25,21 +25,21 @@ readTime: 12
 소거법은 방정식들을 조합해 변수를 하나씩 제거하며 해를 구하는 방법입니다.
 
 **예시:**
-
+<br />
 $$\begin{cases} a + b = 11 \\ a - b = -5 \end{cases}$$
-
+<br />
 두 방정식이 모두 참이면, 두 방정식을 더하거나 빼도 여전히 참입니다.
 
 **1단계 — 두 방정식을 더함:**
-
+<br />
 $$(a + b) + (a - b) = 11 + (-5)$$
-
+<br />
 $$2a = 6 \quad \Rightarrow \quad a = 3$$
-
+<br />
 **2단계 — $a = 3$ 대입:**
-
+<br />
 $$3 + b = 11 \quad \Rightarrow \quad b = 8$$
-
+<br />
 **검증:** $3 + 8 = 11$ ✓, $3 - 8 = -5$ ✓
 
 > **핵심 원리**: 방정식이 참이면, 그 방정식의 합/차/스칼라배도 항상 참입니다. 이것이 소거법의 수학적 근거입니다.
@@ -51,13 +51,13 @@ $$3 + b = 11 \quad \Rightarrow \quad b = 8$$
 ### 자유도 1 — 무한히 많은 해
 
 $$\begin{cases} a + b = 5 \\ 2a + 2b = 10 \end{cases}$$
-
+<br />
 2번 방정식에서 1번 방정식의 2배를 빼면:
-
+<br />
 $$(2a + 2b) - 2(a + b) = 10 - 10$$
-
+<br />
 $$0 = 0$$
-
+<br />
 이 결과는 항등식(항상 참)입니다. 즉 두 방정식이 **동일한 정보**를 담고 있으므로, $a$ 는 어떤 값이든 될 수 있고 $b = 5 - a$ 로 따라갑니다.
 
 이를 **자유도 1(1 degree of freedom)** 이라고 합니다. 자유롭게 선택할 수 있는 변수가 1개이기 때문입니다.
@@ -65,11 +65,11 @@ $$0 = 0$$
 ### 해 없음 — 모순 시스템
 
 $$\begin{cases} a + b = 5 \\ 2a + 2b = 12 \end{cases}$$
-
+<br />
 2번 방정식에서 1번 방정식의 2배를 빼면:
-
+<br />
 $$0 = 2$$
-
+<br />
 이는 불가능한 등식입니다. 이 시스템은 **해가 없습니다(no solution).**
 
 ---
@@ -77,9 +77,9 @@ $$0 = 2$$
 ## 더 많은 변수가 있는 시스템
 
 3변수 시스템도 같은 원리로 풀 수 있습니다.
-
+<br />
 $$\begin{cases} x + y + z = 6 \\ 2x + y + z = 8 \\ x + 2y + z = 9 \end{cases}$$
-
+<br />
 **1단계** — 1행을 이용해 2행, 3행에서 $x$ 소거:
 
 - $R_2 \leftarrow R_2 - 2R_1$: $\quad -y - z = -4$
@@ -100,25 +100,25 @@ $x + 3 + 1 = 6 \Rightarrow x = 2$
 ## 행 축소 (Matrix Row Reduction)
 
 방정식 대신 행렬로 같은 과정을 표현할 수 있습니다.
-
+<br />
 $$\begin{cases} a + b = 11 \\ 2a - b = 2 \end{cases} \quad \Rightarrow \quad \begin{bmatrix} 1 & 1 \\ 2 & -1 \end{bmatrix}$$
-
+<br />
 **행 연산 수행** ($R_2 \leftarrow R_2 - 2R_1$):
-
+<br />
 $$\begin{bmatrix} 1 & 1 \\ 0 & -3 \end{bmatrix}$$
-
+<br />
 이 형태가 **행 사다리꼴(Row Echelon Form)** 입니다. 여기서 $-3b = -24 \Rightarrow b = 8$, 이후 $a = 3$ 을 구할 수 있습니다.
 
 **기약 행 사다리꼴(Reduced Row Echelon Form, RREF)** 은 완전히 해가 분리된 형태입니다:
-
+<br />
 $$\begin{bmatrix} 1 & 0 \\ 0 & 1 \end{bmatrix} \quad \Rightarrow \quad a = 3,\ b = 8$$
 
 ### 특이 시스템의 행 사다리꼴
 
 특이 시스템의 경우, 소거 후 행이 $[0\ \ 0]$ 이 됩니다.
-
+<br />
 $$\begin{bmatrix} 1 & 1 \\ 2 & 2 \end{bmatrix} \xrightarrow{R_2 - 2R_1} \begin{bmatrix} 1 & 1 \\ 0 & 0 \end{bmatrix}$$
-
+<br />
 두 번째 행이 전부 0이므로 해가 무한히 많습니다(자유도 1).
 
 ---
@@ -162,9 +162,9 @@ $$\begin{bmatrix} 1 & 1 \\ 2 & 2 \end{bmatrix} \xrightarrow{R_2 - 2R_1} \begin{b
 
 - 행 사다리꼴로 변환했을 때, **0이 아닌 행의 수** = 랭크
 - 선형 독립인 행의 최대 개수
-
+<br />
 $$\begin{bmatrix} 1 & 2 \\ 3 & 4 \end{bmatrix} \xrightarrow{\text{REF}} \begin{bmatrix} 1 & 2 \\ 0 & -2 \end{bmatrix} \quad \Rightarrow \quad \text{rank} = 2 \quad \text{(비특이)}$$
-
+<br />
 $$\begin{bmatrix} 1 & 2 \\ 2 & 4 \end{bmatrix} \xrightarrow{\text{REF}} \begin{bmatrix} 1 & 2 \\ 0 & 0 \end{bmatrix} \quad \Rightarrow \quad \text{rank} = 1 \quad \text{(특이)}$$
 
 ### 랭크와 해의 관계
@@ -185,27 +185,27 @@ $n \times n$ 행렬(n개 변수, n개 방정식)에서:
 ### 단계별 예시
 
 $$\begin{cases} x + 2y + z = 7 \\ 2x + y + z = 8 \\ x + y + 2z = 8 \end{cases}$$
-
+<br />
 **첨가 행렬:**
-
+<br />
 $$\left[\begin{array}{ccc|c} 1 & 2 & 1 & 7 \\ 2 & 1 & 1 & 8 \\ 1 & 1 & 2 & 8 \end{array}\right]$$
-
+<br />
 **1단계** — $R_2 \leftarrow R_2 - 2R_1$, $R_3 \leftarrow R_3 - R_1$:
-
+<br />
 $$\left[\begin{array}{ccc|c} 1 & 2 & 1 & 7 \\ 0 & -3 & -1 & -6 \\ 0 & -1 & 1 & 1 \end{array}\right]$$
-
+<br />
 **2단계** — $R_3 \leftarrow R_3 - \frac{1}{3}R_2$:
-
+<br />
 $$\left[\begin{array}{ccc|c} 1 & 2 & 1 & 7 \\ 0 & -3 & -1 & -6 \\ 0 & 0 & \frac{4}{3} & 3 \end{array}\right]$$
-
+<br />
 이제 **행 사다리꼴(REF)** 완성입니다.
 
 **3단계 — 역대입(Back Substitution):**
-
+<br />
 $$\frac{4}{3}z = 3 \Rightarrow z = \frac{9}{4}$$
-
+<br />
 $$-3y - \frac{9}{4} = -6 \Rightarrow y = \frac{5}{4}$$
-
+<br />
 $$x + 2 \cdot \frac{5}{4} + \frac{9}{4} = 7 \Rightarrow x = \frac{9}{4}$$
 
 > **알고리즘 요약**: 전진 소거(Forward Elimination)로 REF를 만들고 → 역대입(Back Substitution)으로 해를 구한다.
@@ -230,9 +230,9 @@ $$x + 2 \cdot \frac{5}{4} + \frac{9}{4} = 7 \Rightarrow x = \frac{9}{4}$$
 ## 퀴즈
 
 **Q1. 다음 시스템을 소거법으로 푸세요.**
-
+<br />
 $$\begin{cases} 3x + 2y = 1 \\ x - y = 3 \end{cases}$$
-
+<br />
 <details>
 <summary>정답 보기</summary>
 
@@ -249,20 +249,20 @@ $x = 3 + y = 3 - \frac{8}{5} = \frac{7}{5}$
 ---
 
 **Q2. 다음 행렬을 행 사다리꼴(REF)로 변환하고 랭크를 구하세요.**
-
+<br />
 $$\begin{bmatrix} 1 & 2 & 3 \\ 2 & 4 & 6 \\ 0 & 1 & 1 \end{bmatrix}$$
-
+<br />
 <details>
 <summary>정답 보기</summary>
 
 $R_2 \leftarrow R_2 - 2R_1$:
-
+<br />
 $$\begin{bmatrix} 1 & 2 & 3 \\ 0 & 0 & 0 \\ 0 & 1 & 1 \end{bmatrix}$$
-
+<br />
 $R_2 \leftrightarrow R_3$ (행 교환):
-
+<br />
 $$\begin{bmatrix} 1 & 2 & 3 \\ 0 & 1 & 1 \\ 0 & 0 & 0 \end{bmatrix}$$
-
+<br />
 0이 아닌 행이 2개이므로 **rank = 2** (특이 행렬).
 
 </details>
@@ -288,20 +288,20 @@ $$\begin{bmatrix} 1 & 2 & 3 \\ 0 & 1 & 1 \\ 0 & 0 & 0 \end{bmatrix}$$
 ---
 
 **Q4. 다음 시스템의 랭크와 해의 종류를 판단하세요.**
-
+<br />
 $$\begin{cases} x + y = 3 \\ 2x + 2y = 6 \\ 3x + 3y = 9 \end{cases}$$
-
+<br />
 <details>
 <summary>정답 보기</summary>
 
 첨가 행렬:
-
+<br />
 $$\left[\begin{array}{cc|c} 1 & 1 & 3 \\ 2 & 2 & 6 \\ 3 & 3 & 9 \end{array}\right]$$
-
+<br />
 $R_2 \leftarrow R_2 - 2R_1$, $R_3 \leftarrow R_3 - 3R_1$ 적용 후:
-
+<br />
 $$\left[\begin{array}{cc|c} 1 & 1 & 3 \\ 0 & 0 & 0 \\ 0 & 0 & 0 \end{array}\right]$$
-
+<br />
 **rank = 1**, 자유도 = 1 → **무한히 많은 해** (특이 시스템)
 
 세 방정식이 모두 동일한 정보를 담고 있습니다.

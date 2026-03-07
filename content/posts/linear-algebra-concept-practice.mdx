@@ -41,9 +41,9 @@ readTime: 10
 $x_3 = 2x_1 + x_2$ 이므로 데이터 행렬의 열들이 **선형 종속**입니다.
 
 따라서 $X^T X$ 는 **특이 행렬(singular)** 이 되어:
-
+<br />
 $$\det(X^T X) = 0 \Rightarrow (X^T X)^{-1} \text{ 존재하지 않음}$$
-
+<br />
 선형 회귀의 closed-form 해 $\hat{w} = (X^T X)^{-1} X^T y$ 를 구할 수 없게 됩니다.
 
 **해결책**:
@@ -65,15 +65,15 @@ $$\det(X^T X) = 0 \Rightarrow (X^T X)^{-1} \text{ 존재하지 않음}$$
 배치 행렬 $X$ (행 = 샘플, 열 = 피처)에 대해:
 
 **1단계 — 평균 중심화:**
-
+<br />
 $$X_{\text{centered}} = X - \mathbf{1}\mu^T$$
-
+<br />
 여기서 $\mu$ 는 각 피처의 평균 벡터, $\mathbf{1}$ 은 ones 벡터
 
 **2단계 — 표준편차로 나누기:**
-
+<br />
 $$X_{\text{norm}} = X_{\text{centered}} \oslash \sigma$$
-
+<br />
 이것이 PCA의 **데이터 중심화** 단계와 동일한 연산입니다. 선형대수적으로는 데이터를 **공분산 행렬의 고유벡터 방향**으로 정렬하는 준비 단계입니다.
 
 </details>
@@ -180,9 +180,9 @@ $k$개만 유지: $\hat{W} = \sum_{i=1}^{k} \sigma_i \vec{u}_i \vec{v}_i^T$
 
 <details>
 <summary>정답 보기</summary>
-
+<br />
 $$\text{설명 분산 비율} = \frac{\lambda_1 + \lambda_2}{\sum_i \lambda_i} = \frac{8.5 + 5.2}{25} = \frac{13.7}{25} = 54.8\%$$
-
+<br />
 **해석**: 첫 2개 주성분만으로 전체 데이터 분산의 약 55%를 설명합니다.
 
 **실무 판단 기준**:
@@ -201,17 +201,17 @@ $$\text{설명 분산 비율} = \frac{\lambda_1 + \lambda_2}{\sum_i \lambda_i} =
 <summary>정답 보기</summary>
 
 **코사인 유사도** 를 사용합니다 (점곱 / L2-노름의 곱):
-
+<br />
 $$\cos\theta = \frac{\vec{a} \cdot \vec{b}}{\|\vec{a}\|_2 \|\vec{b}\|_2}$$
-
+<br />
 $$\vec{a} \cdot \vec{b} = 3 + 5 + 8 + 6 + 5 = 27$$
-
+<br />
 $$\|\vec{a}\|_2 = \sqrt{9+1+16+1+25} = \sqrt{52} \approx 7.21$$
-
+<br />
 $$\|\vec{b}\|_2 = \sqrt{1+25+4+36+1} = \sqrt{67} \approx 8.19$$
-
+<br />
 $$\cos\theta = \frac{27}{7.21 \times 8.19} \approx 0.457$$
-
+<br />
 코사인 유사도가 0.46으로 **낮은 편**입니다. 두 사용자의 취향은 크게 다릅니다 (A는 액션·SF 선호, B는 로맨스·드라마 선호 패턴).
 
 **실무**: 협업 필터링(Collaborative Filtering) 추천 시스템이 이 원리를 사용합니다.
@@ -232,17 +232,17 @@ $$\cos\theta = \frac{27}{7.21 \times 8.19} \approx 0.457$$
 
 <details>
 <summary>정답 보기</summary>
-
+<br />
 $$h_1 = \sigma(W_1 x + b_1) \quad (4 \times 3)(3 \times 1) + (4 \times 1) = (4 \times 1)$$
-
+<br />
 $$y = W_2 h_1 + b_2 \quad (2 \times 4)(4 \times 1) + (2 \times 1) = (2 \times 1)$$
-
+<br />
 **전체 배치**로 처리할 때 ($n$개 샘플):
-
+<br />
 $$H_1 = \sigma(X W_1^T + \mathbf{1}b_1^T) \quad (n \times 3)(3 \times 4) = (n \times 4)$$
-
+<br />
 $$Y = H_1 W_2^T + \mathbf{1}b_2^T \quad (n \times 4)(4 \times 2) = (n \times 2)$$
-
+<br />
 이처럼 신경망의 포워드 패스 전체가 **행렬 곱셈의 연속**으로 표현됩니다. GPU는 이 대규모 행렬 곱을 병렬 처리합니다.
 
 </details>
@@ -257,9 +257,9 @@ $$Y = H_1 W_2^T + \mathbf{1}b_2^T \quad (n \times 4)(4 \times 2) = (n \times 2)$
 <summary>정답 보기</summary>
 
 역전파는 연쇄 법칙의 행렬 버전입니다.
-
+<br />
 $$\frac{\partial L}{\partial W_1} = \frac{\partial L}{\partial h_1} \cdot \frac{\partial h_1}{\partial W_1}$$
-
+<br />
 각 단계:
 
 1. 출력층에서 그래디언트 계산: $\delta_2 = \frac{\partial L}{\partial y}$
@@ -282,9 +282,9 @@ $$\frac{\partial L}{\partial W_1} = \frac{\partial L}{\partial h_1} \cdot \frac{
 ## 퀴즈: 개념 종합
 
 **Q1. 다음 중 역행렬이 존재하는 행렬은?**
-
+<br />
 $$A = \begin{bmatrix} 2 & 4 \\ 1 & 2 \end{bmatrix}, \quad B = \begin{bmatrix} 3 & 1 \\ 1 & 2 \end{bmatrix}, \quad C = \begin{bmatrix} 0 & 0 \\ 0 & 0 \end{bmatrix}$$
-
+<br />
 <details>
 <summary>정답 보기</summary>
 
@@ -306,13 +306,13 @@ $$A = \begin{bmatrix} 2 & 4 \\ 1 & 2 \end{bmatrix}, \quad B = \begin{bmatrix} 3 
 다중공선성이 있으면 $X^T X$ 가 특이 행렬이 되어 역행렬이 존재하지 않습니다.
 
 L2 정규화는 대각 원소에 $\lambda$ 를 더합니다:
-
+<br />
 $$(X^T X + \lambda I)^{-1}$$
-
+<br />
 단위 행렬 $I$ 를 더하면 모든 고유값에 $\lambda$ 가 추가됩니다:
-
+<br />
 $$\lambda_i(X^T X + \lambda I) = \lambda_i(X^T X) + \lambda \geq \lambda > 0$$
-
+<br />
 따라서 행렬식이 항상 0보다 크고 역행렬이 **항상 존재**하게 됩니다.
 
 </details>

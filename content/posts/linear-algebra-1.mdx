@@ -24,9 +24,9 @@ readTime: 10
 **Linear(선형)** 이란 직선으로 모델링할 수 있다는 뜻입니다.
 
 **선형 회귀(Linear Regression)** 는 데이터를 직선으로 모델링하는 대표적인 방법입니다. 예를 들어 풍속으로 전력 출력을 예측하는 모델이 있다고 할 때, 우리는 이상적인 가중치 $w$ 와 편향 $b$ 를 찾아야 합니다.
-
+<br />
 $$y = wx + b$$
-
+<br />
 여러 개의 피처와 여러 개의 예시 데이터에 대해 이 수식을 동시에 풀어야 하므로, 이것이 바로 **선형방정식 시스템(System of Linear Equations)** 이 됩니다.
 
 모델이 가중치 $w$ 와 편향 $b$ 를 알면, 피처 $x$ 가 주어졌을 때 목표값 $y$ 를 예측할 수 있습니다.
@@ -52,18 +52,18 @@ $$y = wx + b$$
 문장을 방정식으로 바꾸면 시스템을 수학적으로 풀 수 있습니다.
 
 **2변수 예시**
-
+<br />
 $$\text{Apple} + \text{Banana} = 10$$
 $$\text{Apple} - \text{Banana} = 6$$
-
+<br />
 이를 풀면 $\text{Apple} = 8,\ \text{Banana} = 2$ 입니다.
 
 **3변수 예시**
-
+<br />
 $$a + b + c = 10$$
 $$a + 2b + c = 15$$
 $$a + b + 2c = 12$$
-
+<br />
 이를 풀면 $\text{Apple} = 3,\ \text{Banana} = 5,\ \text{Cherry} = 2$ 입니다.
 
 > **선형 vs 비선형**: 변수가 1차인 경우에만 선형 방정식입니다. $x^2$, $xy$, $\sin(x)$ 등이 포함되면 비선형입니다.
@@ -91,9 +91,9 @@ $$a + b + 2c = 12$$
 ## 특이성과 상수항의 관계
 
 흥미롭게도, **상수항(constant)은 특이성 판단에 영향을 미치지 않습니다.**
-
+<br />
 $$x + 2y = 5 \quad \text{vs} \quad x + 2y = 0$$
-
+<br />
 두 경우 모두 계수(coefficient)는 동일하므로, 특이성은 계수만으로 결정됩니다. 따라서 특이성을 판단할 때는 상수항을 0으로 놓아도 무방합니다.
 
 ---
@@ -101,9 +101,9 @@ $$x + 2y = 5 \quad \text{vs} \quad x + 2y = 0$$
 ## 행렬의 특이성
 
 선형방정식의 계수(coefficient)를 모아서 행렬을 만들 수 있습니다.
-
+<br />
 $$\begin{cases} x + 2y = 5 \\ 3x + 4y = 7 \end{cases} \quad \Rightarrow \quad \begin{bmatrix} 1 & 2 \\ 3 & 4 \end{bmatrix}$$
-
+<br />
 - **비특이 행렬(Non-singular matrix)**: 유일한 해를 가지는 방정식 시스템에서 나온 행렬
 - **특이 행렬(Singular matrix)**: 해가 없거나 무한히 많은 시스템에서 나온 행렬
 
@@ -115,11 +115,11 @@ $$\begin{cases} x + 2y = 5 \\ 3x + 4y = 7 \end{cases} \quad \Rightarrow \quad \b
 
 - **선형 독립(Linearly Independent)**: 어떤 행도 다른 행들의 조합으로 만들 수 없는 경우
 - **선형 종속(Linearly Dependent)**: 한 행이 다른 행(들)의 조합으로 표현되는 경우
-
+<br />
 $$\begin{bmatrix} 1 & 2 \\ 2 & 4 \end{bmatrix} \quad \text{→ 2행 = 1행 × 2 이므로 선형 종속 (특이)}$$
-
+<br />
 $$\begin{bmatrix} 1 & 2 \\ 3 & 4 \end{bmatrix} \quad \text{→ 어떤 행도 다른 행의 배수가 아님 → 선형 독립 (비특이)}$$
-
+<br />
 **핵심 규칙:**
 - 선형 종속 → 특이 행렬
 - 선형 독립 → 비특이 행렬
@@ -129,34 +129,34 @@ $$\begin{bmatrix} 1 & 2 \\ 3 & 4 \end{bmatrix} \quad \text{→ 어떤 행도 다
 ## 행렬식 (Determinant)
 
 행렬이 특이인지 비특이인지를 **하나의 숫자**로 빠르게 판단하는 방법이 행렬식입니다.
-
+<br />
 $$\det(M) = 0 \Rightarrow \text{특이 (singular)}$$
 $$\det(M) \neq 0 \Rightarrow \text{비특이 (non-singular)}$$
 
 ### 2×2 행렬식
 
 $$M = \begin{bmatrix} a & b \\ c & d \end{bmatrix} \quad \Rightarrow \quad \det(M) = ad - bc$$
-
+<br />
 **예시:**
-
+<br />
 $$\begin{bmatrix} 5 & -1 \\ 1 & 3 \end{bmatrix} \Rightarrow \det = (5 \times 3) - (-1 \times 1) = 15 + 1 = 16 \quad \text{(비특이)}$$
-
+<br />
 $$\begin{bmatrix} 2 & -6 \\ -1 & 3 \end{bmatrix} \Rightarrow \det = (2 \times 3) - (-6 \times -1) = 6 - 6 = 0 \quad \text{(특이)}$$
 
 ### 3×3 행렬식 (사루스 법칙)
 
 3×3 행렬식은 **대각선의 곱**을 이용해 계산합니다.
-
+<br />
 $$M = \begin{bmatrix} a & b & c \\ d & e & f \\ g & h & i \end{bmatrix}$$
-
+<br />
 $$\det(M) = (aei + bfg + cdh) - (ceg + fha + ibd)$$
-
+<br />
 왼쪽→오른쪽 대각선의 곱을 더하고, 오른쪽→왼쪽 대각선의 곱을 빼면 됩니다.
 
 **예시:**
-
+<br />
 $$\begin{bmatrix} 1 & 0 & 1 \\ 3 & 1 & 0 \\ 3 & 0 & 3 \end{bmatrix}$$
-
+<br />
 - 좌→우: $1 \cdot 1 \cdot 3 + 0 \cdot 0 \cdot 3 + 1 \cdot 3 \cdot 0 = 3$
 - 우→좌: $1 \cdot 1 \cdot 3 + 0 \cdot 0 \cdot 3 + 1 \cdot 3 \cdot 0 = 3$
 - $\det = 3 - 3 = 0$ → **특이**
@@ -182,9 +182,9 @@ $$\begin{bmatrix} 1 & 0 & 1 \\ 3 & 1 & 0 \\ 3 & 0 & 3 \end{bmatrix}$$
 아래 문제를 풀고 개념을 확인해 보세요.
 
 **Q1. 다음 2×2 행렬의 행렬식을 구하고, 특이/비특이를 판단하세요.**
-
+<br />
 $$A = \begin{bmatrix} 3 & 6 \\ 1 & 2 \end{bmatrix}$$
-
+<br />
 <details>
 <summary>정답 보기</summary>
 
@@ -197,9 +197,9 @@ $\det(A) = (3 \times 2) - (6 \times 1) = 6 - 6 = 0$
 ---
 
 **Q2. 다음 방정식 시스템은 완전/중복/모순 중 어느 것인가요?**
-
+<br />
 $$\begin{cases} x + y = 5 \\ 2x + 2y = 10 \end{cases}$$
-
+<br />
 <details>
 <summary>정답 보기</summary>
 
@@ -210,9 +210,9 @@ $$\begin{cases} x + y = 5 \\ 2x + 2y = 10 \end{cases}$$
 ---
 
 **Q3. 다음 3×3 행렬의 행렬식을 구하세요.**
-
+<br />
 $$B = \begin{bmatrix} 1 & 0 & 0 \\ 0 & 2 & 0 \\ 0 & 0 & 3 \end{bmatrix}$$
-
+<br />
 <details>
 <summary>정답 보기</summary>
 
@@ -227,9 +227,9 @@ $\det(B) = 1 \times 2 \times 3 = 6$
 ---
 
 **Q4. 다음 중 선형 독립인 행렬은 어느 것인가요?**
-
+<br />
 $$C = \begin{bmatrix} 1 & 2 \\ 3 & 6 \end{bmatrix}, \quad D = \begin{bmatrix} 1 & 2 \\ 3 & 4 \end{bmatrix}$$
-
+<br />
 <details>
 <summary>정답 보기</summary>
 

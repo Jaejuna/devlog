@@ -31,7 +31,7 @@ readTime: 13
 | **코사인 거리** | $1 - \dfrac{\sum x_i y_i}{\sqrt{\sum x_i^2}\sqrt{\sum y_i^2}}$ | 방향 유사도, 텍스트 분석에 적합 |
 
 $$d_{\text{Euclid}}(x, y) = \sqrt{\sum_{i=1}^{n}(x_i - y_i)^2}$$
-
+<br />
 $$d_{\text{Manhattan}}(x, y) = \sum_{i=1}^{n} |x_i - y_i|$$
 
 ### z-점수 표준화
@@ -133,9 +133,9 @@ for metric in ['euclidean', 'manhattan', 'cosine']:
 ### 노드 분할 기준: 불순도 지표
 
 $$\text{지니 불순도} = 1 - \sum_{k=1}^{K} p_k^2$$
-
+<br />
 $$\text{엔트로피} = -\sum_{k=1}^{K} p_k \log_2 p_k$$
-
+<br />
 $p_k$: 노드 내 클래스 $k$의 비율. 노드가 순수(한 클래스만)할수록 불순도 → 0
 
 ### 손실 함수 비교
@@ -230,7 +230,7 @@ print(export_text(dt_best, feature_names=list(iris.feature_names)))
 ### 변수 중요도
 
 $$\text{Importance}(x_j) = \sum_{\text{노드 } t,\ x_j \text{ 사용}} \Delta\text{Impurity}(t)$$
-
+<br />
 트리 전체에 걸쳐 변수 $x_j$를 사용한 분할에서 불순도가 얼마나 감소했는지의 합입니다.
 
 ```python
@@ -329,7 +329,7 @@ for model, name in [(DecisionTreeClassifier(random_state=None),  '단일 트리'
 ### 그레이디언트 부스팅 업데이트
 
 $$F_m(x) = F_{m-1}(x) + \gamma_m h_m(x)$$
-
+<br />
 $h_m(x)$: 현재 단계의 약한 학습기 (이전 단계 잔차에 피팅)
 $\gamma_m$: 학습률 (learning rate) — 작을수록 안정적이지만 더 많은 반복 필요
 

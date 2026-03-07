@@ -26,15 +26,15 @@ readTime: 13
 ### 주성분 표현
 
 $$\text{PC}_1 = a_{11}x_1 + a_{12}x_2 + \cdots + a_{1p}x_p$$
-
+<br />
 계수 $a_{1j}$는 고유벡터의 원소로, 변수 $x_j$가 첫 번째 주성분에 기여하는 비중입니다.
 
 ### 누적 설명 분산
 
 $$\text{Cumulative Explained Variance} = \frac{\sum_{i=1}^{k} \lambda_i}{\sum_{j=1}^{p} \lambda_j}$$
-
+<br />
 PCA 수행 전 표준화가 필수입니다. 변수 간 단위가 다르면 스케일이 큰 변수가 주성분을 지배합니다.
-
+<br />
 $$z_j = \frac{x_j - \bar{x}_j}{s_j}$$
 
 ```python
@@ -134,10 +134,10 @@ print(loadings['PC1'].abs().nlargest(5).round(4))
 
 **2단계** — 각 포인트를 가장 가까운 중심에 할당:
 $$\text{cluster}(x_i) = \arg\min_k \|x_i - \mu_k\|^2$$
-
+<br />
 **3단계** — 클러스터 중심 재계산:
 $$\mu_k = \frac{1}{|C_k|} \sum_{x_i \in C_k} x_i$$
-
+<br />
 **4단계** — 중심이 더 이상 변하지 않을 때까지 2–3 반복
 
 ```python
@@ -217,7 +217,7 @@ print("→ KMeans(n_init=10) 권장: 여러 초기값 중 최선 선택")
 ### 실루엣 계수
 
 $$s(i) = \frac{b(i) - a(i)}{\max(a(i), b(i))}$$
-
+<br />
 $a(i)$: 같은 클러스터 내 평균 거리, $b(i)$: 가장 가까운 다른 클러스터까지 평균 거리.
 $-1 \leq s(i) \leq 1$ — 1에 가까울수록 잘 군집됨.
 
@@ -313,7 +313,7 @@ plt.show()
 ### 가우시안 혼합 모형 (GMM)
 
 $$f(x) = \sum_{k=1}^{K} \pi_k \cdot \mathcal{N}(x \mid \mu_k, \Sigma_k)$$
-
+<br />
 $\pi_k$: 클러스터 $k$의 혼합 비율 ($\sum \pi_k = 1$)
 
 ### 다변량 정규분포의 PDF
@@ -324,7 +324,7 @@ $$f(x) = \frac{1}{(2\pi)^{p/2}|\Sigma|^{1/2}} \exp\!\left(-\frac{1}{2}(x-\mu)^\t
 
 **E-step**: 책임도(책임 확률) 계산
 $$\gamma_{ik} = \frac{\pi_k f_k(x_i \mid \theta_k)}{\sum_{j=1}^{K} \pi_j f_j(x_i \mid \theta_j)}$$
-
+<br />
 **M-step**: 책임도 기반으로 $\pi_k$, $\mu_k$, $\Sigma_k$ 갱신 → 수렴까지 반복
 
 ```python
@@ -425,9 +425,9 @@ $$x'_j = \frac{x_j - \min(x_j)}{\max(x_j) - \min(x_j)}$$
 ### 고워 거리 (Gower Distance)
 
 수치형, 범주형, 이진형을 동시에 처리하는 거리:
-
+<br />
 $$D_{ij} = \frac{1}{p} \sum_{k=1}^{p} d_{ij}^{(k)}, \quad d_{ij}^{(k)} = 1 - s_{ij}^{(k)}$$
-
+<br />
 범주형 변수: 같으면 $d=0$, 다르면 $d=1$. 수치형 변수: 정규화된 차이.
 
 ```python

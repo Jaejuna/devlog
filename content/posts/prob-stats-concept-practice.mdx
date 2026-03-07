@@ -27,15 +27,15 @@ readTime: 12
 <summary>정답 보기</summary>
 
 베이즈 정리 적용:
-
+<br />
 $$P(\text{스팸} \mid \text{"무료"}) = \frac{P(\text{"무료"} \mid \text{스팸}) \cdot P(\text{스팸})}{P(\text{"무료"})}$$
-
+<br />
 분모 계산 (전확률 공식):
-
+<br />
 $$P(\text{"무료"}) = 0.6 \times 0.2 + 0.05 \times 0.8 = 0.12 + 0.04 = 0.16$$
-
+<br />
 $$P(\text{스팸} \mid \text{"무료"}) = \frac{0.6 \times 0.2}{0.16} = \frac{0.12}{0.16} = 0.75$$
-
+<br />
 **결론**: "무료"가 포함된 이메일은 75% 확률로 스팸입니다. 사전확률(20%)이 사후확률(75%)으로 크게 업데이트되었습니다.
 
 **머신러닝 연결**: Naive Bayes 분류기는 이 원리를 각 단어에 독립적으로 적용해 텍스트를 분류합니다.
@@ -58,10 +58,10 @@ $$P(\text{스팸} \mid \text{"무료"}) = \frac{0.6 \times 0.2}{0.16} = \frac{0.
 **1. 아니오**: 상관관계 ≠ 인과관계. 아이스크림이 익사를 유발하지 않습니다.
 
 **2. 교란변수(Confounding Variable)**: "여름 기온"이 공통 원인입니다.
-
+<br />
 $$\text{기온} \rightarrow \text{아이스크림 판매량}$$
 $$\text{기온} \rightarrow \text{수영 인구 증가} \rightarrow \text{익사 사고}$$
-
+<br />
 기온을 통제(조건화)하면 두 변수는 독립입니다: $P(\text{익사} \mid \text{아이스크림}, \text{기온}) = P(\text{익사} \mid \text{기온})$
 
 **3. ML 문제점**: 모델이 허위 상관관계를 학습하면 분포가 다른 테스트 데이터에서 실패합니다 (Distribution Shift). 예측은 할 수 있어도 **인과적 개입**(intervention)에 대한 추론은 틀립니다.
@@ -112,11 +112,11 @@ $$\text{기온} \rightarrow \text{수영 인구 증가} \rightarrow \text{익사
 <summary>정답 보기</summary>
 
 **1. 상관계수 계산**:
-
+<br />
 $$r_A = \frac{500}{\sqrt{10000 \times 40000}} = \frac{500}{20000} = 0.025$$
-
+<br />
 $$r_B = \frac{100}{\sqrt{100 \times 200}} = \frac{100}{141.4} \approx 0.707$$
-
+<br />
 **2. 상황 B가 훨씬 강한 선형 관계**: 공분산 값만 보면 A가 크지만, 변수의 스케일이 달라 직접 비교가 불가합니다. 상관계수는 이를 정규화한 값입니다.
 
 **3. 상관계수 = 0이지만 관련된 예시**: $Y = X^2$, $X \sim U(-1, 1)$. X와 Y는 명백히 관련되지만 선형 상관계수는 0입니다. → 상관계수는 **선형** 관계만 포착합니다. 비선형 관계는 MI(Mutual Information) 등으로 측정해야 합니다.
@@ -169,13 +169,13 @@ $$r_B = \frac{100}{\sqrt{100 \times 200}} = \frac{100}{141.4} \approx 0.707$$
 <summary>정답 보기</summary>
 
 **1. MLE**: 이항 분포의 로그 우도를 최대화하면:
-
+<br />
 $$\hat{\theta}_\text{MLE} = \frac{8}{10} = 0.8$$
-
+<br />
 **2. MAP with Beta(3,3)**: 사후 분포는 $\text{Beta}(3+8, 3+2) = \text{Beta}(11, 5)$
-
+<br />
 $$\hat{\theta}_\text{MAP} = \frac{\alpha - 1}{\alpha + \beta - 2} = \frac{10}{14} \approx 0.714$$
-
+<br />
 **3. 비교**:
 
 | | MLE | MAP |

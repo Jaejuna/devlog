@@ -18,9 +18,9 @@ readTime: 14
 점 추정(point estimate)은 모수를 단일 값으로 추정합니다. 그러나 표본은 항상 변동이 있기 때문에 **구간 추정**이 더 유용합니다.
 
 **신뢰구간(CI)**: 모수가 포함될 것으로 기대되는 값의 범위
-
+<br />
 $$\bar{x} \pm \text{margin of error}$$
-
+<br />
 - **95% CI**: 동일한 실험을 100번 반복하면 약 95번은 해당 구간에 모평균이 포함됨
 - CI는 특정 구간에 모수가 있을 "확률"이 아님 — 모수는 고정값, CI가 변하는 것
 
@@ -45,23 +45,23 @@ $$\text{ME} = z^* \cdot \frac{\sigma}{\sqrt{n}}$$
 ### 모표준편차를 모를 때 — t분포
 
 현실에서는 $\sigma$를 모르는 경우가 대부분입니다. 이때 표본표준편차 $s$로 대체하면 불확실성이 커지므로 **t분포**를 사용합니다.
-
+<br />
 $$t = \frac{\bar{x} - \mu}{s/\sqrt{n}}$$
-
+<br />
 - 자유도(df) = $n - 1$
 - $n$이 작을수록 꼬리가 두꺼워짐 (불확실성 반영)
 - $n$이 크면 표준정규분포에 수렴
 
 t분포를 활용한 CI:
-
+<br />
 $$\bar{x} \pm t^*_{n-1} \cdot \frac{s}{\sqrt{n}}$$
 
 ### 비율의 신뢰구간
 
 이진 결과(성공/실패)에서의 모비율 $p$ 추정:
-
+<br />
 $$\hat{p} \pm z^* \cdot \sqrt{\frac{\hat{p}(1-\hat{p})}{n}}$$
-
+<br />
 조건: $n\hat{p} \geq 10$, $n(1-\hat{p}) \geq 10$ (정규 근사 성립)
 
 ---
@@ -110,7 +110,7 @@ $\alpha$는 1종 오류를 허용하는 최대 확률입니다.
 ### p값 (p-value)
 
 **p값**: $H_0$이 참일 때, 관측된 통계량 이상으로 극단적인 값이 나올 확률
-
+<br />
 $$p\text{-value} < \alpha \Rightarrow H_0 \text{ 기각}$$
 $$p\text{-value} \geq \alpha \Rightarrow H_0 \text{ 기각 실패 (채택 아님)}$$
 
@@ -127,7 +127,7 @@ $$p\text{-value} \geq \alpha \Rightarrow H_0 \text{ 기각 실패 (채택 아님
 ### 검정력 (Power of a Test)
 
 $$\text{Power} = P(\text{reject } H_0 \mid H_1 \text{ is true}) = 1 - \beta$$
-
+<br />
 검정력을 높이려면:
 - 표본 크기 $n$ 증가
 - $\alpha$ 증가 (1종 오류 허용을 늘림)
@@ -140,36 +140,36 @@ $$\text{Power} = P(\text{reject } H_0 \mid H_1 \text{ is true}) = 1 - \beta$$
 ### 단일 표본 t검정
 
 하나의 표본 평균이 특정 값 $\mu_0$과 다른지 검정합니다.
-
+<br />
 $$t = \frac{\bar{x} - \mu_0}{s/\sqrt{n}}, \quad df = n-1$$
-
+<br />
 예: "이 반 학생들의 평균 점수가 70점인가?"
 
 ### 독립 이표본 t검정 (Two-Sample t-Test)
 
 두 독립 집단의 평균 차이를 검정합니다.
-
+<br />
 $$t = \frac{(\bar{x}_1 - \bar{x}_2) - 0}{\sqrt{\frac{s_1^2}{n_1} + \frac{s_2^2}{n_2}}}$$
-
+<br />
 - 자유도: Welch 근사법 사용 (두 집단의 분산이 다를 때)
 - $H_0$: $\mu_1 = \mu_2$
 
 ### 이표본 비율 검정 (Two-Sample Proportion Test)
 
 두 집단의 비율 차이를 검정합니다.
-
+<br />
 $$z = \frac{(\hat{p}_1 - \hat{p}_2)}{\sqrt{\hat{p}(1-\hat{p})\left(\frac{1}{n_1} + \frac{1}{n_2}\right)}}$$
-
+<br />
 여기서 $\hat{p}$는 합동 비율(pooled proportion):
-
+<br />
 $$\hat{p} = \frac{x_1 + x_2}{n_1 + n_2}$$
 
 ### 대응 표본 t검정 (Paired t-Test)
 
 동일한 대상에서 전후 측정값 차이를 검정합니다.
-
+<br />
 $$d_i = x_{i,\text{after}} - x_{i,\text{before}}, \quad t = \frac{\bar{d}}{s_d/\sqrt{n}}$$
-
+<br />
 예: 약 복용 전후 혈압 변화 — 각 환자가 자신의 대조군이 됨
 
 ---

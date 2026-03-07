@@ -137,37 +137,37 @@ print(f"가중평균: {np.average(data, weights=weights):.1f}")
 
 **편차 (deviation)**
 관측값과 기준값(주로 평균 또는 중간값) 사이의 차이입니다.
-
+<br />
 $$\text{편차} = x_i - \bar{x}$$
-
+<br />
 **분산 (variance)**
 편차의 제곱을 평균한 값. 표본 분산은 n−1로 나눕니다(베셀 보정).
-
+<br />
 $$s^2 = \frac{1}{n-1} \sum_{i=1}^{n}(x_i - \bar{x})^2$$
-
+<br />
 **표준편차 (standard deviation)**
 분산의 제곱근. 원래 단위와 같아 해석이 직관적입니다.
-
+<br />
 $$s = \sqrt{s^2}$$
 
 
 **평균절대편차 (MAD, Mean Absolute Deviation)**
 각 값이 평균에서 떨어진 거리의 평균. L1 노름 기반으로 이상값에 덜 민감합니다.
-
+<br />
 $$\text{MAD} = \frac{1}{n}\sum_{i=1}^{n}|x_i - \bar{x}|$$
-
+<br />
 **중위절대편차 (Median Absolute Deviation)**
 각 값이 중위값에서 떨어진 거리의 중위값. 가장 로버스트한 변이 지표입니다.
-
+<br />
 $$\text{MAD}_\text{med} = \text{median}(|x_i - \text{median}(x)|)$$
-
+<br />
 **범위 (range)**
-
+<br />
 $$\text{Range} = \max(x) - \min(x)$$
-
+<br />
 **사분위범위 (IQR, Interquartile Range)**
 중간 50% 데이터의 퍼짐 정도. 상자그림(box plot)의 기준이 됩니다.
-
+<br />
 $$\text{IQR} = Q_3 - Q_1$$
 
 ```python
@@ -374,9 +374,9 @@ plt.show()
 두 수치형 변수 사이의 선형 관계 강도와 방향을 수치로 나타냅니다.
 
 **피어슨 상관계수 (Pearson correlation coefficient)**
-
+<br />
 $$r = \frac{\sum_{i=1}^{N}(x_i - \bar{x})(y_i - \bar{y})}{(N-1)s_x s_y}$$
-
+<br />
 - $r = +1$: 완전한 양의 선형 관계
 - $r = 0$: 선형 관계 없음
 - $r = -1$: 완전한 음의 선형 관계

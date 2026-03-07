@@ -32,7 +32,7 @@ $$y = \beta_0 + \beta_1 x + \varepsilon$$
 ### 최소제곱법 (Ordinary Least Squares)
 
 잔차 제곱합을 최소화하여 회귀계수를 추정합니다.
-
+<br />
 $$\min_{\beta} \sum_{i=1}^{n} (y_i - \hat{y}_i)^2 \quad \Rightarrow \quad \hat{\beta}_1 = \frac{\sum(x_i - \bar{x})(y_i - \bar{y})}{\sum(x_i - \bar{x})^2}, \quad \hat{\beta}_0 = \bar{y} - \hat{\beta}_1 \bar{x}$$
 
 ```python
@@ -88,11 +88,11 @@ plt.show()
 ## 4.2 다중선형회귀
 
 둘 이상의 독립변수를 사용해 응답변수를 예측합니다.
-
+<br />
 $$y = \beta_0 + \beta_1 x_1 + \beta_2 x_2 + \cdots + \beta_p x_p + \varepsilon$$
-
+<br />
 행렬 표현:
-
+<br />
 $$y = X\beta + \varepsilon, \quad \hat{\beta} = (X^\top X)^{-1} X^\top y$$
 
 ### 모델 성능 지표
@@ -104,13 +104,13 @@ $$y = X\beta + \varepsilon, \quad \hat{\beta} = (X^\top X)^{-1} X^\top y$$
 | **$R^2$** | $1 - \dfrac{\sum(y_i - \hat{y}_i)^2}{\sum(y_i - \bar{y})^2}$ | 모델이 설명하는 변동 비율 (0~1) |
 
 $$\text{RMSE} = \sqrt{\frac{1}{n} \sum_{i=1}^{n} (y_i - \hat{y}_i)^2}$$
-
+<br />
 $$R^2 = 1 - \frac{\sum(y_i - \hat{y}_i)^2}{\sum(y_i - \bar{y})^2}$$
 
 ### 가중회귀 (Weighted Least Squares)
 
 분산이 관측값마다 다를 때, 신뢰도 높은 관측값에 더 큰 가중치를 부여합니다.
-
+<br />
 $$\min_{\beta} \sum_{i=1}^{n} w_i (y_i - x_i^\top \beta)^2$$
 
 ```python
@@ -363,9 +363,9 @@ print("해석: x1의 효과가 x3의 값에 따라 달라짐")
 ### 주요 진단 지표
 
 $$\text{표준화잔차}: \quad r_i = \frac{e_i}{\hat{\sigma}\sqrt{1 - h_{ii}}}$$
-
+<br />
 $$\text{지렛대}: \quad h_{ii} = x_i^\top (X^\top X)^{-1} x_i$$
-
+<br />
 $|r_i| > 2$ 이면 특잇값 의심, $h_{ii}$가 높고 $r_i$도 크면 영향값으로 판단합니다.
 
 ```python
@@ -455,7 +455,7 @@ $$y = \beta_0 + \beta_1 x + \beta_2 x^2 + \cdots + \beta_k x^k + \varepsilon$$
 ### 일반화가법모형 (GAM)
 
 $$y = \beta_0 + f_1(x_1) + f_2(x_2) + \cdots + f_p(x_p) + \varepsilon$$
-
+<br />
 각 $f_j$는 스플라인 등 비선형 함수 — 각 변수의 효과를 따로 시각화 가능합니다.
 
 ```python

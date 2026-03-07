@@ -39,9 +39,9 @@ readTime: 15
 ## 행렬식 = 넓이 (기하학적 해석)
 
 행렬식은 단순한 숫자가 아닙니다. **선형 변환이 공간을 얼마나 늘리거나 줄이는지**를 나타내는 **넓이(부피)의 배율**입니다.
-
+<br />
 $$A = \begin{bmatrix} a & b \\ c & d \end{bmatrix}$$
-
+<br />
 단위 정사각형(면적 = 1)에 이 변환을 적용하면, 결과 평행사변형의 넓이가 $|\det(A)|$ 입니다.
 
 | 행렬식 값 | 의미 |
@@ -57,13 +57,13 @@ $$A = \begin{bmatrix} a & b \\ c & d \end{bmatrix}$$
 ## 곱의 행렬식
 
 $$\det(AB) = \det(A) \cdot \det(B)$$
-
+<br />
 두 선형 변환을 합성했을 때의 넓이 배율은, 각 변환의 배율을 **곱한 것**과 같습니다.
 
 **중요한 결론:**
-
+<br />
 $$A \text{ 또는 } B \text{ 중 하나가 특이} \Rightarrow \det(AB) = 0 \Rightarrow AB \text{ 도 특이}$$
-
+<br />
 특이 행렬과 비특이 행렬의 곱은 **항상 특이**입니다.
 
 ---
@@ -71,15 +71,15 @@ $$A \text{ 또는 } B \text{ 중 하나가 특이} \Rightarrow \det(AB) = 0 \Rig
 ## 역행렬의 행렬식
 
 $A$ 가 비특이(역행렬 존재)일 때:
-
+<br />
 $$\det(A^{-1}) = \frac{1}{\det(A)}$$
-
+<br />
 **직관:** $A$ 가 공간을 5배로 늘렸다면, $A^{-1}$ 은 $\frac{1}{5}$ 배로 줄여서 원래대로 되돌려야 합니다.
 
 **예시:**
-
+<br />
 $$\det(M) = 0.2 \Rightarrow \det(M^{-1}) = 5$$
-
+<br />
 $$\det(N) = 0.125 \Rightarrow \det(N^{-1}) = 8$$
 
 ---
@@ -87,13 +87,13 @@ $$\det(N) = 0.125 \Rightarrow \det(N^{-1}) = 8$$
 ## 기저 (Basis)
 
 **기저**는 벡터 공간을 정의하는 **최소한의 벡터 집합**입니다.
-
+<br />
 $$\vec{e_1} = \begin{bmatrix} 1 \\ 0 \end{bmatrix}, \quad \vec{e_2} = \begin{bmatrix} 0 \\ 1 \end{bmatrix}$$
-
+<br />
 기저의 핵심 성질: **공간의 모든 점**을 기저 벡터들의 선형 결합으로 표현할 수 있습니다.
-
+<br />
 $$\begin{bmatrix} 3 \\ 5 \end{bmatrix} = 3\vec{e_1} + 5\vec{e_2}$$
-
+<br />
 **기저가 되기 위한 조건:**
 - 벡터들이 **선형 독립** (어떤 벡터도 나머지의 선형 결합으로 표현 불가)
 - 같은 방향 또는 반대 방향의 벡터는 기저가 될 수 없음
@@ -119,9 +119,9 @@ $$\begin{bmatrix} 3 \\ 5 \end{bmatrix} = 3\vec{e_1} + 5\vec{e_2}$$
 ## 고유기저 (Eigenbasis)
 
 선형 변환 $A$ 를 적용할 때, 대부분의 벡터는 방향이 바뀝니다. 하지만 **방향은 유지하고 크기(스케일)만 변하는 특별한 벡터**가 있습니다. 이것이 **고유벡터(Eigenvector)** 입니다.
-
+<br />
 $$A\vec{v} = \lambda\vec{v}$$
-
+<br />
 - $\vec{v}$: 고유벡터 (방향 유지)
 - $\lambda$: 고유값 (스케일 배율)
 
@@ -136,39 +136,39 @@ $$A\vec{v} = \lambda\vec{v}$$
 $$A\vec{v} = \lambda\vec{v}$$
 $$A\vec{v} - \lambda I\vec{v} = \vec{0}$$
 $$(A - \lambda I)\vec{v} = \vec{0}$$
-
+<br />
 $\vec{v} \neq \vec{0}$ 이 되려면 $(A - \lambda I)$ 가 **특이 행렬** 이어야 합니다:
-
+<br />
 $$\det(A - \lambda I) = 0 \quad \text{(특성 다항식)}$$
 
 ### 2×2 행렬 예시
 
 $$A = \begin{bmatrix} 5 & 1 \\ 3 & 3 \end{bmatrix}$$
-
+<br />
 **1단계 — 특성 다항식:**
-
+<br />
 $$\det(A - \lambda I) = \det\begin{bmatrix} 5-\lambda & 1 \\ 3 & 3-\lambda \end{bmatrix} = 0$$
-
+<br />
 $$(5-\lambda)(3-\lambda) - 3 = 0$$
-
+<br />
 $$\lambda^2 - 8\lambda + 12 = 0$$
-
+<br />
 $$(\lambda - 6)(\lambda - 2) = 0$$
-
+<br />
 **고유값:** $\lambda_1 = 6,\quad \lambda_2 = 2$
 
 **2단계 — 고유벡터 ($\lambda_1 = 6$):**
-
+<br />
 $$(A - 6I)\vec{v} = \vec{0}$$
-
+<br />
 $$\begin{bmatrix} -1 & 1 \\ 3 & -3 \end{bmatrix}\vec{v} = \vec{0}$$
-
+<br />
 $$-v_1 + v_2 = 0 \Rightarrow v_1 = v_2 \Rightarrow \vec{v_1} = \begin{bmatrix} 1 \\ 1 \end{bmatrix}$$
-
+<br />
 **고유벡터 ($\lambda_2 = 2$):**
-
+<br />
 $$\begin{bmatrix} 3 & 1 \\ 3 & 1 \end{bmatrix}\vec{v} = \vec{0}$$
-
+<br />
 $$3v_1 + v_2 = 0 \Rightarrow \vec{v_2} = \begin{bmatrix} 1 \\ -3 \end{bmatrix}$$
 
 > **고유값과 고유벡터는 항상 쌍으로 존재합니다.**
@@ -194,9 +194,9 @@ $$3v_1 + v_2 = 0 \Rightarrow \vec{v_2} = \begin{bmatrix} 1 \\ -3 \end{bmatrix}$$
 ### 투영의 수식
 
 데이터 포인트 $\vec{x}$ 를 단위 벡터 $\hat{u}$ 위로 투영:
-
+<br />
 $$\text{투영} = (\vec{x} \cdot \hat{u})$$
-
+<br />
 - $\vec{x} \cdot \hat{u}$: 점곱으로 투영값 계산
 - $\hat{u}$ 를 단위 벡터 ($\|\hat{u}\| = 1$)로 정규화 → 스트레칭 없음
 
@@ -211,13 +211,13 @@ PCA를 이해하려면 두 가지 통계 개념이 필요합니다.
 ### 분산 (Variance)
 
 데이터가 평균에서 얼마나 퍼져 있는지를 나타냅니다.
-
+<br />
 $$\text{Var}(X) = \frac{1}{n}\sum_{i=1}^n (x_i - \bar{x})^2$$
 
 ### 공분산 (Covariance)
 
 두 변수가 **같은 방향으로 함께 변하는지** 를 나타냅니다.
-
+<br />
 $$\text{Cov}(X, Y) = \frac{1}{n}\sum_{i=1}^n (x_i - \bar{x})(y_i - \bar{y})$$
 
 | 공분산 값 | 의미 |
@@ -233,17 +233,17 @@ $$\text{Cov}(X, Y) = \frac{1}{n}\sum_{i=1}^n (x_i - \bar{x})(y_i - \bar{y})$$
 ## 공분산 행렬 (Covariance Matrix)
 
 여러 변수들 간의 공분산과 분산을 모두 담은 행렬입니다.
-
+<br />
 $$\Sigma = \begin{bmatrix} \text{Var}(X) & \text{Cov}(X,Y) \\ \text{Cov}(Y,X) & \text{Var}(Y) \end{bmatrix}$$
-
+<br />
 - **대각 원소**: 각 변수의 분산
 - **비대각 원소**: 변수 쌍의 공분산
 - **대칭 행렬**: $\text{Cov}(X,Y) = \text{Cov}(Y,X)$
 
 **행렬 표기법:**
-
+<br />
 $$\Sigma = \frac{1}{n}(X - \mu)^T(X - \mu)$$
-
+<br />
 여기서 $X - \mu$ 는 평균을 뺀(중심화된) 데이터 행렬입니다.
 
 ---
@@ -263,17 +263,17 @@ PCA는 **투영 + 고유값·고유벡터 + 공분산 행렬**을 결합해, 정
 **1단계 — 데이터 중심화**
 
 각 열의 평균을 빼서 평균이 0이 되도록 합니다.
-
+<br />
 $$X_{\text{centered}} = X - \mu$$
-
+<br />
 **2단계 — 공분산 행렬 계산**
-
+<br />
 $$\Sigma = \frac{1}{n}X_{\text{centered}}^T X_{\text{centered}}$$
-
+<br />
 **3단계 — 고유값·고유벡터 계산**
-
+<br />
 $$\Sigma \vec{v} = \lambda \vec{v}$$
-
+<br />
 고유값을 내림차순으로 정렬합니다. ($\lambda_1 \geq \lambda_2 \geq \cdots$)
 
 **4단계 — 투영 행렬 생성**
@@ -281,7 +281,7 @@ $$\Sigma \vec{v} = \lambda \vec{v}$$
 원하는 차원 수만큼 고유벡터를 선택해 투영 행렬 $V$ 를 만듭니다. (각 고유벡터를 단위 벡터로 정규화)
 
 **5단계 — 데이터 투영**
-
+<br />
 $$X_{\text{PCA}} = X_{\text{centered}} \cdot V$$
 
 ### 왜 작동하는가?
@@ -317,21 +317,21 @@ print("변환된 데이터:", X_pca)
 
 - 각 원소가 **0 이상**
 - 각 **열(column)의 합이 1** — 상태 전이 확률을 나타냄
-
+<br />
 $$M = \begin{bmatrix} 0.9 & 0.2 \\ 0.1 & 0.8 \end{bmatrix}$$
-
+<br />
 (예: 맑은 날 → 맑을 확률 90%, 맑은 날 → 흐릴 확률 10%)
 
 ### 상태 벡터 업데이트
 
 현재 상태 $\vec{s}_t$ 에서 다음 상태:
-
+<br />
 $$\vec{s}_{t+1} = M \cdot \vec{s}_t$$
-
+<br />
 이 과정을 반복하면 상태 벡터가 **수렴(평형)** 합니다.
-
+<br />
 $$\vec{s}_\infty = \text{평형 벡터 (equilibrium vector)}$$
-
+<br />
 **평형 벡터 = 고유값 1에 대응하는 고유벡터**
 
 마르코프 행렬은 항상 고유값 1을 가지므로, 장기 균형 상태를 고유벡터로 구할 수 있습니다.
@@ -366,11 +366,11 @@ $$\vec{s}_\infty = \text{평형 벡터 (equilibrium vector)}$$
 
 <details>
 <summary>정답 보기</summary>
-
+<br />
 $$\det(AB) = \det(A) \cdot \det(B) = 4 \times (-3) = -12$$
-
+<br />
 $$\det(A^{-1}) = \frac{1}{\det(A)} = \frac{1}{4} = 0.25$$
-
+<br />
 $\det(AB) < 0$ 이므로 이 변환은 **공간을 반전**시킵니다.
 
 </details>
@@ -391,14 +391,14 @@ $(4, 8) = 4 \cdot (1, 2)$ 이므로 두 벡터는 **선형 종속**입니다.
 ---
 
 **Q3. 다음 행렬의 고유값을 구하세요.**
-
+<br />
 $$A = \begin{bmatrix} 3 & 1 \\ 0 & 2 \end{bmatrix}$$
-
+<br />
 <details>
 <summary>정답 보기</summary>
-
+<br />
 $$\det(A - \lambda I) = \det\begin{bmatrix} 3-\lambda & 1 \\ 0 & 2-\lambda \end{bmatrix} = (3-\lambda)(2-\lambda) = 0$$
-
+<br />
 **고유값:** $\lambda_1 = 3,\quad \lambda_2 = 2$
 
 (삼각 행렬의 고유값은 대각 원소입니다.)
@@ -428,9 +428,9 @@ $$\det(A - \lambda I) = \det\begin{bmatrix} 3-\lambda & 1 \\ 0 & 2-\lambda \end{
 <summary>정답 보기</summary>
 
 마르코프 행렬의 **고유값 1** 에 대응하는 **고유벡터**입니다.
-
+<br />
 $$M\vec{s} = 1 \cdot \vec{s} = \vec{s}$$
-
+<br />
 즉, 상태 벡터를 아무리 업데이트해도 더 이상 변하지 않는 **고정점(fixed point)** 이 평형 벡터이며, 이것이 고유값 1의 고유벡터입니다.
 
 </details>
