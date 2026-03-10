@@ -12,16 +12,18 @@ export const metadata: Metadata = {
     default: 'devlog — 개발자 블로그',
     template: '%s | devlog',
   },
-  description: '게임과 영화를 좋아하는 개발자의 개발, AI 기술 블로그',
+  description: '삽질의 흔적을 정리합니다.',
   verification: {
     google: 'sxvIVKBQt9YBYmJTtpKUGnFWNhhRuNdJMjDEWYPjqkQ',
   },
   openGraph: {
     siteName: 'devlog',
+    description: '삽질의 흔적을 정리합니다.',
     images: [{ url: '/soong.png', width: 1200, height: 630 }],
   },
   twitter: {
     card: 'summary_large_image',
+    description: '삽질의 흔적을 정리합니다.',
     images: ['/soong.png'],
   },
 }
