@@ -62,14 +62,6 @@ export default function Footer() {
             </a>
           </div>
         </div>
-        <div className="mt-4 flex justify-center">
-          <Link
-            href="/privacy"
-            className="text-xs text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
-          >
-            개인정보처리방침
-          </Link>
-        </div>
       </div>
     </footer>
   )

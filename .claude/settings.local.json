@@ -11,7 +11,17 @@
       "Bash(npm info next-mdx-remote versions --json 2>/dev/null | python3 -c \"import json,sys; v=json.load\\(sys.stdin\\); print\\([x for x in v if x.startswith\\('6'\\)]\\)\")",
       "Bash(npm install next-mdx-remote@6.0.0 2>&1 | tail -5)",
       "Bash(npm install remark-math rehype-katex 2>&1 | tail -5)",
-      "Bash(git push origin main 2>&1)"
+      "Bash(git push origin main 2>&1)",
+      "Bash(for f in statistics-2 statistics-3 statistics-4 statistics-5 statistics-6 statistics-7 statistics-quiz)",
+      "Bash(do echo \"=== $f ===\")",
+      "Read(//Users/jajuna99/git/proj/devlog/content/posts/**)",
+      "Bash(done)",
+      "Bash(for f in statistics-1 statistics-2 statistics-3 statistics-4 statistics-5 statistics-6 statistics-7 statistics-quiz os-interview-questions)",
+      "Bash(for f in statistics-1 statistics-3 statistics-4 statistics-5 statistics-6 statistics-7)",
+      "Bash(do echo \"=== $f ===\" grep -n \"^## 마무리\\\\|^## 정리\\\\|^## 요약\\\\|<br\" /Users/jajuna99/git/proj/devlog/content/posts/$f.mdx)",
+      "Read(//Users/jajuna99/git/proj/devlog/**)",
+      "Bash(tail -4 /Users/jajuna99/git/proj/devlog/content/posts/prob-stats-concept-practice.mdx\ntail -4 /Users/jajuna99/git/proj/devlog/content/posts/prob-stats-coding-practice.mdx\ngrep -n \"^## 퀴즈\\\\|^## 정리\\\\|^## 마무리\\\\|^## 정답\" /Users/jajuna99/git/proj/devlog/content/posts/statistics-3.mdx | tail -3\ngrep -n \"^## 퀴즈\\\\|^## 정리\\\\|^## 마무리\\\\|^## 정답\" /Users/jajuna99/git/proj/devlog/content/posts/statistics-4.mdx | tail -3)",
+      "Bash(find /Users/jajuna99/git/proj/devlog/app -type d -name \"*privacy*\" -o -type d -name \"*contact*\" 2>/dev/null | grep -v node_modules)"
     ]
   }
 }
