@@ -27,8 +27,10 @@ export function getAllPosts(): PostMeta[] {
         tags: (data.tags as string[]) ?? [],
         excerpt: data.excerpt as string,
         readTime: data.readTime as number,
+        draft: (data.draft as boolean) ?? false,
       }
     })
+    .filter((post) => process.env.SHOW_DRAFTS === 'true' || !post.draft)
     .sort((a, b) => (a.date < b.date ? 1 : -1))
 
   return posts
@@ -44,6 +46,11 @@ export function getPostBySlug(slug: string): Post | null {
   const fileContents = fs.readFileSync(fullPath, 'utf8')
   const { data, content } = matter(fileContents)
 
+  const draft = (data.draft as boolean) ?? false
+  if (draft && process.env.SHOW_DRAFTS !== 'true') {
+    return null
+  }
+
   return {
     slug,
     title: data.title as string,
@@ -53,6 +60,7 @@ export function getPostBySlug(slug: string): Post | null {
     excerpt: data.excerpt as string,
     readTime: data.readTime as number,
     content,
+    draft,
   }
 }
 
