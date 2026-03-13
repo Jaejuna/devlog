@@ -9,7 +9,6 @@ export interface Post {
   excerpt: string
   readTime: number
   content: string
-  draft?: boolean
 }
 
 export interface PostMeta {
@@ -20,7 +19,6 @@ export interface PostMeta {
   tags: string[]
   excerpt: string
   readTime: number
-  draft?: boolean
 }
 
 export interface TocItem {
