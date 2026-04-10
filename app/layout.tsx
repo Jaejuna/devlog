@@ -5,6 +5,7 @@ import 'katex/dist/katex.min.css'
 import 'highlight.js/styles/github-dark-dimmed.css'
 import Header from '@/components/layout/Header'
 import Footer from '@/components/layout/Footer'
+import { getAllPosts } from '@/lib/mdx'
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL ?? 'https://j-devlog.space'),
@@ -48,6 +49,28 @@ export default function RootLayout({
 }: {
   children: React.ReactNode
 }) {
+  const posts = getAllPosts()
+
+  const categoryMap: Record<string, { slug: string; title: string }[]> = {}
+  for (const post of posts) {
+    if (!categoryMap[post.category]) categoryMap[post.category] = []
+    categoryMap[post.category].push({ slug: post.slug, title: post.title })
+  }
+  const categories = Object.entries(categoryMap).map(([name, catPosts]) => ({
+    name,
+    posts: catPosts,
+  }))
+
+  const tagCount: Record<string, number> = {}
+  for (const post of posts) {
+    for (const tag of post.tags) {
+      tagCount[tag] = (tagCount[tag] ?? 0) + 1
+    }
+  }
+  const tags = Object.entries(tagCount)
+    .sort((a, b) => b[1] - a[1])
+    .map(([name, count]) => ({ name, count }))
+
   return (
     <html lang="ko" suppressHydrationWarning>
       <head>
@@ -68,7 +91,7 @@ export default function RootLayout({
         )}
       </head>
       <body className="min-h-screen bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100">
-        <Header />
+        <Header categories={categories} tags={tags} />
         <main>{children}</main>
         <Footer />
       </body>
