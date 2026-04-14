@@ -1,8 +1,6 @@
 import { MetadataRoute } from 'next'
 import { getAllPosts } from '@/lib/mdx'
 
-export const dynamic = 'force-dynamic'
-
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL ?? 'https://j-devlog.space'
 
 export default function sitemap(): MetadataRoute.Sitemap {
