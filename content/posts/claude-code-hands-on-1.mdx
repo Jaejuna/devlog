@@ -1,0 +1,278 @@
+---
+title: "Claude Code Hands-on #1 — 컨텍스트 관리부터 커스텀 명령어까지"
+date: "2026-04-10"
+category: "Claude Code in Action"
+tags: ["Claude Code", "AI", "코딩어시스턴트", "컨텍스트관리", "CLAUDE.md", "커스텀명령어"]
+excerpt: "Claude Code를 제대로 쓰려면 컨텍스트 관리가 핵심이다. /init, CLAUDE.md, @ 파일 멘션, Planning Mode, Thinking Mode, 대화 흐름 제어, 커스텀 명령어까지 실무에서 바로 쓰는 핵심 기능을 정리했습니다."
+readTime: 14
+---
+
+> 이 글은 Anthropic 공식 Course [Claude Code in Action](https://anthropic.skilljar.com/claude-code-in-action) 한국어로 번역 & 정리한 글입니다. Hands-on 시리즈 첫 번째 편입니다.
+
+---
+
+## 컨텍스트 관리란
+
+Claude Code를 개발 프로젝트에 투입할 때 가장 중요한 것은 **컨텍스트 관리**다.<br/>
+
+프로젝트에는 수십, 수백 개의 파일이 있지만 Claude가 실제로 필요한 정보는 그 중 극히 일부다. 오히려 관련 없는 정보를 너무 많이 제공하면 Claude의 성능이 떨어진다.<br/>
+
+목표는 단순하다 — **Claude가 지금 당장 필요한 정보만 보도록 유도하는 것.**
+
+---
+
+## /init — 프로젝트 첫 분석
+
+새 프로젝트에서 Claude Code를 처음 실행할 때는 `/init` 명령어로 시작하는 게 좋다. Claude가 전체 코드베이스를 분석해서 다음을 파악한다.<br/>
+
+- 프로젝트의 목적과 전체 아키텍처
+- 핵심 명령어와 중요 파일 위치
+- 코딩 패턴과 구조
+
+분석이 끝나면 Claude는 결과를 요약하고 `CLAUDE.md` 파일을 생성한다.<br/>
+
+파일 생성 권한을 요청할 때 **Enter**를 눌러 각각 승인하거나, **Shift+Tab**을 눌러 세션 전체에서 파일 쓰기를 자유롭게 허용할 수 있다.
+
+---
+
+## CLAUDE.md 파일
+
+`CLAUDE.md`는 Claude Code가 모든 요청마다 자동으로 읽는 파일이다. 두 가지 역할을 한다.<br/>
+
+- Claude가 코드베이스를 빠르게 이해해 관련 코드를 찾을 수 있도록 도움
+- Claude에게 전달할 일반적인 지침을 담는 공간
+
+Claude Code는 세 단계의 `CLAUDE.md`를 인식한다.<br/>
+
+| 파일 | 위치 | 특징 |
+|---|---|---|
+| `CLAUDE.md` | 프로젝트 루트 | `/init`이 생성, 소스 컨트롤에 커밋, 팀 전체 공유 |
+| `CLAUDE.local.md` | 프로젝트 루트 | 커밋 안 함, 개인 지침만 담기 |
+| `~/.claude/CLAUDE.md` | 홈 디렉터리 | 머신의 모든 프로젝트에 적용 |
+
+세 파일의 내용은 모두 Claude에게 보내는 모든 요청에 포함된다.
+
+---
+
+## Memory Mode — # 단축키
+
+`#` 명령어를 입력하면 **Memory Mode**가 활성화되어 `CLAUDE.md` 파일을 지능적으로 편집할 수 있다.<br/>
+
+예를 들어 Claude가 코드에 주석을 너무 자주 달면 이렇게 입력한다.
+
+```
+# don't write comments so often
+```
+
+Claude가 이 지침을 알맞은 `CLAUDE.md` 파일에 자동으로 병합한다.<br/>
+
+한 번 추가하면 이후 대화에서 같은 실수를 반복하지 않는다. **Escape로 멈추고 → `#`로 수정 → 다시 진행** 흐름과 함께 쓰면 특히 강력하다.
+
+---
+
+## @ 파일 멘션
+
+Claude가 특정 파일을 봐야 할 때 `@` 기호 뒤에 파일 경로를 입력하면 해당 파일 내용이 요청에 자동으로 포함된다.<br/>
+
+```
+How does the auth system work? @auth
+```
+
+Claude가 코드베이스를 직접 검색하는 것보다 훨씬 효율적이다. 관련 파일을 정확히 가리키기 때문에 검색 과정 없이 바로 답변이 나온다.<br/>
+
+`CLAUDE.md` 안에서도 동일한 `@` 문법을 쓸 수 있다. 프로젝트의 많은 영역에서 참조되는 파일이라면 `CLAUDE.md`에 미리 등록해두면 좋다.
+
+```md
+# Reference the @prisma/schema.prisma file anytime you need to understand
+# the structure of data inside the database
+```
+
+이렇게 등록된 파일은 모든 요청마다 자동으로 컨텍스트에 포함되어, Claude가 관련 질문에 즉시 응답할 수 있다.
+
+---
+
+## 스크린샷으로 소통하기
+
+Claude와 소통할 때 가장 효과적인 방법 중 하나는 **스크린샷**이다.<br/>
+
+UI의 특정 부분을 수정하고 싶을 때 스크린샷을 첨부하면 Claude가 정확히 무엇을 말하는지 이해한다.<br/>
+
+스크린샷을 붙여넣으려면 **`Ctrl+V`** 를 사용한다. macOS에서도 `Cmd+V`가 아닌 `Ctrl+V`다. 이미지를 붙여넣은 뒤 원하는 변경 사항을 바로 요청하면 된다.
+
+---
+
+## Planning Mode
+
+복잡한 작업에서 Claude가 코드베이스를 충분히 탐색한 뒤 구현하도록 유도하려면 **Planning Mode**를 활성화한다.<br/>
+
+**`Shift + Tab`을 두 번** 누르면 된다. (이미 자동 승인 모드라면 한 번으로 충분하다.)<br/>
+
+Planning Mode에서 Claude는:
+
+- 프로젝트 파일을 더 광범위하게 읽는다
+- 상세한 구현 계획을 작성한다
+- 정확히 무엇을 할 것인지 보여준다
+- 승인을 받은 후에야 실행에 옮긴다
+
+계획을 검토하면서 Claude가 놓친 부분이 있다면 그 자리에서 방향을 수정할 수 있다.
+
+---
+
+## Thinking Mode
+
+Claude는 복잡한 문제를 풀기 전에 더 많은 시간을 들여 추론할 수 있는 **Thinking Mode**를 제공한다.<br/>
+
+요청 안에 다음 키워드를 포함하기만 하면 된다.
+
+| 키워드 | 추론 수준 |
+|---|---|
+| `think` | 기본 추론 |
+| `think more` | 확장 추론 |
+| `think a lot` | 심층 추론 |
+| `think longer` | 장시간 추론 |
+| `ultrathink` | 최대 추론 |
+
+각 모드는 Claude에게 더 많은 토큰을 할당해 어려운 문제를 더 깊이 분석한다.<br/>
+
+다만 두 기능 모두 추가 토큰을 소비하므로 비용 측면도 고려하자.
+
+### Planning vs Thinking — 언제 무엇을 쓰나
+
+두 기능은 다루는 복잡성의 종류가 다르다.<br/>
+
+**Planning Mode**는 이런 상황에 적합하다.
+
+- 코드베이스 전반을 이해해야 하는 작업
+- 여러 파일이나 컴포넌트에 영향을 주는 변경
+- 다단계 구현
+
+**Thinking Mode**는 이런 상황에 적합하다.
+
+- 복잡한 로직 문제
+- 디버깅이 어려운 버그
+- 알고리즘 문제
+
+두 모드를 동시에 사용하면 넓이와 깊이를 모두 잡을 수 있다.
+
+---
+
+## 대화 흐름 제어
+
+복잡한 작업을 진행하다 보면 대화 흐름을 직접 제어해야 할 때가 있다.
+
+### Escape — 중단하기
+
+Claude가 잘못된 방향으로 가거나 너무 많은 것을 한꺼번에 처리하려 할 때 **Escape** 키를 누르면 응답을 즉시 중단할 수 있다.<br/>
+
+특히 Claude가 같은 실수를 반복할 때 유용하다.
+
+1. **Escape**로 현재 응답을 중단
+2. `#` 단축키로 올바른 방법을 메모리에 추가
+3. 수정된 정보로 대화를 이어간다
+
+이후 대화에서 같은 오류가 반복되지 않는다.
+
+### Escape 두 번 — 대화 되감기
+
+긴 대화를 진행하다 보면 이미 해결된 디버깅 과정이나 관련 없는 내용이 쌓이기 마련이다.<br/>
+
+**Escape를 두 번** 누르면 보낸 메시지 목록이 표시되고, 원하는 시점으로 되돌아갈 수 있다.
+
+- Claude가 코드베이스에 대해 쌓은 이해는 유지하면서
+- 불필요한 대화 히스토리만 제거할 수 있다
+
+### /compact
+
+`/compact` 명령어는 대화 전체를 요약하면서 Claude가 배운 핵심 정보를 보존한다.<br/>
+
+다음 상황에 적합하다.
+
+- Claude가 현재 작업에 대한 지식을 많이 쌓았을 때
+- 관련된 다음 작업으로 넘어가고 싶을 때
+- 대화는 길어졌지만 중요한 컨텍스트가 남아있을 때
+
+### /clear
+
+`/clear` 명령어는 대화 히스토리를 완전히 삭제해 새로 시작한다.<br/>
+
+완전히 다른 작업으로 전환할 때, 또는 이전 컨텍스트가 새 작업을 방해할 수 있을 때 사용한다.
+
+| 상황 | 추천 |
+|---|---|
+| 관련 작업 연속으로 진행 | `/compact` |
+| 완전히 다른 작업으로 전환 | `/clear` |
+| 특정 시점부터 다시 | Escape 두 번 |
+
+---
+
+## 커스텀 명령어
+
+Claude Code에는 기본 제공 명령어 외에, 자주 쓰는 작업을 **커스텀 명령어**로 등록할 수 있다.<br/>
+
+### 만드는 방법
+
+1. 프로젝트의 `.claude` 폴더를 연다
+2. 그 안에 `commands` 디렉터리를 만든다
+3. 원하는 명령어 이름으로 마크다운 파일을 만든다 (예: `audit.md`)
+
+파일명이 곧 명령어 이름이 된다. `audit.md` → `/audit`<br/>
+
+커스텀 명령어를 추가한 뒤에는 **Claude Code를 재시작**해야 인식된다.
+
+### 예시 — /audit
+
+의존성 취약점을 점검하는 `/audit` 명령어 예시다.
+
+```md
+1. Run `npm audit` to find vulnerable packages
+2. Run `npm audit fix` to apply updates
+3. Run tests to verify nothing broke
+```
+
+### 인자 넘기기 — $ARGUMENTS
+
+`$ARGUMENTS` 플레이스홀더를 사용하면 명령어에 동적으로 인자를 전달할 수 있다.<br/>
+
+예를 들어 `write_tests.md` 파일을 이렇게 만들면:
+
+```md
+Write comprehensive tests for: $ARGUMENTS
+
+Testing conventions:
+* Use Vitest with React Testing Library
+* Place test files in a __tests__ directory next to the source file
+* Name test files as [filename].test.ts(x)
+* Use @/ prefix for imports
+
+Coverage:
+* Test happy paths
+* Test edge cases
+* Test error states
+```
+
+다음처럼 실행할 수 있다.
+
+```
+/write_tests the use-auth.ts file in the hooks directory
+```
+
+인자는 파일 경로에 한정되지 않는다. Claude에게 방향과 컨텍스트를 주는 어떤 문자열이든 넘길 수 있다.
+
+<br />
+
+## 정리
+
+| 기능 | 언제 쓰나 |
+|---|---|
+| `/init` | 새 프로젝트 첫 실행 시 |
+| `CLAUDE.md` | 프로젝트 전반 지침 등록 |
+| `#` Memory Mode | 반복 실수 수정, 지침 추가 |
+| `@` 파일 멘션 | Claude에게 특정 파일을 직접 가리킬 때 |
+| `Ctrl+V` 스크린샷 | UI 변경 사항을 시각적으로 전달 |
+| Planning Mode | 다파일 구현, 복잡한 변경 |
+| Thinking Mode | 복잡한 로직, 알고리즘 문제 |
+| Escape | 잘못된 방향 즉시 중단 |
+| Escape × 2 | 대화 특정 시점으로 되감기 |
+| `/compact` | 컨텍스트 유지하며 대화 압축 |
+| `/clear` | 완전히 다른 작업 시작 |
+| 커스텀 명령어 | 반복 워크플로우 자동화 |
