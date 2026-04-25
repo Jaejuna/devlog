@@ -42,33 +42,33 @@ type CategoryConfig = {
 
 const CATEGORY_CONFIG: Record<string, CategoryConfig> = {
   AI: {
-    bg: 'bg-blue-50 dark:bg-blue-950/30',
-    border: 'border-blue-200 dark:border-blue-800',
-    text: 'text-blue-700 dark:text-blue-300',
+    bg: 'bg-gray-50 dark:bg-gray-900/30',
+    border: 'border-gray-200 dark:border-gray-800',
+    text: 'text-gray-700 dark:text-gray-300',
     description: 'LLM, 프롬프트 엔지니어링, AI 도구 활용',
   },
   개발: {
-    bg: 'bg-emerald-50 dark:bg-emerald-950/30',
-    border: 'border-emerald-200 dark:border-emerald-800',
-    text: 'text-emerald-700 dark:text-emerald-300',
+    bg: 'bg-gray-50 dark:bg-gray-900/30',
+    border: 'border-gray-200 dark:border-gray-800',
+    text: 'text-gray-700 dark:text-gray-300',
     description: '웹·백엔드 개념, 패턴, 실무 경험',
   },
   면접: {
-    bg: 'bg-amber-50 dark:bg-amber-950/30',
-    border: 'border-amber-200 dark:border-amber-800',
-    text: 'text-amber-700 dark:text-amber-300',
+    bg: 'bg-gray-50 dark:bg-gray-900/30',
+    border: 'border-gray-200 dark:border-gray-800',
+    text: 'text-gray-700 dark:text-gray-300',
     description: 'CS 기초, 기술 면접 빈출 문제 정리',
   },
   회고: {
-    bg: 'bg-rose-50 dark:bg-rose-950/30',
-    border: 'border-rose-200 dark:border-rose-800',
-    text: 'text-rose-700 dark:text-rose-300',
+    bg: 'bg-gray-50 dark:bg-gray-900/30',
+    border: 'border-gray-200 dark:border-gray-800',
+    text: 'text-gray-700 dark:text-gray-300',
     description: '프로젝트와 이벤트 경험의 기록',
   },
   MMD: {
-    bg: 'bg-violet-50 dark:bg-violet-950/30',
-    border: 'border-violet-200 dark:border-violet-800',
-    text: 'text-violet-700 dark:text-violet-300',
+    bg: 'bg-gray-50 dark:bg-gray-900/30',
+    border: 'border-gray-200 dark:border-gray-800',
+    text: 'text-gray-700 dark:text-gray-300',
     description: 'ML/DS를 위한 선형대수, 미적분, 통계',
   },
 }
