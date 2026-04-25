@@ -165,7 +165,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
                   J&apos;s Devlog
                 </h1>
                 <p className="text-sm text-gray-500 dark:text-gray-400">
-                  개발 경험과 CS 기초, AI·수학을 정리하는 기술 블로그
+                  개발, 연구 경험을 정리하는 기술 블로그
                 </p>
               </div>
 
