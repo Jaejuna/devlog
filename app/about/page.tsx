@@ -54,12 +54,11 @@ export default function AboutPage() {
             <p className="text-primary-600 dark:text-primary-400 font-medium mb-4">
               devlog.
             </p>
-            <p className="text-gray-600 dark:text-gray-400 leading-relaxed mb-4">
-              Data Science, AI, 시스템 개발을 공부하는 개발자의 기술 블로그입니다. <br />
-              배운 개념을 직접 정리하고, 실험한 결과를 솔직하게 기록합니다.
+            <p className="text-gray-600 dark:text-gray-400 leading-relaxed mb-1">
+              데이터 사이언스, AI, 시스템 개발에 관심 있는 개발자입니다.
             </p>
             <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
-              이론부터 실습, 설계, 운영까지 — 관심 가는 건 다 파고듭니다.
+              현지화(L10N)와 국제화(I18N)를 위한 AI & 시스템을 만들고 있습니다.
             </p>
 
             <div className="flex items-center gap-4 mt-6">
