@@ -13,6 +13,9 @@ import type { PostMeta } from '@/lib/types'
 export const metadata: Metadata = {
   title: 'devlog — 개발자 블로그',
   description: '개발 경험과 면접 준비 콘텐츠를 다루는 개인 기술 블로그',
+  alternates: {
+    canonical: 'https://j-devlog.space',
+  },
   openGraph: {
     title: 'devlog — 개발자 블로그',
     description: '개발 경험과 면접 준비 콘텐츠를 다루는 개인 기술 블로그',
