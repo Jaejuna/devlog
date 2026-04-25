@@ -1,0 +1,236 @@
+---
+title: "Claude Code Hands-on #4 — 실전 Hooks와 Claude Code SDK"
+date: "2026-04-13"
+category: "Claude Code in Action"
+tags: ["Claude Code", "AI", "Hooks", "SDK", "자동화", "TypeScript", "코딩어시스턴트"]
+excerpt: "Hooks 보안 설정, TypeScript 타입체크 자동화, 쿼리 중복 방지 Hook까지 실전 활용법과 함께, 전체 Hook 타입 목록과 Claude Code SDK를 이용한 프로그래밍 방식 자동화를 정리했습니다."
+readTime: 15
+---
+
+> 이 글은 Anthropic 공식 Course [Claude Code in Action](https://anthropic.skilljar.com/claude-code-in-action) 한국어로 번역 & 정리한 글입니다. Hands-on 시리즈 네 번째 편입니다.
+
+---
+
+## Hooks 보안 — 절대 경로 사용
+
+Claude Code 공식 문서는 Hook 스크립트 경로를 지정할 때 **상대 경로 대신 절대 경로**를 사용하도록 권장한다.<br/>
+
+이는 [경로 가로채기(path interception)](https://attack.mitre.org/techniques/T1574/007/) 및 바이너리 플랜팅(binary planting) 공격을 방지하기 위해서다.<br/>
+
+문제는 절대 경로를 쓰면 `settings.json`을 팀과 공유하기 어려워진다는 점이다. 내 머신의 절대 경로와 동료 머신의 절대 경로가 다르기 때문이다.
+
+### 해결 방법 — $PWD 플레이스홀더
+
+이 문제를 해결하기 위해 프로젝트에 `settings.example.json` 파일을 만들고, 스크립트 경로에 `$PWD` 플레이스홀더를 사용한다.<br/>
+
+`npm run setup`을 실행하면 `scripts/init-claude.js` 스크립트가 자동으로:
+
+1. `$PWD` 플레이스홀더를 해당 머신의 절대 경로로 교체
+2. `settings.example.json`을 복사해 `settings.local.json`으로 저장
+
+덕분에 설정 파일을 팀과 공유하면서도 각자의 머신에서 절대 경로로 안전하게 동작한다.
+
+---
+
+## 실전 Hook #1 — TypeScript 타입체크 자동화
+
+AI 보조 개발에서 자주 발생하는 문제가 있다. Claude가 함수 시그니처를 수정할 때 해당 함수를 호출하는 다른 파일을 빠뜨리는 경우다.<br/>
+
+예를 들어 `schema.ts`의 함수에 `verbose` 파라미터를 추가해달라고 요청하면, Claude는 함수 정의는 수정하지만 `main.ts`의 호출 지점을 놓쳐 타입 에러를 만들 수 있다.<br/>
+
+이를 PostToolUse Hook으로 해결할 수 있다.
+
+```json
+"PostToolUse": [
+  {
+    "matcher": "Write|Edit|MultiEdit",
+    "hooks": [
+      {
+        "type": "command",
+        "command": "/절대/경로/hooks/typecheck_hook.js"
+      }
+    ]
+  }
+]
+```
+
+파일이 편집될 때마다 Hook이 `tsc --noEmit`을 실행하고, 타입 에러가 발견되면 Claude에게 즉시 피드백을 돌려준다. Claude는 그 피드백을 바탕으로 누락된 파일도 함께 수정한다.<br/>
+
+TypeScript 외에 타입 시스템이 없는 언어라면, 같은 원리로 자동화 테스트를 실행하는 Hook으로 대체할 수 있다.
+
+---
+
+## 실전 Hook #2 — 쿼리 중복 방지
+
+규모가 큰 프로젝트에서는 Claude가 기존 함수를 재사용하는 대신 유사한 기능을 새로 작성하는 경우가 생긴다. DB 쿼리 파일이 여러 개이고 각각 수십 개의 함수가 있을 때 특히 자주 발생한다.<br/>
+
+예를 들어 "3일 이상 대기 중인 주문에 대해 Slack 알림을 보내는 기능을 만들어줘"라고 요청하면, 이미 `getPendingOrders()` 함수가 있음에도 새 쿼리를 작성할 수 있다.<br/>
+
+이를 방지하는 Hook을 구성할 수 있다.
+
+```json
+"PostToolUse": [
+  {
+    "matcher": "Write|Edit",
+    "hooks": [
+      {
+        "type": "command",
+        "command": "/절대/경로/hooks/query_review_hook.js"
+      }
+    ]
+  }
+]
+```
+
+Hook의 동작 흐름이다.<br/>
+
+1. `./queries` 디렉터리의 파일이 수정될 때 발동
+2. Claude Code SDK로 별도의 Claude 인스턴스를 실행
+3. 두 번째 인스턴스가 변경 사항을 검토해 유사한 기존 쿼리를 확인
+4. 중복이 발견되면 첫 번째 Claude 인스턴스에 피드백 전달
+5. Claude가 중복을 제거하고 기존 함수를 재사용하도록 유도
+
+이 Hook은 별도의 Claude 인스턴스를 실행하기 때문에 API 사용량과 처리 시간이 늘어난다. 모든 디렉터리에 적용하기보다는 중복이 문제가 되는 핵심 디렉터리에만 적용하는 게 좋다.
+
+---
+
+## 전체 Hook 타입
+
+`PreToolUse`와 `PostToolUse` 외에도 더 많은 Hook 타입이 있다.<br/>
+
+| Hook 타입 | 발동 시점 |
+|---|---|
+| `PreToolUse` | 도구 실행 직전 |
+| `PostToolUse` | 도구 실행 직후 |
+| `Notification` | Claude가 도구 권한을 요청하거나 60초 이상 유휴 상태일 때 |
+| `Stop` | Claude가 응답을 완료했을 때 |
+| `SubagentStop` | 서브에이전트(UI에서 "Task"로 표시) 작업 완료 시 |
+| `PreCompact` | 수동 또는 자동 compact 실행 직전 |
+| `UserPromptSubmit` | 사용자가 프롬프트를 제출했을 때, Claude가 처리하기 전 |
+| `SessionStart` | 세션 시작 또는 재개 시 |
+| `SessionEnd` | 세션 종료 시 |
+
+---
+
+## Hook 입력 구조 이해하기
+
+Hook 스크립트에 전달되는 stdin 데이터는 **Hook 타입**과 **매처**에 따라 달라진다. 이 점이 Hook 작성을 어렵게 만드는 주요 원인이다.<br/>
+
+예를 들어 `PostToolUse`에서 `TodoWrite` 도구를 감시할 때의 입력은 이렇다.
+
+```json
+{
+  "session_id": "9ecf22fa-...",
+  "transcript_path": "<path>",
+  "hook_event_name": "PostToolUse",
+  "tool_name": "TodoWrite",
+  "tool_input": {
+    "todos": [{ "content": "write a readme", "status": "pending", "priority": "medium", "id": "1" }]
+  },
+  "tool_response": {
+    "oldTodos": [],
+    "newTodos": [{ "content": "write a readme", "status": "pending", "priority": "medium", "id": "1" }]
+  }
+}
+```
+
+반면 `Stop` Hook의 입력은 훨씬 단순하다.
+
+```json
+{
+  "session_id": "af9f50b6-...",
+  "transcript_path": "<path>",
+  "hook_event_name": "Stop",
+  "stop_hook_active": false
+}
+```
+
+Hook 타입마다, 그리고 매처로 잡은 도구마다 입력 구조가 크게 다르다.
+
+### 입력 구조 확인용 Helper Hook
+
+어떤 데이터가 들어오는지 모를 때는 먼저 로그를 찍어보는 Helper Hook을 만들면 편하다.
+
+```json
+"PostToolUse": [
+  {
+    "matcher": "*",
+    "hooks": [
+      {
+        "type": "command",
+        "command": "jq . > post-log.json"
+      }
+    ]
+  }
+]
+```
+
+`jq .`은 stdin으로 받은 JSON을 그대로 파일에 저장한다. 어떤 도구를 실행하든 `post-log.json`에 실제 입력 구조가 기록되므로, 그 내용을 보고 스크립트를 작성하면 된다.
+
+---
+
+## Claude Code SDK
+
+**Claude Code SDK**를 사용하면 애플리케이션이나 스크립트 안에서 Claude Code를 프로그래밍 방식으로 실행할 수 있다.<br/>
+
+TypeScript, Python, CLI 세 가지 방식으로 제공되며, 터미널에서 쓰는 Claude Code와 완전히 동일한 도구와 설정을 그대로 사용한다.
+
+### 기본 사용법
+
+```ts
+import { query } from "@anthropic-ai/claude-code";
+
+const prompt = "Look for duplicate queries in the ./src/queries dir";
+
+for await (const message of query({ prompt })) {
+  console.log(JSON.stringify(message, null, 2));
+}
+```
+
+이 코드를 실행하면 Claude Code와 Claude 모델 사이의 대화가 메시지 단위로 출력된다. 마지막 메시지에 Claude의 최종 응답이 담긴다.
+
+### 권한 설정
+
+SDK는 기본적으로 **읽기 전용** 권한만 갖는다. 파일 읽기, 디렉터리 검색, grep은 가능하지만 파일 쓰기·편집·생성은 불가능하다.<br/>
+
+쓰기 권한이 필요하다면 `allowedTools` 옵션을 추가한다.
+
+```ts
+for await (const message of query({
+  prompt,
+  options: {
+    allowedTools: ["Edit"]
+  }
+})) {
+  console.log(JSON.stringify(message, null, 2));
+}
+```
+
+`.claude` 디렉터리의 설정 파일로 프로젝트 전체 권한을 관리할 수도 있다.
+
+### 활용 시나리오
+
+SDK는 더 큰 개발 워크플로우에 통합할 때 진가를 발휘한다.<br/>
+
+- Git Hook에서 코드 변경 사항 자동 리뷰
+- 빌드 스크립트에서 코드 분석 및 최적화
+- 코드 유지보수 헬퍼 명령어
+- 문서 자동 생성
+- CI/CD 파이프라인의 코드 품질 검사
+
+앞서 살펴본 **쿼리 중복 방지 Hook**도 내부적으로 SDK를 활용해 별도의 Claude 인스턴스를 실행하는 방식으로 구현된다.
+
+<br />
+
+## 정리
+
+| 개념 | 설명 |
+|---|---|
+| 절대 경로 | Hook 스크립트는 절대 경로 사용 권장 (보안) |
+| `settings.example.json` | `$PWD` 플레이스홀더로 팀 공유 가능한 설정 템플릿 |
+| TypeScript Hook | 편집 후 `tsc --noEmit` 실행 → 타입 에러 즉시 피드백 |
+| 쿼리 중복 방지 Hook | SDK로 별도 Claude 인스턴스를 실행해 중복 검토 |
+| `Stop`, `SessionStart` 등 | PreToolUse/PostToolUse 외 다양한 추가 Hook 타입 |
+| Helper Hook (`jq .`) | 실제 stdin 구조를 파일로 저장해 확인 |
+| Claude Code SDK | 스크립트·앱에서 Claude Code를 프로그래밍 방식으로 실행 |
+| SDK 기본 권한 | 읽기 전용, 쓰기 필요 시 `allowedTools`로 명시 |

@@ -1,0 +1,216 @@
+---
+title: "Claude Code Hands-on #3 — Hooks로 도구 실행 제어하기"
+date: "2026-04-13"
+category: "Claude Code in Action"
+tags: ["Claude Code", "AI", "Hooks", "자동화", "보안", "코딩어시스턴트"]
+excerpt: "Claude Code의 Hooks를 사용하면 도구 실행 전후에 커스텀 명령어를 끼워넣을 수 있다. 코드 포매터 자동 실행부터 민감한 파일 접근 차단까지, 실전 예제와 함께 정리했습니다."
+readTime: 13
+---
+
+> 이 글은 Anthropic 공식 Course [Claude Code in Action](https://anthropic.skilljar.com/claude-code-in-action) 한국어로 번역 & 정리한 글입니다. Hands-on 시리즈 세 번째 편입니다.
+
+---
+
+## Hooks란
+
+**Hooks**는 Claude가 도구를 실행하기 직전 또는 직후에 커스텀 명령어를 실행할 수 있게 해주는 기능이다.<br/>
+
+일반적인 흐름을 먼저 살펴보자. 사용자가 Claude에게 요청을 보내면 Claude 모델이 응답을 생성하고, 필요한 경우 도구 호출을 결정한다. 그러면 Claude Code가 해당 도구를 실행하고 결과를 반환한다.<br/>
+
+Hooks는 이 과정에 끼어들어, **도구 실행 직전이나 직후에 사용자 정의 코드를 실행**할 수 있게 한다.
+
+---
+
+## 두 가지 Hook 타입
+
+Hook에는 두 종류가 있다.<br/>
+
+**PreToolUse Hook** — 도구가 실행되기 전에 동작한다. 도구 호출을 허용하거나 차단할 수 있다.<br/>
+
+**PostToolUse Hook** — 도구가 실행된 후에 동작한다. 이미 실행된 작업을 되돌릴 수는 없지만, 후속 작업을 실행하거나 Claude에게 추가 피드백을 줄 수 있다.
+
+---
+
+## Hook 설정 위치
+
+Hooks는 Claude 설정 파일에서 정의한다. 세 곳에 추가할 수 있다.<br/>
+
+| 파일 | 적용 범위 |
+|---|---|
+| `~/.claude/settings.json` | 전역 — 모든 프로젝트에 적용 |
+| `.claude/settings.json` | 프로젝트 — 팀과 공유 |
+| `.claude/settings.local.json` | 프로젝트 — 개인 전용, 커밋 안 함 |
+
+설정 파일을 직접 편집하거나, Claude Code 안에서 `/hooks` 명령어를 사용해 대화형으로 추가할 수 있다.
+
+---
+
+## PreToolUse Hook 구성
+
+PreToolUse Hook은 매처(matcher)와 실행할 명령어로 구성된다.<br/>
+
+```json
+"PreToolUse": [
+  {
+    "matcher": "Read",
+    "hooks": [
+      {
+        "type": "command",
+        "command": "node /home/hooks/read_hook.js"
+      }
+    ]
+  }
+]
+```
+
+`Read` 도구가 실행되기 전에 지정한 명령어가 호출된다. 명령어는 도구 호출 상세 정보를 받아 다음 중 하나를 결정한다.<br/>
+
+- 정상적으로 진행 허용
+- 도구 호출 차단 + Claude에게 에러 메시지 전달
+
+---
+
+## PostToolUse Hook 구성
+
+PostToolUse Hook은 도구 실행 후에 동작한다.<br/>
+
+```json
+"PostToolUse": [
+  {
+    "matcher": "Write|Edit|MultiEdit",
+    "hooks": [
+      {
+        "type": "command",
+        "command": "node /home/hooks/edit_hook.js"
+      }
+    ]
+  }
+]
+```
+
+`|` 기호는 OR 연산자로, `Write`, `Edit`, `MultiEdit` 중 어느 것이든 실행되면 Hook이 발동한다.<br/>
+
+이미 실행된 작업이기 때문에 차단은 불가능하다. 대신 방금 편집된 파일을 포매팅하거나, 테스트를 자동 실행하는 등의 후속 작업을 처리한다.
+
+---
+
+## Hook 스크립트 작성
+
+Hook이 발동하면 Claude는 도구 호출 상세 정보를 JSON 형태로 **표준 입력(stdin)** 에 전달한다.<br/>
+
+```json
+{
+  "session_id": "2d6a1e4d-6...",
+  "transcript_path": "/Users/sg/...",
+  "hook_event_name": "PreToolUse",
+  "tool_name": "Read",
+  "tool_input": {
+    "file_path": "/code/queries/.env"
+  }
+}
+```
+
+스크립트는 이 데이터를 파싱해 도구 이름과 입력 파라미터를 확인한 뒤 결정을 내린다.
+
+### 종료 코드로 흐름 제어
+
+스크립트의 **종료 코드(exit code)** 가 Claude에게 결과를 전달한다.<br/>
+
+| 종료 코드 | 의미 |
+|---|---|
+| `0` | 정상 — 도구 호출 허용 |
+| `2` | 차단 — PreToolUse에서만 유효 |
+
+종료 코드 `2`로 종료할 때 표준 에러(stderr)에 출력한 메시지는 Claude에게 피드백으로 전달된다. Claude는 이 메시지를 바탕으로 왜 작업이 차단됐는지 이해한다.
+
+---
+
+## 실전 예제 — .env 파일 보호
+
+가장 실용적인 Hook 사용 사례 중 하나는 `.env` 파일 같은 민감한 파일에 대한 접근을 차단하는 것이다.<br/>
+
+`Read` 도구뿐 아니라 `Grep` 도구도 파일 내용에 접근할 수 있기 때문에, 두 도구 모두를 감시해야 한다.
+
+### 1단계 — Hook 설정
+
+`.claude/settings.local.json` 파일에 PreToolUse Hook을 추가한다.
+
+```json
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Read|Grep",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node ./hooks/read_hook.js"
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+### 2단계 — Hook 스크립트 작성
+
+`./hooks/read_hook.js` 파일을 만들고 아래 로직을 작성한다.
+
+```js
+async function main() {
+  const chunks = [];
+  for await (const chunk of process.stdin) {
+    chunks.push(chunk);
+  }
+
+  const toolArgs = JSON.parse(Buffer.concat(chunks).toString());
+
+  const readPath =
+    toolArgs.tool_input?.file_path || toolArgs.tool_input?.path || "";
+
+  if (readPath.includes('.env')) {
+    console.error("You cannot read the .env file");
+    process.exit(2);
+  }
+}
+
+main();
+```
+
+표준 입력으로 받은 JSON을 파싱해 파일 경로를 확인하고, `.env`가 포함되어 있으면 종료 코드 `2`로 차단한다.
+
+### 3단계 — 테스트
+
+설정을 저장한 뒤 Claude Code를 재시작한다. Claude에게 `.env` 파일을 읽어달라고 요청하면 Hook이 개입해 에러 메시지를 돌려준다.<br/>
+
+Claude는 작업이 Hook에 의해 차단됐다는 사실을 인지하고 이를 사용자에게 안내한다.
+
+---
+
+## 활용 아이디어
+
+Hooks로 구현할 수 있는 다양한 워크플로우가 있다.<br/>
+
+- **코드 포매팅** — 파일 편집 후 자동으로 Prettier나 Black 실행
+- **테스트 자동화** — 파일 변경 시 관련 테스트 자동 실행
+- **접근 제어** — 특정 파일이나 디렉터리에 대한 읽기/쓰기 차단
+- **코드 품질** — 린터나 타입체커 실행 후 결과를 Claude에게 피드백
+- **로깅** — Claude가 접근하거나 수정한 파일 기록
+- **컨벤션 검증** — 네이밍 규칙이나 코딩 표준 준수 여부 확인
+
+PreToolUse Hook은 Claude가 할 수 있는 것을 제어하고, PostToolUse Hook은 Claude가 한 것을 보강한다. 이 두 가지를 조합하면 개발 환경에 맞는 정교한 자동화 워크플로우를 만들 수 있다.
+
+<br />
+
+## 정리
+
+| 개념 | 설명 |
+|---|---|
+| `PreToolUse` Hook | 도구 실행 전 개입 — 허용 또는 차단 |
+| `PostToolUse` Hook | 도구 실행 후 개입 — 후속 작업 실행 |
+| `matcher` | 감시할 도구 지정 (`Read`, `Write`, `Read\|Grep` 등) |
+| 종료 코드 `0` | 정상 진행 허용 |
+| 종료 코드 `2` | 도구 호출 차단 (PreToolUse 전용) |
+| `stderr` 출력 | Claude에게 전달되는 차단 이유 메시지 |
+| `/hooks` 명령어 | Claude Code 안에서 Hook을 대화형으로 설정 |
