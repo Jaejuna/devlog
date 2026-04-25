@@ -35,3 +35,4 @@ next-env.d.ts
 
 # Draft posts (local only — move to content/posts/ when ready to publish)
 content/drafts/*.mdx
+content/ideas/

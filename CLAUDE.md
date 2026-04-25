@@ -31,6 +31,10 @@ On every iteration you must:
 - **Deployment target**: Vercel
 - **Package manager**: npm
 
+## Blog Post Writing
+
+블로그 포스트 작성 시 반드시 `/blog-style` 커맨드를 먼저 참고한다.
+
 ## Success Signals
 
 A task is complete when:
