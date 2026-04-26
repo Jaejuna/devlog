@@ -32,6 +32,8 @@ type UlProps = DetailedHTMLProps<HTMLAttributes<HTMLUListElement>, HTMLUListElem
 type OlProps = DetailedHTMLProps<HTMLAttributes<HTMLOListElement>, HTMLOListElement>
 type LiProps = DetailedHTMLProps<HTMLAttributes<HTMLLIElement>, HTMLLIElement>
 
+type PProps = DetailedHTMLProps<HTMLAttributes<HTMLParagraphElement>, HTMLParagraphElement>
+
 type ImgProps = DetailedHTMLProps<ImgHTMLAttributes<HTMLImageElement>, HTMLImageElement>
 
 type TableProps = DetailedHTMLProps<HTMLAttributes<HTMLTableElement>, HTMLTableElement>
@@ -50,6 +52,12 @@ function AnchorIcon() {
 }
 
 const mdxComponents: MDXComponents = {
+  p: ({ children, ...props }: PProps) => (
+    <p className="mb-5 leading-relaxed text-gray-700 dark:text-gray-300" {...props}>
+      {children}
+    </p>
+  ),
+
   img: ({ src, alt, style }: ImgProps) => {
     if (!src) return null
     return (
