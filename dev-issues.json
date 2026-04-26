@@ -1,0 +1,67 @@
+[
+  {
+    "id": "20260426-vercel-sitemap-force-dynamic",
+    "date": "2026-04-26",
+    "project": "devlog",
+    "category": "deployment",
+    "error_summary": "force-dynamic 추가 후 sitemap이 3개 페이지만 반환",
+    "context": "Google Search Console에서 인덱싱된 페이지가 너무 적어 sitemap.ts에 force-dynamic 추가 시도",
+    "root_cause": "Vercel 서버리스 환경에서 force-dynamic은 런타임 중 파일시스템 접근을 시도하지만, Next.js 빌드 타임에만 MDX 파일을 읽을 수 있어 빈 배열 반환",
+    "solution": "force-dynamic 제거. sitemap은 빌드 타임에 정적으로 생성되어야 함",
+    "prevention": "sitemap, 파일시스템 기반 콘텐츠 라우트에는 force-dynamic 사용 금지. Vercel 서버리스에서 런타임 파일시스템 접근 불가",
+    "tags": ["vercel", "next.js", "sitemap", "serverless", "force-dynamic"],
+    "severity": "high"
+  },
+  {
+    "id": "20260426-mdx-image-path-mismatch",
+    "date": "2026-04-26",
+    "project": "devlog",
+    "category": "mdx",
+    "error_summary": "MDX 이미지 경로 불일치로 이미지 미표시",
+    "context": "public/content/rtk/ 폴더에 이미지를 넣었으나 MDX에서 /rtk/filename으로 참조",
+    "root_cause": "public 폴더 하위 실제 경로(content/rtk/)와 MDX에서 사용한 참조 경로(/rtk/) 불일치",
+    "solution": "/rtk/filename → /content/rtk/filename으로 수정",
+    "prevention": "public 폴더 내 이미지는 실제 디렉토리 구조 그대로 참조. public/a/b/img.png → /a/b/img.png",
+    "tags": ["next.js", "mdx", "image", "public-folder"],
+    "severity": "low"
+  },
+  {
+    "id": "20260426-mdx-image-double-extension",
+    "date": "2026-04-26",
+    "project": "devlog",
+    "category": "mdx",
+    "error_summary": "이미지 파일명 이중 확장자 오타",
+    "context": "MDX에서 claude-git-command-req.png.png로 참조해 이미지 미표시",
+    "root_cause": "파일명 작성 시 .png 중복 입력 오타",
+    "solution": "claude-git-command-req.png.png → claude-git-command-req.png 수정",
+    "prevention": "이미지 삽입 후 실제 파일명과 대조 확인",
+    "tags": ["mdx", "image", "typo"],
+    "severity": "low"
+  },
+  {
+    "id": "20260426-gsc-sitemap-url-format",
+    "date": "2026-04-26",
+    "project": "devlog",
+    "category": "seo",
+    "error_summary": "Google Search Console sitemap 제출 URL 형식 오류",
+    "context": "Search Console에서 sitemap 제출 시 'Please enter a valid path' 오류 발생",
+    "root_cause": "sitemap URL에 도메인(https://j-devlog.space)을 포함해서 입력. Search Console은 도메인 제외한 경로(/sitemap.xml)만 입력해야 함",
+    "solution": "https://j-devlog.space/sitemap.xml → sitemap.xml 또는 /sitemap.xml 로 입력",
+    "prevention": "Search Console sitemap 제출 필드는 도메인 이후 경로만 입력",
+    "tags": ["google-search-console", "sitemap", "seo"],
+    "severity": "low"
+  },
+  {
+    "id": "20260426-duplicate-url-canonical",
+    "date": "2026-04-26",
+    "project": "devlog",
+    "category": "seo",
+    "error_summary": "/?tag=SQL 쿼리스트링 URL이 중복 페이지로 인식",
+    "context": "Search Console에서 /?tag=SQL 같은 쿼리스트링 URL이 별도 페이지로 크롤링됨",
+    "root_cause": "홈페이지에 canonical 태그 미설정으로 쿼리스트링 포함 URL도 유효한 URL로 처리됨",
+    "solution": "app/page.tsx metadata에 alternates.canonical = 'https://j-devlog.space' 추가",
+    "prevention": "쿼리스트링이 붙을 수 있는 모든 페이지에 canonical 설정. 특히 필터/태그 기능이 있는 페이지",
+    "tags": ["seo", "canonical", "next.js", "metadata"],
+    "severity": "medium"
+  }
+]
