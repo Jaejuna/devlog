@@ -1,0 +1,131 @@
+---
+title: "RTK — LLM 토큰을 60~90% 줄이는 CLI 프록시"
+date: "2026-04-25"
+category: "AI"
+tags: ["LLM", "Claude Code", "토큰최적화", "CLI", "개발도구", "AI", "RTK"]
+excerpt: "RTK(Token Killer)는 git, pytest 등 CLI 명령어 출력을 LLM에 넘기기 전에 필터링해 토큰 소비를 60~90% 줄이는 프록시 도구입니다. 설치부터 동작 원리까지 정리했습니다."
+readTime: 8
+---
+
+Claude Code나 Cursor로 개발하다 보면, **CLI 명령어 출력이 토큰을 엄청나게 소모**한다는 걸 금방 느끼게 됩니다.<br/>
+
+`git log`, `npm test`, `docker build` 같은 명령어의 출력은 LLM이 실제로 필요한 정보보다 훨씬 많은 내용을 담고 있습니다. RTK는 이 문제를 해결합니다.
+
+---
+
+## RTK란
+
+**RTK(Rust Token Killer)** 는 CLI 명령어 출력을 LLM 컨텍스트에 넘기기 전에 **필터링**하는 프록시 도구입니다.<br/>
+
+Rust로 만들어진 단일 바이너리로, 외부 의존성이 없습니다. Bash hook으로 명령어 실행을 가로채서 LLM에 필요한 고신호(high-signal) 정보만 추출한 뒤 전달합니다.
+
+- GitHub: [rtk-ai/rtk](https://github.com/rtk-ai/rtk)
+- 공식 사이트: [rtk-ai.app](https://www.rtk-ai.app/)
+![rtk webpage](/rtk/rtk-web.png)
+
+---
+
+## 왜 필요한가
+
+`git log --oneline -20` 출력 하나만 해도 수십 줄이 나옵니다. npm 테스트 결과, Docker 빌드 로그는 수백 줄에 달하기도 합니다.<br/>
+
+LLM 입장에서 이 출력의 대부분은 노이즈입니다. 에러 메시지, 스택 트레이스의 핵심 줄, 테스트 실패 요약만 있으면 충분합니다.<br/>
+
+불필요한 출력이 컨텍스트를 채우면 두 가지 문제가 생깁니다.
+
+- **비용 증가** — 입력 토큰이 늘어날수록 API 비용이 올라갑니다
+- **품질 저하** — 관련 없는 정보가 많을수록 LLM의 집중도가 떨어집니다
+
+---
+
+## 동작 원리
+
+RTK는 `rtk init -g` 실행 시 Bash hook을 설치합니다. 이후 명령어를 실행할 때마다 아래 흐름이 자동으로 작동합니다.
+
+```
+명령어 입력
+    ↓
+RTK가 가로채서 실제 명령어 실행
+    ↓
+출력을 12가지 필터링 전략으로 처리
+    ↓
+고신호 정보만 LLM 컨텍스트에 전달
+```
+
+명령어당 추가 지연은 **5~15ms** 수준이라 체감하기 어렵습니다. 필터링 실패 시에는 원본 출력으로 자동 폴백됩니다.
+<br />
+---
+
+## 설치
+
+```bash
+# Homebrew (macOS)
+brew install rtk-ai/tap/rtk
+
+# 또는 curl
+curl -fsSL https://rtk-ai.app/install.sh | sh
+```
+
+설치 후 전역 hook을 설정합니다.
+
+```bash
+rtk init -g
+```
+
+이 명령어 하나로 모든 터미널 세션에서 RTK가 자동 활성화됩니다.
+
+![rtk init 실행 결과](/rtk/rtk-init.png)
+
+---
+
+## 지원 도구
+
+**AI 코딩 어시스턴트** — Claude Code, Cursor, Aider, Gemini CLI, Codex, Windsurf, Cline<br/>
+
+**명령어 모듈** — git, cargo, npm/yarn/pnpm, pytest, docker, make 등 40개 이상
+- 공식 사이트 Demo 참고: [rtk-ai.app](https://www.rtk-ai.app/)
+
+---
+
+## 실제 효과
+
+RTK 공식 사이트에서 공개한 수치입니다.
+
+| 명령어 | 원본 토큰 | RTK 후 | 절감률 |
+|---|---|---|---|
+| `git log` | ~800 | ~80 | 90% |
+| `npm test` | ~1,200 | ~200 | 83% |
+| `docker build` | ~2,000 | ~300 | 85% |
+
+실 사용자 기준 **몇 주 만에 1억 3천만 토큰 이상 절감**된 사례도 보고됐습니다.
+
+![RTK 적용 후 claude git 실행 비교](/rtk/claude-git-command-req.png.png)
+![RTK 적용 후 토큰 효율성](/rtk/rtk-before-after.png)
+
+---
+
+## 주의할 점
+
+**exit code 보존** — RTK는 원본 명령어의 exit code를 그대로 전달합니다. CI/CD 파이프라인에서도 안전하게 사용할 수 있습니다.<br/>
+
+**필터링 범위** — 모든 명령어가 최적화되는 건 아닙니다. 지원 모듈 목록에 없는 명령어는 원본 출력을 그대로 전달합니다.<br/>
+
+**컨텍스트 손실 가능성(중요)** — 필터링 과정에서 드물게 디버깅에 필요한 정보가 잘릴 수 있습니다. 이때는 RTK를 일시적으로 비활성화해 원본 출력을 확인합니다.
+
+```bash
+rtk disable   # 비활성화
+rtk enable    # 재활성화
+```
+
+<br />
+
+## 정리
+
+| 개념 | 설명 |
+|---|---|
+| RTK | CLI 출력을 LLM에 넘기기 전에 필터링하는 프록시 |
+| 설치 | `brew install rtk-ai/tap/rtk` + `rtk init -g` |
+| 동작 방식 | Bash hook으로 명령어 가로채기 → 고신호 정보만 추출 |
+| 절감률 | 명령어별 60~90% 토큰 감소 |
+| 지원 도구 | Claude Code, Cursor, Aider 등 주요 AI 코딩 어시스턴트 |
+| exit code | 원본 그대로 보존 — CI/CD 환경 안전 |
