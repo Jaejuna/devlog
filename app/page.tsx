@@ -133,6 +133,11 @@ export default async function HomePage({ searchParams }: HomePageProps) {
     : allPosts
 
   const categories = Array.from(new Set(allPosts.map((p) => p.category)))
+    .sort((a, b) => {
+      const latestA = Math.max(...allPosts.filter((p) => p.category === a).map((p) => new Date(p.date).getTime()))
+      const latestB = Math.max(...allPosts.filter((p) => p.category === b).map((p) => new Date(p.date).getTime()))
+      return latestA - latestB
+    })
 
   const viewsMap = await getViewsMap(allPosts.map((p) => p.slug))
   const popularPosts = [...allPosts]
@@ -174,15 +179,17 @@ export default async function HomePage({ searchParams }: HomePageProps) {
                 <h2 className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-4">
                   카테고리
                 </h2>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                  {categories.map((cat) => (
-                    <CategoryCard
-                      key={cat}
-                      category={cat}
-                      posts={postsByCategory[cat]}
-                      config={CATEGORY_CONFIG[cat] ?? DEFAULT_CONFIG}
-                    />
-                  ))}
+                <div className="overflow-x-auto">
+                  <div className="grid grid-rows-3 md:grid-rows-2 grid-flow-col gap-3 auto-cols-[calc(50%-6px)] md:auto-cols-[calc(33.333%-8px)]">
+                    {categories.map((cat) => (
+                      <CategoryCard
+                        key={cat}
+                        category={cat}
+                        posts={postsByCategory[cat]}
+                        config={CATEGORY_CONFIG[cat] ?? DEFAULT_CONFIG}
+                      />
+                    ))}
+                  </div>
                 </div>
               </section>
 

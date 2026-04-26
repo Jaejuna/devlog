@@ -1,9 +1,13 @@
 'use client'
 
 import Link from 'next/link'
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import SearchModal from '@/components/blog/SearchModal'
 import ThemeToggle from '@/components/ui/ThemeToggle'
+
+const DRAWER_MIN = 240
+const DRAWER_MAX = 560
+const DRAWER_DEFAULT = 288
 
 const navLinks = [
   { href: '/', label: '홈' },
@@ -23,6 +27,41 @@ export default function Header({ categories, tags }: HeaderProps) {
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
   const [openCategories, setOpenCategories] = useState<Record<string, boolean>>({})
+  const [drawerWidth, setDrawerWidth] = useState(DRAWER_DEFAULT)
+  const drawerWidthRef = useRef(DRAWER_DEFAULT)
+
+  useEffect(() => {
+    const saved = localStorage.getItem('drawer-width')
+    if (saved) {
+      const w = Number(saved)
+      drawerWidthRef.current = w
+      setDrawerWidth(w)
+    }
+  }, [])
+
+  function handleResizeStart(e: React.MouseEvent) {
+    e.preventDefault()
+    const startX = e.clientX
+    const startWidth = drawerWidthRef.current
+
+    const onMove = (ev: MouseEvent) => {
+      const newWidth = Math.max(DRAWER_MIN, Math.min(DRAWER_MAX, startWidth + (startX - ev.clientX)))
+      drawerWidthRef.current = newWidth
+      setDrawerWidth(newWidth)
+    }
+    const onUp = () => {
+      localStorage.setItem('drawer-width', String(drawerWidthRef.current))
+      document.body.style.userSelect = ''
+      document.body.style.cursor = ''
+      window.removeEventListener('mousemove', onMove)
+      window.removeEventListener('mouseup', onUp)
+    }
+
+    document.body.style.userSelect = 'none'
+    document.body.style.cursor = 'col-resize'
+    window.addEventListener('mousemove', onMove)
+    window.addEventListener('mouseup', onUp)
+  }
 
   function toggleCategory(name: string) {
     setOpenCategories((prev) => ({ ...prev, [name]: !prev[name] }))
@@ -92,10 +131,17 @@ export default function Header({ categories, tags }: HeaderProps) {
 
       {/* Drawer panel */}
       <div
-        className={`fixed top-0 right-0 z-50 h-full w-72 bg-white dark:bg-gray-950 shadow-2xl flex flex-col transform transition-transform duration-300 ease-in-out ${
+        className={`fixed top-0 right-0 z-50 h-full bg-white dark:bg-gray-950 shadow-2xl flex flex-col transform transition-transform duration-300 ease-in-out ${
           drawerOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
+        style={{ width: drawerWidth }}
       >
+        {/* Resize handle */}
+        <div
+          onMouseDown={handleResizeStart}
+          className="absolute left-0 top-0 h-full w-1.5 cursor-col-resize hover:bg-primary-400/40 dark:hover:bg-primary-500/40 transition-colors z-10"
+          title="드래그하여 너비 조절"
+        />
         {/* Drawer header */}
         <div className="flex items-center justify-between px-5 h-16 border-b border-gray-200 dark:border-gray-800 flex-shrink-0">
           <span className="font-bold text-gray-900 dark:text-white">메뉴</span>
