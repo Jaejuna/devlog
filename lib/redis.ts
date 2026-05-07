@@ -5,6 +5,46 @@ function authHeaders() {
   return { Authorization: `Bearer ${REDIS_TOKEN ?? ''}` }
 }
 
+function todayKey() {
+  const d = new Date()
+  return `visits:daily:${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`
+}
+
+function monthKey() {
+  const d = new Date()
+  return `visits:monthly:${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`
+}
+
+export async function incrementVisits(): Promise<void> {
+  if (!REDIS_URL || !REDIS_TOKEN) return
+  try {
+    await fetch(`${REDIS_URL}/pipeline`, {
+      method: 'POST',
+      headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+      body: JSON.stringify([['INCR', todayKey()], ['INCR', monthKey()]]),
+    })
+  } catch {}
+}
+
+export async function getVisitStats(): Promise<{ today: number; month: number }> {
+  if (!REDIS_URL || !REDIS_TOKEN) return { today: 0, month: 0 }
+  try {
+    const res = await fetch(`${REDIS_URL}/pipeline`, {
+      method: 'POST',
+      headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+      body: JSON.stringify([['GET', todayKey()], ['GET', monthKey()]]),
+      next: { revalidate: 60 },
+    })
+    const data = await res.json()
+    return {
+      today: Number(data[0]?.result ?? 0),
+      month: Number(data[1]?.result ?? 0),
+    }
+  } catch {
+    return { today: 0, month: 0 }
+  }
+}
+
 export async function getViews(slug: string): Promise<number> {
   if (!REDIS_URL || !REDIS_TOKEN) return 0
   try {

@@ -19,6 +19,7 @@ import PostNavigation from '@/components/blog/PostNavigation'
 import RelatedPosts from '@/components/blog/RelatedPosts'
 import ReadingProgress from '@/components/blog/ReadingProgress'
 import ViewCounter from '@/components/blog/ViewCounter'
+import TotalViews from '@/components/blog/TotalViews'
 
 interface BlogPostPageProps {
   params: { slug: string }
@@ -238,6 +239,9 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
                 <TableOfContents headings={headings} />
               </div>
             )}
+
+            {/* 방문 통계 */}
+            <TotalViews />
 
             {/* 사이드바 광고 */}
             <AdSidebar
