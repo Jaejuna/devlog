@@ -63,5 +63,44 @@
     "prevention": "쿼리스트링이 붙을 수 있는 모든 페이지에 canonical 설정. 특히 필터/태그 기능이 있는 페이지",
     "tags": ["seo", "canonical", "next.js", "metadata"],
     "severity": "medium"
+  },
+  {
+    "id": "20260426-ffmpeg-ass-path-filtergraph",
+    "date": "2026-04-26",
+    "project": "short-maker",
+    "category": "infra",
+    "error_summary": "FFmpeg ass 필터 경로 파싱 오류",
+    "context": "쇼츠 클립 export 시 ASS 자막 burn-in 단계에서 FFmpeg 오류 발생",
+    "root_cause": "macOS의 tempfile.gettempdir()가 /var/folders/... 형태의 긴 경로를 반환하는데, FFmpeg 8.x의 filtergraph 파서가 이 경로를 옵션 key=value로 오해해 'No option name near ...' 오류 발생",
+    "solution": "Path('/tmp')가 존재하면 사용(macOS/Linux), 없으면 tempfile.gettempdir() 폴백(Windows). Windows는 C:\\...\\Temp 형태를 FFmpeg이 드라이브 문자로 정상 인식함",
+    "prevention": "FFmpeg filtergraph에 경로를 넣을 때 tempfile.gettempdir() 직접 사용 금지. /tmp 우선 사용",
+    "tags": ["ffmpeg", "filtergraph", "ass", "subtitle", "macos", "tempdir"],
+    "severity": "high"
+  },
+  {
+    "id": "20260426-ffmpeg-no-libass-homebrew",
+    "date": "2026-04-26",
+    "project": "short-maker",
+    "category": "infra",
+    "error_summary": "Homebrew 기본 ffmpeg에 libass 미포함",
+    "context": "FFmpeg ass 필터 경로 문제를 수정한 후에도 'No such filter: ass' 오류 지속",
+    "root_cause": "brew install ffmpeg의 기본 bottle이 libass, libfreetype 없이 빌드됨. ass/drawtext/subtitles 필터 모두 사용 불가",
+    "solution": "brew install ffmpeg-full 설치. keg-only라 /opt/homebrew/Cellar/ffmpeg-full/8.1_1/bin/ffmpeg 경로로 .env의 FFMPEG_PATH 업데이트",
+    "prevention": "자막 burn-in 기능 필요 시 ffmpeg-full 또는 libass 포함 빌드 사용. brew info ffmpeg으로 Dependencies 확인",
+    "tags": ["ffmpeg", "libass", "homebrew", "subtitle", "ffmpeg-full"],
+    "severity": "high"
+  },
+  {
+    "id": "20260426-shortmaker-meta-json-path",
+    "date": "2026-04-26",
+    "project": "short-maker",
+    "category": "etc",
+    "error_summary": "meta.json 저장 경로 불일치",
+    "context": "쇼츠 프로젝트 생성 후 분석/export 시 'Project not found' 오류 간헐 발생",
+    "root_cause": "create_project는 analysis/meta.json에 저장, upload/analyze 라우트는 project_root/meta.json을 읽어 경로 불일치. export.py는 load_json(id, '../meta.json')으로 우회 시도했으나 불안정",
+    "solution": "storage_service에 save_meta()/load_meta() 전용 함수 추가해 항상 project_root/meta.json 사용. 모든 라우트를 해당 함수로 통일",
+    "prevention": "메타데이터처럼 여러 라우트에서 공유하는 파일은 전용 읽기/쓰기 함수로 추상화. 경로 문자열 직접 조합 금지",
+    "tags": ["fastapi", "storage", "path", "meta", "short-maker"],
+    "severity": "medium"
   }
 ]
