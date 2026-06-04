@@ -5,6 +5,16 @@ import type { Post, PostMeta } from './types'
 
 const postsDirectory = path.join(process.cwd(), 'content/posts')
 
+function extractFirstImage(content: string): string | undefined {
+  // ![alt](url) 형식
+  const mdMatch = content.match(/!\[.*?\]\(([^)]+)\)/)
+  if (mdMatch) return mdMatch[1]
+  // <img src="..." /> 형식
+  const htmlMatch = content.match(/<img[^>]+src=["']([^"']+)["']/)
+  if (htmlMatch) return htmlMatch[1]
+  return undefined
+}
+
 export function getAllPosts(): PostMeta[] {
   if (!fs.existsSync(postsDirectory)) {
     return []
@@ -17,7 +27,8 @@ export function getAllPosts(): PostMeta[] {
       const slug = fileName.replace(/\.mdx$/, '')
       const fullPath = path.join(postsDirectory, fileName)
       const fileContents = fs.readFileSync(fullPath, 'utf8')
-      const { data } = matter(fileContents)
+      const { data, content } = matter(fileContents)
+      const thumbnail = extractFirstImage(content)
 
       return {
         slug,
@@ -27,6 +38,7 @@ export function getAllPosts(): PostMeta[] {
         tags: (data.tags as string[]) ?? [],
         excerpt: data.excerpt as string,
         readTime: data.readTime as number,
+        ...(thumbnail && { thumbnail }),
       }
     })
     .sort((a, b) => (a.date < b.date ? 1 : -1))

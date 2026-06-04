@@ -19,6 +19,7 @@ export interface PostMeta {
   tags: string[]
   excerpt: string
   readTime: number
+  thumbnail?: string
 }
 
 export interface TocItem {
