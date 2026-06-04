@@ -137,8 +137,25 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-    <div className="max-w-6xl mx-auto px-4 py-8">
-      <div className="flex flex-col lg:flex-row gap-8">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 py-8">
+      <div className="flex flex-col lg:flex-row gap-10">
+        {/* Left Sidebar (desktop only) */}
+        <aside className="hidden lg:block w-64 flex-shrink-0">
+          <div className="sticky top-24 flex flex-col gap-6">
+            {headings.length > 0 && (
+              <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-xl">
+                <TableOfContents headings={headings} />
+              </div>
+            )}
+            <TotalViews />
+            <AdSidebar
+              adClient={process.env.NEXT_PUBLIC_ADSENSE_ID}
+              adSlot={process.env.NEXT_PUBLIC_AD_SLOT_SIDEBAR}
+              sticky
+            />
+          </div>
+        </aside>
+
         {/* Main Content */}
         <article className="flex-1 min-w-0">
           {/* 헤더 */}
@@ -243,27 +260,6 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
           <RelatedPosts posts={relatedPosts} />
         </article>
 
-        {/* Sidebar (desktop only) */}
-        <aside className="hidden lg:block w-72 flex-shrink-0">
-          <div className="sticky top-20 flex flex-col gap-6">
-            {/* 목차 */}
-            {headings.length > 0 && (
-              <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-xl">
-                <TableOfContents headings={headings} />
-              </div>
-            )}
-
-            {/* 방문 통계 */}
-            <TotalViews />
-
-            {/* 사이드바 광고 */}
-            <AdSidebar
-              adClient={process.env.NEXT_PUBLIC_ADSENSE_ID}
-              adSlot={process.env.NEXT_PUBLIC_AD_SLOT_SIDEBAR}
-              sticky
-            />
-          </div>
-        </aside>
       </div>
     </div>
     </>

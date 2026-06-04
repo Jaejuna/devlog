@@ -150,8 +150,53 @@ export default async function HomePage({ searchParams }: HomePageProps) {
   }, {})
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8">
-      <div className="flex flex-col lg:flex-row gap-8">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 py-8">
+      <div className="flex flex-col lg:flex-row gap-10">
+        {/* Left Sidebar (desktop only) */}
+        <aside className="hidden lg:block w-64 flex-shrink-0">
+          <div className="sticky top-24 flex flex-col gap-6">
+            {/* 검색 */}
+            <div>
+              <h3 className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-2">
+                검색
+              </h3>
+              <SidebarSearch />
+            </div>
+
+            {/* 전체 조회수 */}
+            <TotalViews />
+
+            {/* 인기글 */}
+            <div>
+              <h3 className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-3">
+                인기글
+              </h3>
+              <ul className="flex flex-col gap-3">
+                {popularPosts.map((post, i) => (
+                  <li key={post.slug}>
+                    <Link
+                      href={`/blog/${post.slug}`}
+                      className="flex items-start gap-3 group"
+                    >
+                      <span className="text-2xl font-bold text-gray-200 dark:text-gray-700 leading-none">
+                        {i + 1}
+                      </span>
+                      <div>
+                        <p className="text-sm font-medium text-gray-800 dark:text-gray-200 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors line-clamp-2">
+                          {post.title}
+                        </p>
+                        <p className="text-xs text-gray-400 mt-0.5">
+                          {post.readTime}분 읽기
+                        </p>
+                      </div>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </aside>
+
         {/* Main Content */}
         <div className="flex-1 min-w-0">
           {/* 상단 광고 배너 */}
@@ -272,55 +317,14 @@ export default async function HomePage({ searchParams }: HomePageProps) {
           )}
         </div>
 
-        {/* Sidebar (desktop only) */}
-        <aside className="hidden lg:block w-80 flex-shrink-0">
-          <div className="flex flex-col gap-6">
-            {/* 검색 박스 */}
-            <div>
-              <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                검색
-              </h3>
-              <SidebarSearch />
-            </div>
-
-            {/* 광고 */}
+        {/* 오른쪽 광고 사이드바 (desktop only) */}
+        <aside className="hidden xl:block w-56 flex-shrink-0">
+          <div className="sticky top-24">
             <AdSidebar
               adClient={process.env.NEXT_PUBLIC_ADSENSE_ID}
               adSlot={process.env.NEXT_PUBLIC_AD_SLOT_SIDEBAR}
               sticky
             />
-
-            {/* 전체 조회수 */}
-            <TotalViews />
-
-            {/* 인기글 */}
-            <div>
-              <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
-                인기글
-              </h3>
-              <ul className="flex flex-col gap-3">
-                {popularPosts.map((post, i) => (
-                  <li key={post.slug}>
-                    <Link
-                      href={`/blog/${post.slug}`}
-                      className="flex items-start gap-3 group"
-                    >
-                      <span className="text-2xl font-bold text-gray-200 dark:text-gray-700 leading-none">
-                        {i + 1}
-                      </span>
-                      <div>
-                        <p className="text-sm font-medium text-gray-800 dark:text-gray-200 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors line-clamp-2">
-                          {post.title}
-                        </p>
-                        <p className="text-xs text-gray-400 mt-0.5">
-                          {post.readTime}분 읽기
-                        </p>
-                      </div>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
           </div>
         </aside>
       </div>
