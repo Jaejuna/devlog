@@ -153,7 +153,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 py-8">
       <div className="flex flex-col lg:flex-row gap-10">
         {/* Left Sidebar (desktop only) */}
-        <aside className="hidden lg:block w-64 flex-shrink-0">
+        <aside className="hidden lg:block w-72 flex-shrink-0">
           <div className="sticky top-24 flex flex-col gap-6">
             {/* 검색 */}
             <div>

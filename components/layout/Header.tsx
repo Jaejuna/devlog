@@ -45,7 +45,7 @@ export default function Header({ categories, tags }: HeaderProps) {
     const startWidth = drawerWidthRef.current
 
     const onMove = (ev: MouseEvent) => {
-      const newWidth = Math.max(DRAWER_MIN, Math.min(DRAWER_MAX, startWidth + (ev.clientX - startX)))
+      const newWidth = Math.max(DRAWER_MIN, Math.min(DRAWER_MAX, startWidth + (startX - ev.clientX)))
       drawerWidthRef.current = newWidth
       setDrawerWidth(newWidth)
     }
@@ -70,7 +70,7 @@ export default function Header({ categories, tags }: HeaderProps) {
   return (
     <>
       <header className="sticky top-0 z-50 w-full bg-white/80 dark:bg-gray-950/80 backdrop-blur-md border-b border-gray-200 dark:border-gray-800">
-        <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 h-16 flex items-center justify-between">
           {/* Logo */}
           <Link
             href="/"
@@ -131,15 +131,15 @@ export default function Header({ categories, tags }: HeaderProps) {
 
       {/* Drawer panel */}
       <div
-        className={`fixed top-0 left-0 z-50 h-full bg-white dark:bg-gray-950 shadow-2xl flex flex-col transform transition-transform duration-300 ease-in-out ${
-          drawerOpen ? 'translate-x-0' : '-translate-x-full'
+        className={`fixed top-0 right-0 z-50 h-full bg-white dark:bg-gray-950 shadow-2xl flex flex-col transform transition-transform duration-300 ease-in-out ${
+          drawerOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
         style={{ width: drawerWidth }}
       >
         {/* Resize handle */}
         <div
           onMouseDown={handleResizeStart}
-          className="absolute right-0 top-0 h-full w-1.5 cursor-col-resize hover:bg-primary-400/40 dark:hover:bg-primary-500/40 transition-colors z-10"
+          className="absolute left-0 top-0 h-full w-1.5 cursor-col-resize hover:bg-primary-400/40 dark:hover:bg-primary-500/40 transition-colors z-10"
           title="드래그하여 너비 조절"
         />
         {/* Drawer header */}
