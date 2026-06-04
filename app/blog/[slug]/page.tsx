@@ -1,7 +1,6 @@
 import { notFound } from 'next/navigation'
 import { getAllPosts, getPostBySlug, getAdjacentPosts } from '@/lib/mdx'
 import type { Metadata } from 'next'
-import Badge from '@/components/ui/Badge'
 import Tag from '@/components/ui/Tag'
 import AdSidebar from '@/components/ads/AdSidebar'
 import { MDXRemote } from 'next-mdx-remote/rsc'
@@ -143,25 +142,39 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
         {/* Main Content */}
         <article className="flex-1 min-w-0">
           {/* 헤더 */}
-          <header className="mb-8">
-            <div className="flex flex-wrap items-center gap-2 mb-4">
-              <Badge variant="purple">{post.category}</Badge>
-              {post.tags.map((tag) => (
-                <Tag key={tag} href={`/tag/${encodeURIComponent(tag)}`}>
-                  {tag}
-                </Tag>
-              ))}
-            </div>
-            <h1 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4 leading-tight">
+          <header className="mb-10">
+            {/* Category */}
+            <p className="text-xs font-semibold text-primary-600 dark:text-primary-400 uppercase tracking-widest mb-4">
+              {post.category}
+            </p>
+
+            {/* Title */}
+            <h1 className="text-3xl md:text-4xl font-extrabold text-gray-900 dark:text-white mb-5 leading-tight tracking-tight">
               {post.title}
             </h1>
-            <div className="flex items-center gap-3 text-sm text-gray-500 dark:text-gray-400">
+
+            {/* Meta */}
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-sm text-gray-400 dark:text-gray-500 mb-5">
               <time dateTime={post.date}>{formatDate(post.date)}</time>
               <span>·</span>
               <span>{post.readTime}분 읽기</span>
               <span>·</span>
               <ViewCounter slug={params.slug} />
             </div>
+
+            {/* Tags */}
+            {post.tags.length > 0 && (
+              <div className="flex flex-wrap gap-1.5">
+                {post.tags.map((tag) => (
+                  <Tag key={tag} href={`/tag/${encodeURIComponent(tag)}`}>
+                    {tag}
+                  </Tag>
+                ))}
+              </div>
+            )}
+
+            {/* Divider */}
+            <div className="mt-8 border-t border-gray-100 dark:border-gray-800" />
           </header>
 
           {/* 모바일 목차 (접기/펼치기) */}

@@ -12,7 +12,7 @@ interface TagProps {
   href?: string
 }
 
-export default function Tag({ children, variant = 'blue', href }: TagProps) {
+export default function Tag({ children, variant = 'gray', href }: TagProps) {
   const className = `inline-flex items-center px-2 py-0.5 rounded text-xs font-medium transition-colors ${variantClasses[variant]}`
 
   if (href) {

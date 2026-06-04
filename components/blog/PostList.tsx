@@ -10,7 +10,7 @@ interface PostListProps {
 
 export default function PostList({ posts, adClient, adSlot }: PostListProps) {
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col">
       {posts.map((post, index) => (
         <>
           <PostCard key={post.slug} post={post} />

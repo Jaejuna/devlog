@@ -165,13 +165,24 @@ export default async function HomePage({ searchParams }: HomePageProps) {
           {!isFiltered ? (
             <>
               {/* Hero */}
-              <div className="mb-8 pb-8 border-b border-gray-100 dark:border-gray-800">
-                <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">
+              <div className="mb-10 pb-8 border-b border-gray-100 dark:border-gray-800">
+                <h1 className="text-3xl font-extrabold text-gray-900 dark:text-white mb-2 tracking-tight">
                   J&apos;s Devlog
                 </h1>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
+                <p className="text-base text-gray-500 dark:text-gray-400 mb-5">
                   개발, 연구 경험을 정리하는 기술 블로그
                 </p>
+                <div className="flex items-center gap-4 text-xs text-gray-400 dark:text-gray-500">
+                  <span>
+                    <strong className="text-gray-600 dark:text-gray-300 font-semibold">{allPosts.length}</strong>
+                    {' '}개 포스트
+                  </span>
+                  <span className="text-gray-300 dark:text-gray-700">·</span>
+                  <span>
+                    <strong className="text-gray-600 dark:text-gray-300 font-semibold">{categories.length}</strong>
+                    {' '}개 카테고리
+                  </span>
+                </div>
               </div>
 
               {/* Category Grid */}
