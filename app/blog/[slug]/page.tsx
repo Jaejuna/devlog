@@ -137,27 +137,24 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 py-8">
-      <div className="flex flex-col lg:flex-row gap-10">
-        {/* Left Sidebar (desktop only) */}
-        <aside className="hidden lg:block w-72 flex-shrink-0">
-          <div className="sticky top-24 flex flex-col gap-6">
-            {headings.length > 0 && (
-              <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-xl">
-                <TableOfContents headings={headings} />
-              </div>
-            )}
-            <TotalViews />
-            <AdSidebar
-              adClient={process.env.NEXT_PUBLIC_ADSENSE_ID}
-              adSlot={process.env.NEXT_PUBLIC_AD_SLOT_SIDEBAR}
-              sticky
-            />
+      {/* Fixed left sidebar (xl+ 전용) */}
+      <aside className="hidden xl:flex fixed top-20 left-6 w-56 flex-col gap-6 z-10 overflow-y-auto max-h-[calc(100vh-5rem)] pb-8">
+        {headings.length > 0 && (
+          <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-xl">
+            <TableOfContents headings={headings} />
           </div>
-        </aside>
+        )}
+        <TotalViews />
+        <AdSidebar
+          adClient={process.env.NEXT_PUBLIC_ADSENSE_ID}
+          adSlot={process.env.NEXT_PUBLIC_AD_SLOT_SIDEBAR}
+          sticky
+        />
+      </aside>
 
-        {/* Main Content */}
-        <article className="flex-1 min-w-0">
+      {/* Main Content */}
+      <div className="max-w-3xl mx-auto px-6 py-8">
+        <article>
           {/* 헤더 */}
           <header className="mb-10">
             {/* Category */}
@@ -259,9 +256,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
           {/* 관련 포스트 */}
           <RelatedPosts posts={relatedPosts} />
         </article>
-
       </div>
-    </div>
     </>
   )
 }

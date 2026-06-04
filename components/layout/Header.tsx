@@ -70,7 +70,7 @@ export default function Header({ categories, tags }: HeaderProps) {
   return (
     <>
       <header className="sticky top-0 z-50 w-full bg-white/80 dark:bg-gray-950/80 backdrop-blur-md border-b border-gray-200 dark:border-gray-800">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 h-16 flex items-center justify-between">
+        <div className="max-w-3xl mx-auto px-6 h-16 flex items-center justify-between">
           {/* Logo */}
           <Link
             href="/"
