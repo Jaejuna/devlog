@@ -32,7 +32,7 @@ export default function AboutPage() {
   const recentPosts = getAllPosts().slice(0, 3)
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-12">
+    <div className="max-w-3xl mx-auto px-6 py-12">
       {/* 자기소개 */}
       <section className="mb-16">
         <div className="flex flex-col md:flex-row items-center md:items-start gap-8">

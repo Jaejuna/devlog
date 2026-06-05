@@ -22,7 +22,7 @@ export default function TagsPage() {
   const sortedTags = Object.entries(tagCounts).sort((a, b) => b[1] - a[1])
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
+    <div className="max-w-3xl mx-auto px-6 py-8">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
           태그 목록

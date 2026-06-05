@@ -41,7 +41,7 @@ export default function TagPage({ params }: TagPageProps) {
   if (posts.length === 0) notFound()
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
+    <div className="max-w-3xl mx-auto px-6 py-8">
       {/* 제목 */}
       <div className="mb-8">
         <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">태그</p>
