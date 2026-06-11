@@ -1,0 +1,42 @@
+{
+  "nav": {
+    "home": "/home",
+    "tags": "/tags",
+    "about": "/about",
+    "search": "Search"
+  },
+  "hero": {},
+  "home": {
+    "categoriesLabel": "categories",
+    "latestPostsLabel": "latest.posts",
+    "topPostsLabel": "top.posts",
+    "noResults": "// no posts found",
+    "filterLabel": "filter:",
+    "allPosts": "All"
+  },
+  "search": {
+    "placeholder": "Search posts...",
+    "typeToSearch": "// type to search",
+    "noResults": "// no results found",
+    "navigate": "↑↓ navigate",
+    "open": "↵ open",
+    "close": "esc close"
+  },
+  "tags": {
+    "title": "All Tags",
+    "command": "$ ls --tags",
+    "found": "tags found"
+  },
+  "tag": {
+    "command": "$ grep --tag",
+    "back": "← /tags",
+    "found": "posts found"
+  },
+  "post": {
+    "readTime": "{minutes} min read"
+  },
+  "about": {
+    "bio": "Localization Engineer & PM at Nexon Korea. Researching LLM translation and evaluation systems for Korean cultural content. Exploring the intersection of language, AI, and engineering.",
+    "openToConnect": "Open to connect"
+  }
+}

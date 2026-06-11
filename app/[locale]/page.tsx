@@ -5,23 +5,23 @@ import AdSidebar from '@/components/ads/AdSidebar'
 import AdBanner from '@/components/ads/AdBanner'
 import Badge from '@/components/ui/Badge'
 import HeroSection from '@/components/ui/HeroSection'
-import Link from 'next/link'
+import { Link } from '@/i18n/navigation'
 import type { Metadata } from 'next'
+import TotalViews from '@/components/blog/TotalViews'
 import type { PostMeta } from '@/lib/types'
+import { getTranslations } from 'next-intl/server'
 
 export const metadata: Metadata = {
   title: 'devlog — 개발자 블로그',
   description: '개발 경험과 면접 준비 콘텐츠를 다루는 개인 기술 블로그',
-  alternates: {
-    canonical: 'https://j-devlog.space',
-  },
+  alternates: { canonical: 'https://j-devlog.space' },
   openGraph: {
     title: 'devlog — 개발자 블로그',
     description: '개발 경험과 면접 준비 콘텐츠를 다루는 개인 기술 블로그',
     type: 'website',
     locale: 'ko_KR',
     siteName: 'devlog',
-    url: process.env.NEXT_PUBLIC_BASE_URL ?? 'https://devlog-two.vercel.app',
+    url: process.env.NEXT_PUBLIC_BASE_URL ?? 'https://j-devlog.space',
     images: [{ url: '/soong.png', width: 1200, height: 630 }],
   },
   twitter: {
@@ -32,16 +32,32 @@ export const metadata: Metadata = {
   },
 }
 
-const CATEGORY_DESC: Record<string, string> = {
-  AI: 'LLM, 프롬프트 엔지니어링, AI 도구 활용',
-  개발: '웹·백엔드 개념, 패턴, 실무 경험',
-  면접: 'CS 기초, 기술 면접 빈출 문제 정리',
-  회고: '프로젝트와 이벤트 경험의 기록',
-  MMD: 'ML/DS를 위한 선형대수, 미적분, 통계',
+const CATEGORY_DESC: Record<string, Record<string, string>> = {
+  ko: {
+    AI: 'LLM, 프롬프트 엔지니어링, AI 도구 활용',
+    개발: '웹·백엔드 개념, 패턴, 실무 경험',
+    면접: 'CS 기초, 기술 면접 빈출 문제 정리',
+    회고: '프로젝트와 이벤트 경험의 기록',
+    MMD: 'ML/DS를 위한 선형대수, 미적분, 통계',
+  },
+  en: {
+    AI: 'LLM, prompt engineering, AI tooling',
+    개발: 'Web & backend concepts, patterns, engineering',
+    면접: 'CS fundamentals & interview prep',
+    회고: 'Project & event retrospectives',
+    MMD: 'Linear algebra, calculus & stats for ML/DS',
+  },
 }
 
-function CategoryCard({ category, posts }: { category: string; posts: PostMeta[] }) {
-  const desc = CATEGORY_DESC[category] ?? '관련 포스트 모음'
+function CategoryCard({
+  category,
+  posts,
+  desc,
+}: {
+  category: string
+  posts: PostMeta[]
+  desc: string
+}) {
   return (
     <Link href={`/?category=${encodeURIComponent(category)}`}>
       <div className="h-full p-4 rounded-lg border border-slate-800/60 bg-slate-900/20 hover:border-accent-800/50 hover:bg-slate-800/30 transition-all cursor-pointer group">
@@ -70,12 +86,13 @@ function CategoryCard({ category, posts }: { category: string; posts: PostMeta[]
 }
 
 interface HomePageProps {
-  searchParams: {
-    category?: string
-  }
+  params: { locale: string }
+  searchParams: { category?: string }
 }
 
-export default async function HomePage({ searchParams }: HomePageProps) {
+export default async function HomePage({ params, searchParams }: HomePageProps) {
+  const { locale } = params
+  const t = await getTranslations('home')
   const allPosts = getAllPosts()
   const isFiltered = !!searchParams.category
 
@@ -103,12 +120,16 @@ export default async function HomePage({ searchParams }: HomePageProps) {
     return acc
   }, {})
 
+  const categoryDesc = CATEGORY_DESC[locale] ?? CATEGORY_DESC.ko
+
   return (
     <>
       {/* Fixed left sidebar (xl+ only) */}
       <aside className="hidden xl:flex fixed top-20 left-6 w-56 flex-col gap-5 z-10">
         <div>
-          <h3 className="font-mono text-xs text-slate-700 mb-3 px-1">{'// top.posts'}</h3>
+          <h3 className="font-mono text-xs text-slate-700 mb-3 px-1">
+            {`// ${t('topPostsLabel')}`}
+          </h3>
           <ul className="flex flex-col gap-3">
             {popularPosts.map((post, i) => (
               <li key={post.slug}>
@@ -135,7 +156,6 @@ export default async function HomePage({ searchParams }: HomePageProps) {
 
       {/* Main Content */}
       <div className="max-w-3xl mx-auto px-6 py-4">
-        {/* 상단 광고 배너 */}
         <div className="mb-4">
           <AdBanner
             adClient={process.env.NEXT_PUBLIC_ADSENSE_ID ?? ''}
@@ -145,27 +165,31 @@ export default async function HomePage({ searchParams }: HomePageProps) {
 
         {!isFiltered ? (
           <>
-            {/* Hero */}
             <HeroSection postCount={allPosts.length} categoryCount={categories.length} />
-
-            {/* Divider */}
             <div className="border-t border-slate-800/60 mb-10" />
 
-            {/* Category Grid */}
             <section className="mb-10">
-              <h2 className="font-mono text-xs text-slate-700 mb-4">{'// categories'}</h2>
+              <h2 className="font-mono text-xs text-slate-700 mb-4">
+                {`// ${t('categoriesLabel')}`}
+              </h2>
               <div className="overflow-x-auto">
                 <div className="grid grid-rows-3 md:grid-rows-2 grid-flow-col gap-3 auto-cols-[calc(50%-6px)] md:auto-cols-[calc(33.333%-8px)]">
                   {categories.map((cat) => (
-                    <CategoryCard key={cat} category={cat} posts={postsByCategory[cat]} />
+                    <CategoryCard
+                      key={cat}
+                      category={cat}
+                      posts={postsByCategory[cat]}
+                      desc={categoryDesc[cat] ?? '관련 포스트 모음'}
+                    />
                   ))}
                 </div>
               </div>
             </section>
 
-            {/* Latest Posts */}
             <section>
-              <h2 className="font-mono text-xs text-slate-700 mb-4">{'// latest.posts'}</h2>
+              <h2 className="font-mono text-xs text-slate-700 mb-4">
+                {`// ${t('latestPostsLabel')}`}
+              </h2>
               <PostList
                 posts={allPosts.slice(0, 6)}
                 adClient={process.env.NEXT_PUBLIC_ADSENSE_ID}
@@ -175,10 +199,9 @@ export default async function HomePage({ searchParams }: HomePageProps) {
           </>
         ) : (
           <>
-            {/* Category filter tabs */}
             <div className="flex flex-wrap gap-2 mb-4 pt-6">
               <Link href="/">
-                <Badge variant="gray">전체</Badge>
+                <Badge variant="gray">{t('allPosts')}</Badge>
               </Link>
               {categories.map((cat) => (
                 <Link key={cat} href={`/?category=${encodeURIComponent(cat)}`}>
@@ -187,9 +210,8 @@ export default async function HomePage({ searchParams }: HomePageProps) {
               ))}
             </div>
 
-            {/* Active filter */}
             <div className="flex items-center gap-2 mb-6">
-              <span className="font-mono text-xs text-slate-600">filter:</span>
+              <span className="font-mono text-xs text-slate-600">{t('filterLabel')}</span>
               <Link
                 href="/"
                 className="inline-flex items-center gap-1 px-2.5 py-1 rounded font-mono text-xs bg-primary-900/20 text-primary-400 border border-primary-800/30 hover:bg-primary-900/30 transition-colors"
@@ -217,9 +239,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
                 adSlot={process.env.NEXT_PUBLIC_AD_SLOT_INFEED}
               />
             ) : (
-              <p className="font-mono text-slate-600 text-center py-16">
-                {'// no posts found'}
-              </p>
+              <p className="font-mono text-slate-600 text-center py-16">{t('noResults')}</p>
             )}
           </>
         )}

@@ -1,13 +1,15 @@
 import { getAllPosts } from '@/lib/mdx'
 import type { Metadata } from 'next'
-import Link from 'next/link'
+import { Link } from '@/i18n/navigation'
+import { getTranslations } from 'next-intl/server'
 
 export const metadata: Metadata = {
   title: '태그 목록 | devlog',
   description: '블로그의 모든 태그 목록',
 }
 
-export default function TagsPage() {
+export default async function TagsPage() {
+  const t = await getTranslations('tags')
   const posts = getAllPosts()
 
   const tagCounts = posts.reduce<Record<string, number>>((acc, post) => {
@@ -21,18 +23,16 @@ export default function TagsPage() {
 
   return (
     <div className="max-w-3xl mx-auto px-6 py-10">
-      {/* 헤더 */}
       <div className="mb-10">
-        <p className="font-mono text-xs text-accent-600 mb-2">{'$ ls --tags'}</p>
-        <h1 className="text-2xl font-bold text-slate-100 mb-1">태그 목록</h1>
+        <p className="font-mono text-xs text-accent-600 mb-2">{t('command')}</p>
+        <h1 className="text-2xl font-bold text-slate-100 mb-1">{t('title')}</h1>
         <p className="font-mono text-xs text-slate-700">
           {'// '}
           <span className="text-slate-500">{sortedTags.length}</span>
-          {' tags found'}
+          {` ${t('found')}`}
         </p>
       </div>
 
-      {/* 태그 클라우드 */}
       <div className="flex flex-wrap gap-3">
         {sortedTags.map(([tag, count]) => (
           <Link

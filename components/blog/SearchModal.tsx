@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useEffect, useRef, useCallback } from 'react'
-import Link from 'next/link'
+import { useTranslations } from 'next-intl'
+import { useRouter } from '@/i18n/navigation'
 
 interface SearchItem {
   slug: string
@@ -19,16 +20,16 @@ interface SearchModalProps {
 
 function useDebounce<T>(value: T, delay: number): T {
   const [debouncedValue, setDebouncedValue] = useState(value)
-
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedValue(value), delay)
     return () => clearTimeout(timer)
   }, [value, delay])
-
   return debouncedValue
 }
 
 export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
+  const t = useTranslations('search')
+  const router = useRouter()
   const [query, setQuery] = useState('')
   const [index, setIndex] = useState<SearchItem[]>([])
   const [results, setResults] = useState<SearchItem[]>([])
@@ -45,10 +46,7 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
   }, [isOpen, index.length])
 
   useEffect(() => {
-    if (!debouncedQuery.trim()) {
-      setResults([])
-      return
-    }
+    if (!debouncedQuery.trim()) { setResults([]); return }
     const q = debouncedQuery.toLowerCase()
     const filtered = index.filter(
       (item) =>
@@ -84,12 +82,12 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
       } else if (e.key === 'Enter' && selectedIndex >= 0) {
         const item = results[selectedIndex]
         if (item) {
-          window.location.href = `/blog/${item.slug}`
+          router.push(`/blog/${item.slug}`)
           onClose()
         }
       }
     },
-    [isOpen, onClose, results, selectedIndex],
+    [isOpen, onClose, results, selectedIndex, router],
   )
 
   useEffect(() => {
@@ -100,15 +98,9 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
   if (!isOpen) return null
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-start justify-center pt-16 px-4"
-      onClick={onClose}
-    >
+    <div className="fixed inset-0 z-50 flex items-start justify-center pt-16 px-4" onClick={onClose}>
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
-      <div
-        className="relative w-full max-w-xl bg-[#0d1117] border border-slate-700/50 rounded-xl shadow-2xl overflow-hidden"
-        onClick={(e) => e.stopPropagation()}
-      >
+      <div className="relative w-full max-w-xl bg-[#0d1117] border border-slate-700/50 rounded-xl shadow-2xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
         {/* Search input */}
         <div className="flex items-center gap-3 px-4 py-3 border-b border-slate-800/60">
           <span className="font-mono text-accent-600 text-sm flex-shrink-0">❯</span>
@@ -117,14 +109,11 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="포스트 검색..."
+            placeholder={t('placeholder')}
             className="flex-1 font-mono text-sm text-slate-200 bg-transparent outline-none placeholder-slate-700"
           />
           {query && (
-            <button
-              onClick={() => setQuery('')}
-              className="font-mono text-xs text-slate-700 hover:text-slate-400 transition-colors"
-            >
+            <button onClick={() => setQuery('')} className="font-mono text-xs text-slate-700 hover:text-slate-400 transition-colors">
               [esc]
             </button>
           )}
@@ -135,7 +124,7 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
           <ul className="max-h-80 overflow-y-auto">
             {results.map((item, i) => (
               <li key={item.slug}>
-                <Link
+                <a
                   href={`/blog/${item.slug}`}
                   onClick={onClose}
                   className={`flex flex-col px-4 py-3 border-b border-slate-800/40 transition-colors ${
@@ -151,25 +140,21 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
                   </div>
                   <p className="text-sm font-medium text-slate-200 mb-0.5">{item.title}</p>
                   <p className="font-mono text-xs text-slate-600 line-clamp-1">{item.excerpt}</p>
-                </Link>
+                </a>
               </li>
             ))}
           </ul>
         ) : query && debouncedQuery ? (
-          <div className="px-4 py-8 text-center font-mono text-sm text-slate-700">
-            {'// no results found'}
-          </div>
+          <div className="px-4 py-8 text-center font-mono text-sm text-slate-700">{t('noResults')}</div>
         ) : (
-          <div className="px-4 py-6 text-center font-mono text-sm text-slate-700">
-            {'// type to search'}
-          </div>
+          <div className="px-4 py-6 text-center font-mono text-sm text-slate-700">{t('typeToSearch')}</div>
         )}
 
         {/* Keyboard hints */}
         <div className="flex items-center gap-4 px-4 py-2 border-t border-slate-800/60 bg-slate-900/30">
-          <span className="font-mono text-[10px] text-slate-700">↑↓ navigate</span>
-          <span className="font-mono text-[10px] text-slate-700">↵ open</span>
-          <span className="font-mono text-[10px] text-slate-700">esc close</span>
+          <span className="font-mono text-[10px] text-slate-700">{t('navigate')}</span>
+          <span className="font-mono text-[10px] text-slate-700">{t('open')}</span>
+          <span className="font-mono text-[10px] text-slate-700">{t('close')}</span>
         </div>
       </div>
     </div>

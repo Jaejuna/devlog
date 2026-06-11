@@ -1,0 +1,42 @@
+{
+  "nav": {
+    "home": "/home",
+    "tags": "/태그",
+    "about": "/소개",
+    "search": "검색"
+  },
+  "hero": {},
+  "home": {
+    "categoriesLabel": "categories",
+    "latestPostsLabel": "latest.posts",
+    "topPostsLabel": "top.posts",
+    "noResults": "// no posts found",
+    "filterLabel": "filter:",
+    "allPosts": "전체"
+  },
+  "search": {
+    "placeholder": "포스트 검색...",
+    "typeToSearch": "// type to search",
+    "noResults": "// no results found",
+    "navigate": "↑↓ navigate",
+    "open": "↵ open",
+    "close": "esc close"
+  },
+  "tags": {
+    "title": "태그 목록",
+    "command": "$ ls --tags",
+    "found": "tags found"
+  },
+  "tag": {
+    "command": "$ grep --tag",
+    "back": "← /tags",
+    "found": "posts found"
+  },
+  "post": {
+    "readTime": "{minutes}분 읽기"
+  },
+  "about": {
+    "bio": "Nexon Korea에서 게임 현지화 PM·엔지니어로 일합니다. 한국 문화 콘텐츠를 위한 LLM 번역·평가 시스템을 연구하고, 언어와 AI, 엔지니어링이 교차하는 지점을 탐구합니다.",
+    "openToConnect": "Open to connect"
+  }
+}

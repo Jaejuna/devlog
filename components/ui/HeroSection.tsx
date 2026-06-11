@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useTranslations } from 'next-intl'
 
 interface HeroSectionProps {
   postCount: number
@@ -8,9 +9,8 @@ interface HeroSectionProps {
 }
 
 const HERO_TOKENS = [
-  { text: '언어를', typeLabel: '<noun>', colorClass: 'text-amber-400' },
-  { text: '설계하는', typeLabel: '<verb>', colorClass: 'text-accent-400' },
-  { text: '엔지니어', typeLabel: '<concept>', colorClass: 'text-amber-300' },
+  { text: 'Linguistic', typeLabel: '<adj>', colorClass: 'text-amber-400' },
+  { text: 'Engineer', typeLabel: '<noun>', colorClass: 'text-accent-400' },
 ]
 
 const BG_TOKENS = [
@@ -51,7 +51,6 @@ function TokenWord({
 export default function HeroSection({ postCount, categoryCount }: HeroSectionProps) {
   const [visibleCount, setVisibleCount] = useState(0)
   const [showCursor, setShowCursor] = useState(true)
-  const [showSubtitle, setShowSubtitle] = useState(false)
   const [showStats, setShowStats] = useState(false)
 
   useEffect(() => {
@@ -59,12 +58,8 @@ export default function HeroSection({ postCount, categoryCount }: HeroSectionPro
       const t = setTimeout(() => setVisibleCount((v) => v + 1), 500)
       return () => clearTimeout(t)
     } else {
-      const t1 = setTimeout(() => setShowSubtitle(true), 200)
-      const t2 = setTimeout(() => setShowStats(true), 450)
-      return () => {
-        clearTimeout(t1)
-        clearTimeout(t2)
-      }
+      const t = setTimeout(() => setShowStats(true), 300)
+      return () => clearTimeout(t)
     }
   }, [visibleCount])
 
@@ -112,16 +107,6 @@ export default function HeroSection({ postCount, categoryCount }: HeroSectionPro
             <TokenWord key={i} token={token} visible={i < visibleCount} />
           ))}
         </h1>
-
-        {/* Subtitle */}
-        <p
-          className={`font-mono text-slate-500 text-base mb-8 transition-all duration-500 ${
-            showSubtitle ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'
-          }`}
-        >
-          <span className="text-slate-700">{'// '}</span>
-          개발 경험과 연구를 언어로 정리합니다
-        </p>
 
         {/* Stats */}
         <div
