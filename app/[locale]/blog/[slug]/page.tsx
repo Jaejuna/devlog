@@ -21,6 +21,7 @@ import ViewCounter from '@/components/blog/ViewCounter'
 import TotalViews from '@/components/blog/TotalViews'
 import { routing } from '@/i18n/routing'
 import { getTranslations } from 'next-intl/server'
+import { translateTag } from '@/lib/tagTranslations'
 
 interface BlogPostPageProps {
   params: { locale: string; slug: string }
@@ -138,7 +139,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
             {post.tags.length > 0 && (
               <div className="flex flex-wrap gap-1.5">
                 {post.tags.map((tag) => (
-                  <Tag key={tag} href={`/tag/${encodeURIComponent(tag)}`}>{tag}</Tag>
+                  <Tag key={tag} href={`/tag/${encodeURIComponent(tag)}`}>{translateTag(tag, params.locale)}</Tag>
                 ))}
               </div>
             )}
