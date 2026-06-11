@@ -10,7 +10,7 @@ export default function SidebarSearch() {
     <>
       <button
         onClick={() => setOpen(true)}
-        className="w-full text-left px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-400 hover:border-primary-400 dark:hover:border-primary-600 transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500"
+        className="w-full text-left px-3 py-2 font-mono text-xs text-slate-600 border border-slate-800/60 rounded bg-slate-800/20 hover:border-accent-700/40 hover:text-slate-400 transition-all focus:outline-none"
       >
         포스트 검색...
       </button>

@@ -4,6 +4,7 @@ import PostList from '@/components/blog/PostList'
 import AdSidebar from '@/components/ads/AdSidebar'
 import AdBanner from '@/components/ads/AdBanner'
 import Badge from '@/components/ui/Badge'
+import HeroSection from '@/components/ui/HeroSection'
 import Link from 'next/link'
 import type { Metadata } from 'next'
 import SidebarSearch from '@/components/blog/SidebarSearch'
@@ -33,83 +34,35 @@ export const metadata: Metadata = {
   },
 }
 
-type CategoryConfig = {
-  bg: string
-  border: string
-  text: string
-  description: string
+const CATEGORY_DESC: Record<string, string> = {
+  AI: 'LLM, 프롬프트 엔지니어링, AI 도구 활용',
+  개발: '웹·백엔드 개념, 패턴, 실무 경험',
+  면접: 'CS 기초, 기술 면접 빈출 문제 정리',
+  회고: '프로젝트와 이벤트 경험의 기록',
+  MMD: 'ML/DS를 위한 선형대수, 미적분, 통계',
 }
 
-const CATEGORY_CONFIG: Record<string, CategoryConfig> = {
-  AI: {
-    bg: 'bg-gray-50 dark:bg-gray-900/30',
-    border: 'border-gray-200 dark:border-gray-800',
-    text: 'text-gray-700 dark:text-gray-300',
-    description: 'LLM, 프롬프트 엔지니어링, AI 도구 활용',
-  },
-  개발: {
-    bg: 'bg-gray-50 dark:bg-gray-900/30',
-    border: 'border-gray-200 dark:border-gray-800',
-    text: 'text-gray-700 dark:text-gray-300',
-    description: '웹·백엔드 개념, 패턴, 실무 경험',
-  },
-  면접: {
-    bg: 'bg-gray-50 dark:bg-gray-900/30',
-    border: 'border-gray-200 dark:border-gray-800',
-    text: 'text-gray-700 dark:text-gray-300',
-    description: 'CS 기초, 기술 면접 빈출 문제 정리',
-  },
-  회고: {
-    bg: 'bg-gray-50 dark:bg-gray-900/30',
-    border: 'border-gray-200 dark:border-gray-800',
-    text: 'text-gray-700 dark:text-gray-300',
-    description: '프로젝트와 이벤트 경험의 기록',
-  },
-  MMD: {
-    bg: 'bg-gray-50 dark:bg-gray-900/30',
-    border: 'border-gray-200 dark:border-gray-800',
-    text: 'text-gray-700 dark:text-gray-300',
-    description: 'ML/DS를 위한 선형대수, 미적분, 통계',
-  },
-}
-
-const DEFAULT_CONFIG: CategoryConfig = {
-  bg: 'bg-gray-50 dark:bg-gray-900/30',
-  border: 'border-gray-200 dark:border-gray-800',
-  text: 'text-gray-700 dark:text-gray-300',
-  description: '관련 포스트 모음',
-}
-
-function CategoryCard({
-  category,
-  posts,
-  config,
-}: {
-  category: string
-  posts: PostMeta[]
-  config: CategoryConfig
-}) {
+function CategoryCard({ category, posts }: { category: string; posts: PostMeta[] }) {
+  const desc = CATEGORY_DESC[category] ?? '관련 포스트 모음'
   return (
     <Link href={`/?category=${encodeURIComponent(category)}`}>
-      <div
-        className={`h-full p-5 rounded-xl border ${config.border} ${config.bg} hover:shadow-md transition-all cursor-pointer group`}
-      >
+      <div className="h-full p-4 rounded-lg border border-slate-800/60 bg-slate-900/20 hover:border-accent-800/50 hover:bg-slate-800/30 transition-all cursor-pointer group">
         <div className="flex items-start justify-between mb-2">
-          <h3 className={`font-bold text-base ${config.text}`}>{category}</h3>
-          <span className="text-xs text-gray-400 dark:text-gray-500 bg-white/70 dark:bg-black/20 px-2 py-0.5 rounded-full shrink-0 ml-2">
-            {posts.length}개
+          <span className="font-mono text-sm text-accent-500/80 bg-accent-900/10 border border-accent-800/20 px-1.5 py-0.5 rounded">
+            [{category}]
+          </span>
+          <span className="font-mono text-xs text-slate-700 bg-slate-800/40 px-1.5 py-0.5 rounded ml-2 shrink-0">
+            {posts.length}
           </span>
         </div>
-        <p className="text-xs text-gray-500 dark:text-gray-400 mb-3 leading-relaxed">
-          {config.description}
-        </p>
-        <ul className="space-y-1">
+        <p className="text-xs text-slate-600 mb-2 leading-relaxed">{desc}</p>
+        <ul className="space-y-0.5">
           {posts.slice(0, 2).map((p) => (
             <li
               key={p.slug}
-              className="text-xs text-gray-500 dark:text-gray-400 truncate group-hover:text-gray-700 dark:group-hover:text-gray-300 transition-colors"
+              className="font-mono text-xs text-slate-700 truncate group-hover:text-slate-500 transition-colors"
             >
-              · {p.title}
+              ↳ {p.title}
             </li>
           ))}
         </ul>
@@ -132,12 +85,15 @@ export default async function HomePage({ searchParams }: HomePageProps) {
     ? allPosts.filter((post) => post.category === searchParams.category)
     : allPosts
 
-  const categories = Array.from(new Set(allPosts.map((p) => p.category)))
-    .sort((a, b) => {
-      const latestA = Math.max(...allPosts.filter((p) => p.category === a).map((p) => new Date(p.date).getTime()))
-      const latestB = Math.max(...allPosts.filter((p) => p.category === b).map((p) => new Date(p.date).getTime()))
-      return latestA - latestB
-    })
+  const categories = Array.from(new Set(allPosts.map((p) => p.category))).sort((a, b) => {
+    const latestA = Math.max(
+      ...allPosts.filter((p) => p.category === a).map((p) => new Date(p.date).getTime()),
+    )
+    const latestB = Math.max(
+      ...allPosts.filter((p) => p.category === b).map((p) => new Date(p.date).getTime()),
+    )
+    return latestA - latestB
+  })
 
   const viewsMap = await getViewsMap(allPosts.map((p) => p.slug))
   const popularPosts = [...allPosts]
@@ -151,159 +107,129 @@ export default async function HomePage({ searchParams }: HomePageProps) {
 
   return (
     <>
-      {/* Fixed left sidebar (xl+ 전용) */}
-      <aside className="hidden xl:flex fixed top-20 left-6 w-56 flex-col gap-6 z-10 overflow-y-auto max-h-[calc(100vh-5rem)] pb-8">
+      {/* Fixed left sidebar (xl+ only) */}
+      <aside className="hidden xl:flex fixed top-20 left-6 w-56 flex-col gap-5 z-10 overflow-y-auto max-h-[calc(100vh-5rem)] pb-8">
         <div>
-          <h3 className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-2">
-            검색
-          </h3>
+          <h3 className="font-mono text-xs text-slate-700 mb-2 px-1">{'// search'}</h3>
           <SidebarSearch />
         </div>
         <TotalViews />
         <div>
-          <h3 className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-3">
-            인기글
-          </h3>
+          <h3 className="font-mono text-xs text-slate-700 mb-3 px-1">{'// top.posts'}</h3>
           <ul className="flex flex-col gap-3">
             {popularPosts.map((post, i) => (
               <li key={post.slug}>
-                <Link href={`/blog/${post.slug}`} className="flex items-start gap-3 group">
-                  <span className="text-2xl font-bold text-gray-200 dark:text-gray-700 leading-none">
-                    {i + 1}
+                <Link href={`/blog/${post.slug}`} className="flex items-start gap-2.5 group">
+                  <span className="font-mono text-sm font-bold text-slate-700 leading-none mt-0.5 group-hover:text-primary-500 transition-colors">
+                    {String(i + 1).padStart(2, '0')}
                   </span>
                   <div>
-                    <p className="text-sm font-medium text-gray-800 dark:text-gray-200 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors line-clamp-2">
+                    <p className="text-sm font-medium text-slate-500 group-hover:text-primary-400 transition-colors line-clamp-2 leading-snug">
                       {post.title}
                     </p>
-                    <p className="text-xs text-gray-400 mt-0.5">{post.readTime}분 읽기</p>
+                    <p className="font-mono text-xs text-slate-700 mt-0.5">{post.readTime}min</p>
                   </div>
                 </Link>
               </li>
             ))}
           </ul>
         </div>
+        <AdSidebar
+          adClient={process.env.NEXT_PUBLIC_ADSENSE_ID ?? ''}
+          adSlot={process.env.NEXT_PUBLIC_AD_SLOT_SIDEBAR ?? ''}
+        />
       </aside>
 
       {/* Main Content */}
-      <div className="max-w-3xl mx-auto px-6 py-8">
-        <div>
-          {/* 상단 광고 배너 */}
-          <div className="mb-6">
-            <AdBanner
-              adClient={process.env.NEXT_PUBLIC_ADSENSE_ID ?? ''}
-              adSlot={process.env.NEXT_PUBLIC_AD_SLOT_BANNER ?? ''}
-            />
-          </div>
-
-          {!isFiltered ? (
-            <>
-              {/* Hero */}
-              <div className="mb-10 pb-8 border-b border-gray-100 dark:border-gray-800">
-                <h1 className="text-3xl font-extrabold text-gray-900 dark:text-white mb-2 tracking-tight">
-                  J&apos;s Devlog
-                </h1>
-                <p className="text-base text-gray-500 dark:text-gray-400 mb-5">
-                  개발, 연구 경험을 정리하는 기술 블로그
-                </p>
-                <div className="flex items-center gap-4 text-xs text-gray-400 dark:text-gray-500">
-                  <span>
-                    <strong className="text-gray-600 dark:text-gray-300 font-semibold">{allPosts.length}</strong>
-                    {' '}개 포스트
-                  </span>
-                  <span className="text-gray-300 dark:text-gray-700">·</span>
-                  <span>
-                    <strong className="text-gray-600 dark:text-gray-300 font-semibold">{categories.length}</strong>
-                    {' '}개 카테고리
-                  </span>
-                </div>
-              </div>
-
-              {/* Category Grid */}
-              <section className="mb-10">
-                <h2 className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-4">
-                  카테고리
-                </h2>
-                <div className="overflow-x-auto">
-                  <div className="grid grid-rows-3 md:grid-rows-2 grid-flow-col gap-3 auto-cols-[calc(50%-6px)] md:auto-cols-[calc(33.333%-8px)]">
-                    {categories.map((cat) => (
-                      <CategoryCard
-                        key={cat}
-                        category={cat}
-                        posts={postsByCategory[cat]}
-                        config={CATEGORY_CONFIG[cat] ?? DEFAULT_CONFIG}
-                      />
-                    ))}
-                  </div>
-                </div>
-              </section>
-
-              {/* Latest Posts */}
-              <section>
-                <h2 className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-4">
-                  최신 글
-                </h2>
-                <PostList
-                  posts={allPosts.slice(0, 6)}
-                  adClient={process.env.NEXT_PUBLIC_ADSENSE_ID}
-                  adSlot={process.env.NEXT_PUBLIC_AD_SLOT_INFEED}
-                />
-              </section>
-            </>
-          ) : (
-            <>
-              {/* 카테고리 필터 탭 */}
-              <div className="flex flex-wrap gap-2 mb-4">
-                <Link href="/">
-                  <Badge variant="gray">전체</Badge>
-                </Link>
-                {categories.map((cat) => (
-                  <Link key={cat} href={`/?category=${encodeURIComponent(cat)}`}>
-                    <Badge variant={searchParams.category === cat ? 'purple' : 'gray'}>
-                      {cat}
-                    </Badge>
-                  </Link>
-                ))}
-              </div>
-
-              {/* 활성 필터 표시 */}
-              <div className="flex items-center gap-2 mb-6">
-                <span className="text-xs text-gray-400 dark:text-gray-500">필터:</span>
-                <Link
-                  href="/"
-                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300 hover:bg-primary-200 dark:hover:bg-primary-900/50 transition-colors"
-                >
-                  {searchParams.category}
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="12"
-                    height="12"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth={2.5}
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </Link>
-                <span className="text-xs text-gray-400 dark:text-gray-500">
-                  ({filteredPosts.length}개)
-                </span>
-              </div>
-
-              {filteredPosts.length > 0 ? (
-                <PostList
-                  posts={filteredPosts}
-                  adClient={process.env.NEXT_PUBLIC_ADSENSE_ID}
-                  adSlot={process.env.NEXT_PUBLIC_AD_SLOT_INFEED}
-                />
-              ) : (
-                <p className="text-gray-500 dark:text-gray-400 text-center py-16">
-                  해당 조건의 포스트가 없습니다.
-                </p>
-              )}
-            </>
-          )}
+      <div className="max-w-3xl mx-auto px-6 py-4">
+        {/* 상단 광고 배너 */}
+        <div className="mb-4">
+          <AdBanner
+            adClient={process.env.NEXT_PUBLIC_ADSENSE_ID ?? ''}
+            adSlot={process.env.NEXT_PUBLIC_AD_SLOT_BANNER ?? ''}
+          />
         </div>
+
+        {!isFiltered ? (
+          <>
+            {/* Hero */}
+            <HeroSection postCount={allPosts.length} categoryCount={categories.length} />
+
+            {/* Divider */}
+            <div className="border-t border-slate-800/60 mb-10" />
+
+            {/* Category Grid */}
+            <section className="mb-10">
+              <h2 className="font-mono text-xs text-slate-700 mb-4">{'// categories'}</h2>
+              <div className="overflow-x-auto">
+                <div className="grid grid-rows-3 md:grid-rows-2 grid-flow-col gap-3 auto-cols-[calc(50%-6px)] md:auto-cols-[calc(33.333%-8px)]">
+                  {categories.map((cat) => (
+                    <CategoryCard key={cat} category={cat} posts={postsByCategory[cat]} />
+                  ))}
+                </div>
+              </div>
+            </section>
+
+            {/* Latest Posts */}
+            <section>
+              <h2 className="font-mono text-xs text-slate-700 mb-4">{'// latest.posts'}</h2>
+              <PostList
+                posts={allPosts.slice(0, 6)}
+                adClient={process.env.NEXT_PUBLIC_ADSENSE_ID}
+                adSlot={process.env.NEXT_PUBLIC_AD_SLOT_INFEED}
+              />
+            </section>
+          </>
+        ) : (
+          <>
+            {/* Category filter tabs */}
+            <div className="flex flex-wrap gap-2 mb-4 pt-6">
+              <Link href="/">
+                <Badge variant="gray">전체</Badge>
+              </Link>
+              {categories.map((cat) => (
+                <Link key={cat} href={`/?category=${encodeURIComponent(cat)}`}>
+                  <Badge variant={searchParams.category === cat ? 'amber' : 'gray'}>{cat}</Badge>
+                </Link>
+              ))}
+            </div>
+
+            {/* Active filter */}
+            <div className="flex items-center gap-2 mb-6">
+              <span className="font-mono text-xs text-slate-600">filter:</span>
+              <Link
+                href="/"
+                className="inline-flex items-center gap-1 px-2.5 py-1 rounded font-mono text-xs bg-primary-900/20 text-primary-400 border border-primary-800/30 hover:bg-primary-900/30 transition-colors"
+              >
+                [{searchParams.category}]
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="10"
+                  height="10"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2.5}
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </Link>
+              <span className="font-mono text-xs text-slate-700">({filteredPosts.length})</span>
+            </div>
+
+            {filteredPosts.length > 0 ? (
+              <PostList
+                posts={filteredPosts}
+                adClient={process.env.NEXT_PUBLIC_ADSENSE_ID}
+                adSlot={process.env.NEXT_PUBLIC_AD_SLOT_INFEED}
+              />
+            ) : (
+              <p className="font-mono text-slate-600 text-center py-16">
+                {'// no posts found'}
+              </p>
+            )}
+          </>
+        )}
       </div>
     </>
   )

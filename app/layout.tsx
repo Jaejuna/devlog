@@ -31,19 +31,6 @@ export const metadata: Metadata = {
 
 const adsenseId = process.env.NEXT_PUBLIC_ADSENSE_ID
 
-// Runs before React hydration to avoid flash of wrong theme
-const themeScript = `
-(function() {
-  var stored = localStorage.getItem('theme');
-  var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-  if (stored === 'dark' || (!stored && prefersDark)) {
-    document.documentElement.classList.add('dark');
-  } else {
-    document.documentElement.classList.remove('dark');
-  }
-})();
-`
-
 export default function RootLayout({
   children,
 }: {
@@ -72,13 +59,10 @@ export default function RootLayout({
     .map(([name, count]) => ({ name, count }))
 
   return (
-    <html lang="ko" suppressHydrationWarning>
+    <html lang="ko" className="dark">
       <head>
         {/* AdSense 소유권 확인 */}
         <meta name="google-adsense-account" content="ca-pub-4027542037390876" />
-
-        {/* Theme init — must run before paint to prevent flash */}
-        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
 
         {/* AdSense — production only */}
         {adsenseId && process.env.NODE_ENV === 'production' && (
@@ -90,7 +74,7 @@ export default function RootLayout({
           />
         )}
       </head>
-      <body className="min-h-screen bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100">
+      <body className="min-h-screen bg-[#0a0e17] text-slate-200">
         <Header categories={categories} tags={tags} />
         <main>{children}</main>
         <Footer />
