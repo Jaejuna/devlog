@@ -1,21 +1,26 @@
 import type { PostMeta } from '@/lib/types'
 import PostCard from './PostCard'
+import { getTranslations } from 'next-intl/server'
+import { getLocale } from 'next-intl/server'
 
 interface RelatedPostsProps {
   posts: PostMeta[]
 }
 
-export default function RelatedPosts({ posts }: RelatedPostsProps) {
+export default async function RelatedPosts({ posts }: RelatedPostsProps) {
   if (posts.length === 0) return null
 
+  const t = await getTranslations('blog')
+  const locale = await getLocale()
+
   return (
-    <section className="mt-16 pt-8 border-t border-gray-200 dark:border-gray-800">
-      <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6">
-        관련 포스트
+    <section className="mt-16 pt-8 border-t border-slate-800/60">
+      <h2 className="font-mono text-xs text-slate-700 mb-6">
+        {'// '}<span className="text-slate-500">{t('relatedPosts')}</span>
       </h2>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="flex flex-col">
         {posts.map((post) => (
-          <PostCard key={post.slug} post={post} />
+          <PostCard key={post.slug} post={post} locale={locale} />
         ))}
       </div>
     </section>

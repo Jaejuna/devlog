@@ -74,14 +74,14 @@ function splitAtFirstH2(content: string): [string, string] {
 }
 
 export default async function BlogPostPage({ params }: BlogPostPageProps) {
-  const post = getPostBySlug(params.slug)
+  const post = getPostBySlug(params.slug, params.locale)
   if (!post) notFound()
 
   const t = await getTranslations('post')
   const headings = extractHeadings(post.content)
   const [contentPart1, contentPart2] = splitAtFirstH2(post.content)
-  const { prev, next } = getAdjacentPosts(params.slug)
-  const relatedPosts = getAllPosts()
+  const { prev, next } = getAdjacentPosts(params.slug, params.locale)
+  const relatedPosts = getAllPosts(params.locale)
     .filter((p) => p.category === post.category && p.slug !== post.slug)
     .slice(0, 3)
 

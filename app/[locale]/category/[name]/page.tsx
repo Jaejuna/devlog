@@ -29,8 +29,9 @@ export async function generateMetadata({ params }: CategoryPageProps): Promise<M
 }
 
 export default function CategoryPage({ params }: CategoryPageProps) {
+  const { locale } = params
   const categoryName = decodeURIComponent(params.name)
-  const allPosts = getAllPosts()
+  const allPosts = getAllPosts(locale)
   const posts = allPosts.filter((p) => p.category === categoryName)
 
   if (posts.length === 0) notFound()
@@ -74,6 +75,7 @@ export default function CategoryPage({ params }: CategoryPageProps) {
             posts={posts}
             adClient={process.env.NEXT_PUBLIC_ADSENSE_ID}
             adSlot={process.env.NEXT_PUBLIC_AD_SLOT_INFEED}
+            locale={locale}
           />
         </div>
 

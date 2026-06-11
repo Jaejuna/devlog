@@ -35,6 +35,15 @@
   "post": {
     "readTime": "{minutes} min read"
   },
+  "blog": {
+    "prevPost": "Prev",
+    "nextPost": "Next",
+    "relatedPosts": "Related Posts",
+    "toc": "Contents",
+    "todayVisits": "Today",
+    "monthVisits": "This Month",
+    "totalViews": "Total Views"
+  },
   "about": {
     "bio": "Localization Engineer & PM at Nexon Korea. Researching LLM translation and evaluation systems for Korean cultural content. Exploring the intersection of language, AI, and engineering.",
     "openToConnect": "Open to connect"

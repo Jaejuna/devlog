@@ -93,7 +93,7 @@ interface HomePageProps {
 export default async function HomePage({ params, searchParams }: HomePageProps) {
   const { locale } = params
   const t = await getTranslations('home')
-  const allPosts = getAllPosts()
+  const allPosts = getAllPosts(locale)
   const isFiltered = !!searchParams.category
 
   const filteredPosts = isFiltered
@@ -194,6 +194,7 @@ export default async function HomePage({ params, searchParams }: HomePageProps) 
                 posts={allPosts.slice(0, 6)}
                 adClient={process.env.NEXT_PUBLIC_ADSENSE_ID}
                 adSlot={process.env.NEXT_PUBLIC_AD_SLOT_INFEED}
+                locale={locale}
               />
             </section>
           </>
@@ -237,6 +238,7 @@ export default async function HomePage({ params, searchParams }: HomePageProps) 
                 posts={filteredPosts}
                 adClient={process.env.NEXT_PUBLIC_ADSENSE_ID}
                 adSlot={process.env.NEXT_PUBLIC_AD_SLOT_INFEED}
+                locale={locale}
               />
             ) : (
               <p className="font-mono text-slate-600 text-center py-16">{t('noResults')}</p>

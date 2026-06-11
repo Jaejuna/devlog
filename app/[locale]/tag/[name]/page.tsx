@@ -5,6 +5,7 @@ import PostList from '@/components/blog/PostList'
 import { Link } from '@/i18n/navigation'
 import { getTranslations } from 'next-intl/server'
 import { routing } from '@/i18n/routing'
+import { translateTag } from '@/lib/tagTranslations'
 
 interface TagPageProps {
   params: { locale: string; name: string }
@@ -29,10 +30,13 @@ export async function generateMetadata({ params }: TagPageProps): Promise<Metada
 
 export default async function TagPage({ params }: TagPageProps) {
   const t = await getTranslations('tag')
+  const { locale } = params
   const tagName = decodeURIComponent(params.name)
-  const posts = getAllPosts().filter((p) => p.tags.includes(tagName))
+  const posts = getAllPosts(locale).filter((p) => p.tags.includes(tagName))
 
   if (posts.length === 0) notFound()
+
+  const displayName = translateTag(tagName, locale)
 
   return (
     <div className="max-w-3xl mx-auto px-6 py-10">
@@ -43,7 +47,7 @@ export default async function TagPage({ params }: TagPageProps) {
         <p className="font-mono text-xs text-accent-600 mb-2">{t('command')}</p>
         <h1 className="text-2xl font-bold text-slate-100 mb-1">
           <span className="text-slate-500 font-normal">#</span>
-          {tagName}
+          {displayName}
         </h1>
         <p className="font-mono text-xs text-slate-700">
           {'// '}
@@ -56,6 +60,7 @@ export default async function TagPage({ params }: TagPageProps) {
         posts={posts}
         adClient={process.env.NEXT_PUBLIC_ADSENSE_ID}
         adSlot={process.env.NEXT_PUBLIC_AD_SLOT_INFEED}
+        locale={locale}
       />
     </div>
   )

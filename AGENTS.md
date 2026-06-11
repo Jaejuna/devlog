@@ -92,6 +92,49 @@ content/posts/*.mdx
 - `AdInFeed`: 반응형, PostList 2번째 카드 뒤 자동 삽입
 - `AdSidebar`: 300×250, sticky prop 지원
 
+## 11. i18n (next-intl v4) 구현 패턴
+
+### 설계 원칙
+- `localePrefix: 'as-needed'` — 한국어는 `/` (기존 SEO URL 유지), 영어는 `/en/` prefix
+- 모든 페이지는 `app/[locale]/` 아래에 위치. 루트 `app/layout.tsx`는 passthrough only
+- `setRequestLocale(locale)` 호출 위치: `app/[locale]/layout.tsx` — 이 한 줄이 하위 모든 서버 컴포넌트에서 `getTranslations()` 사용을 가능하게 함
+
+### 번역 접근법별 패턴
+
+| 컨텍스트 | 방법 | 예시 |
+|---|---|---|
+| 서버 컴포넌트 (page/layout) | `getTranslations('namespace')` | `blog/[slug]/page.tsx` |
+| 서버 컴포넌트 (하위 컴포넌트) | `getTranslations('namespace')` — setRequestLocale 이후면 locale prop 불필요 | `PostNavigation.tsx`, `RelatedPosts.tsx` |
+| 클라이언트 컴포넌트 | `useTranslations('namespace')` + `useLocale()` | `TotalViews.tsx`, `MobileToc.tsx` |
+| 태그 번역 (비-intl) | `translateTag(tag, locale)` from `lib/tagTranslations.ts` | `PostCard.tsx`, `tags/page.tsx` |
+
+### locale 전파 체인
+```
+page.tsx (params.locale)
+  └── PostList (locale prop)
+        └── PostCard (locale prop) → translateTag(), formatDate()
+  └── RelatedPosts (locale: getLocale()) → PostCard
+  └── PostNavigation (getTranslations 만 사용, locale prop 불필요)
+```
+
+### 영문 포스트 파일 지원 (slug.en.mdx)
+- `content/posts/slug.en.mdx` 파일이 있으면 EN locale에서 자동 사용
+- `getAllPosts(locale?)`: `.en.mdx` 파일은 base 목록에서 제외, EN locale 시 EN frontmatter 우선 적용
+- `getPostBySlug(slug, locale?)`: EN locale 시 slug.en.mdx 먼저 탐색
+- 썸네일은 항상 base(ko) 파일에서 추출 (EN 파일에 이미지 없어도 됨)
+
+### 주의사항
+- `zsh glob` 이슈: `git add "app/tag/[name]/page.tsx"` — 대괄호 경로는 반드시 따옴표로 감쌀 것
+- `generateStaticParams` 내에서 `getAllPosts()` 호출 시 locale 없이 호출 (base slugs 전체 필요)
+- `as never` 타입캐스트: 루트 `app/layout.tsx`는 `return children as never` — TypeScript 타입 만족용
+- 태그 URL은 항상 한국어 slug (`/tag/인증`) — 표시명만 번역됨
+
+### 메시지 파일 구조 (`messages/ko.json`, `messages/en.json`)
+- `nav`, `hero`, `home`, `search`, `tags`, `tag`, `post`, `blog`, `about` 네임스페이스
+- `blog` 네임스페이스: PostNavigation, RelatedPosts, MobileToc, TotalViews 텍스트
+
+---
+
 ## 9. 알려진 이슈 & 주의사항
 
 - `RegExpStringIterator` 이터레이션: `tsconfig.json`에 `"lib": ["esnext"]` 설정 필요. 대안으로 배열 분할 방식 사용

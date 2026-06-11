@@ -6,29 +6,40 @@ import type { Post, PostMeta } from './types'
 const postsDirectory = path.join(process.cwd(), 'content/posts')
 
 function extractFirstImage(content: string): string | undefined {
-  // ![alt](url) 형식
   const mdMatch = content.match(/!\[.*?\]\(([^)]+)\)/)
   if (mdMatch) return mdMatch[1]
-  // <img src="..." /> 형식
   const htmlMatch = content.match(/<img[^>]+src=["']([^"']+)["']/)
   if (htmlMatch) return htmlMatch[1]
   return undefined
 }
 
-export function getAllPosts(): PostMeta[] {
+function resolvePostPath(slug: string, locale?: string): string {
+  if (locale === 'en') {
+    const enPath = path.join(postsDirectory, `${slug}.en.mdx`)
+    if (fs.existsSync(enPath)) return enPath
+  }
+  return path.join(postsDirectory, `${slug}.mdx`)
+}
+
+export function getAllPosts(locale?: string): PostMeta[] {
   if (!fs.existsSync(postsDirectory)) {
     return []
   }
 
   const fileNames = fs.readdirSync(postsDirectory)
   const posts = fileNames
-    .filter((name) => name.endsWith('.mdx'))
+    .filter((name) => name.endsWith('.mdx') && !name.endsWith('.en.mdx'))
     .map((fileName) => {
       const slug = fileName.replace(/\.mdx$/, '')
-      const fullPath = path.join(postsDirectory, fileName)
-      const fileContents = fs.readFileSync(fullPath, 'utf8')
+      const localizedPath = resolvePostPath(slug, locale)
+      const fileContents = fs.readFileSync(localizedPath, 'utf8')
       const { data, content } = matter(fileContents)
-      const thumbnail = extractFirstImage(content)
+      // always extract thumbnail from base (ko) file so EN files don't need images
+      const basePath = path.join(postsDirectory, fileName)
+      const baseContent = localizedPath !== basePath
+        ? matter(fs.readFileSync(basePath, 'utf8')).content
+        : content
+      const thumbnail = extractFirstImage(baseContent)
 
       return {
         slug,
@@ -46,8 +57,8 @@ export function getAllPosts(): PostMeta[] {
   return posts
 }
 
-export function getPostBySlug(slug: string): Post | null {
-  const fullPath = path.join(postsDirectory, `${slug}.mdx`)
+export function getPostBySlug(slug: string, locale?: string): Post | null {
+  const fullPath = resolvePostPath(slug, locale)
 
   if (!fs.existsSync(fullPath)) {
     return null
@@ -68,12 +79,11 @@ export function getPostBySlug(slug: string): Post | null {
   }
 }
 
-
-export function getAdjacentPosts(slug: string): {
-  prev: PostMeta | null
-  next: PostMeta | null
-} {
-  const posts = getAllPosts()
+export function getAdjacentPosts(
+  slug: string,
+  locale?: string,
+): { prev: PostMeta | null; next: PostMeta | null } {
+  const posts = getAllPosts(locale)
   const index = posts.findIndex((p) => p.slug === slug)
 
   return {

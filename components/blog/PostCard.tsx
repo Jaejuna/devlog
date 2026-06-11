@@ -1,21 +1,21 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import type { PostMeta } from '@/lib/types'
+import { translateTag } from '@/lib/tagTranslations'
 
 interface PostCardProps {
   post: PostMeta
+  locale?: string
 }
 
-function formatDate(dateString: string): string {
-  const date = new Date(dateString)
-  return date.toLocaleDateString('ko-KR', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-  })
+function formatDate(dateString: string, locale: string): string {
+  return new Date(dateString).toLocaleDateString(
+    locale === 'en' ? 'en-US' : 'ko-KR',
+    { year: 'numeric', month: '2-digit', day: '2-digit' },
+  )
 }
 
-export default function PostCard({ post }: PostCardProps) {
+export default function PostCard({ post, locale = 'ko' }: PostCardProps) {
   return (
     <Link href={`/blog/${post.slug}`} className="block group">
       <article className="relative py-5 border-b border-slate-800/60">
@@ -32,7 +32,7 @@ export default function PostCard({ post }: PostCardProps) {
               </span>
               <span className="text-slate-700">·</span>
               <time dateTime={post.date} className="text-slate-500">
-                {formatDate(post.date)}
+                {formatDate(post.date, locale)}
               </time>
               <span className="text-slate-700">·</span>
               <span className="text-slate-500">{post.readTime}min</span>
@@ -56,7 +56,7 @@ export default function PostCard({ post }: PostCardProps) {
                     key={tag}
                     className="font-mono text-xs text-slate-500 bg-slate-800/40 border border-slate-700/30 px-1.5 py-0.5 rounded"
                   >
-                    #{tag}
+                    #{translateTag(tag, locale)}
                   </span>
                 ))}
               </div>

@@ -2,6 +2,8 @@ import { getAllPosts } from '@/lib/mdx'
 import type { Metadata } from 'next'
 import { Link } from '@/i18n/navigation'
 import { getTranslations } from 'next-intl/server'
+import { translateTag } from '@/lib/tagTranslations'
+import { getLocale } from 'next-intl/server'
 
 export const metadata: Metadata = {
   title: '태그 목록 | devlog',
@@ -10,6 +12,7 @@ export const metadata: Metadata = {
 
 export default async function TagsPage() {
   const t = await getTranslations('tags')
+  const locale = await getLocale()
   const posts = getAllPosts()
 
   const tagCounts = posts.reduce<Record<string, number>>((acc, post) => {
@@ -41,7 +44,7 @@ export default async function TagsPage() {
             className="group inline-flex items-center gap-2 px-3 py-1.5 rounded border border-slate-800/60 bg-slate-900/20 hover:border-accent-700/50 hover:bg-slate-800/30 transition-all"
           >
             <span className="font-mono text-sm text-slate-400 group-hover:text-accent-400 transition-colors">
-              #{tag}
+              #{translateTag(tag, locale)}
             </span>
             <span className="font-mono text-xs text-slate-700 bg-slate-800/60 px-1.5 py-0.5 rounded">
               {count}

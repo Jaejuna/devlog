@@ -11,6 +11,8 @@ interface HeroSectionProps {
 const HERO_TOKENS = [
   { text: 'Linguistic', typeLabel: '<adj>', colorClass: 'text-amber-400' },
   { text: 'Engineer', typeLabel: '<noun>', colorClass: 'text-accent-400' },
+  { text: 'Blog', typeLabel: '<noun>', colorClass: 'text-slate-400' },
+  { text: '...?', typeLabel: '<punct>', colorClass: 'text-slate-600' },
 ]
 
 const BG_TOKENS = [
@@ -91,7 +93,7 @@ export default function HeroSection({ postCount, categoryCount }: HeroSectionPro
       <div className="relative z-10">
         {/* Terminal init line */}
         <div className="font-mono text-sm text-accent-600 mb-6 flex items-center gap-1">
-          <span>$ linguistic-engineer --init</span>
+          <span>$ linguistic-engineer-blog --init</span>
           <span
             className={`text-primary-500 ml-1 transition-opacity duration-75 ${
               showCursor ? 'opacity-100' : 'opacity-0'

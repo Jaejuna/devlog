@@ -35,6 +35,15 @@
   "post": {
     "readTime": "{minutes}분 읽기"
   },
+  "blog": {
+    "prevPost": "이전",
+    "nextPost": "다음",
+    "relatedPosts": "관련 포스트",
+    "toc": "목차",
+    "todayVisits": "오늘 방문",
+    "monthVisits": "이번 달 방문",
+    "totalViews": "누적 조회"
+  },
   "about": {
     "bio": "Nexon Korea에서 게임 현지화 PM·엔지니어로 일합니다. 한국 문화 콘텐츠를 위한 LLM 번역·평가 시스템을 연구하고, 언어와 AI, 엔지니어링이 교차하는 지점을 탐구합니다.",
     "openToConnect": "Open to connect"
