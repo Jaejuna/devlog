@@ -153,6 +153,28 @@ const ACTIVITIES: {
   },
 ]
 
+const ORGANIZATIONS: {
+  name: string
+  role?: string
+  period: string
+  desc?: string
+  affiliation?: string
+}[] = [
+  {
+    name: 'BOAZ',
+    role: '20th Member · Data Analysis Part',
+    period: 'Jan 2023 — Feb 2024',
+    desc: 'Inter-university Big Data club',
+  },
+  {
+    name: 'Typhoon',
+    role: 'Tech Leader',
+    period: 'Mar 2019 — Feb 2024',
+    affiliation: 'Hanyang University',
+    desc: 'Central Club · Basketball',
+  },
+]
+
 const SKILLS = [
   {
     label: 'Localization',
@@ -423,6 +445,32 @@ export default function AboutPage() {
               </div>
               {act.desc && (
                 <p className="text-sm text-slate-400 leading-relaxed mt-1">{act.desc}</p>
+              )}
+            </TimelineItem>
+          ))}
+        </div>
+      </section>
+
+      {/* ── 조직 ───────────────────────────────────── */}
+      <section className="mb-10 pb-10 border-b border-slate-800/60">
+        <SectionHeader label="organizations" />
+        <div>
+          {ORGANIZATIONS.map((org, i) => (
+            <TimelineItem key={org.name} isLast={i === ORGANIZATIONS.length - 1}>
+              <div className="flex items-start justify-between flex-wrap gap-1 mb-1">
+                <div>
+                  <p className="text-sm font-semibold text-slate-200">{org.name}</p>
+                  {org.role && (
+                    <p className="font-mono text-xs text-accent-500 mt-0.5">{org.role}</p>
+                  )}
+                  {org.affiliation && (
+                    <p className="font-mono text-xs text-slate-600 mt-0.5">{org.affiliation}</p>
+                  )}
+                </div>
+                <span className="font-mono text-xs text-slate-600">{org.period}</span>
+              </div>
+              {org.desc && (
+                <p className="text-sm text-slate-400 leading-relaxed mt-1">{org.desc}</p>
               )}
             </TimelineItem>
           ))}
