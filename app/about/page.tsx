@@ -24,7 +24,7 @@ const EXPERIENCE: {
     type: 'Full-time',
     bullets: [
       'MapleStory: Idle RPG — 텍스트 데이터 관리, 예산·일정 컨트롤, 다국어 번역 벤더 코디네이션',
-      'LLM Translation System — RAG 및 Graph 리소스를 포함한 HITL LLM 번역 플랫폼 구축',
+      'LLM Translation System — RAG 및 Graph 리소스를 포함한 HITL LLM 번역 플랫폼 구축, 연간 1.2억 절감 (2025년 기준 4개 게임 적용)',
       'Domain Specific Benchmark — HITL 파이프라인이 포함된 게임 도메인 번역 벤치마크 시스템 설계 및 개발',
     ],
     tags: ['Localization Engineering', 'LLM', 'RAG', 'HITL', 'AWS'],
