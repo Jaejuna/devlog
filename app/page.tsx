@@ -7,8 +7,6 @@ import Badge from '@/components/ui/Badge'
 import HeroSection from '@/components/ui/HeroSection'
 import Link from 'next/link'
 import type { Metadata } from 'next'
-import SidebarSearch from '@/components/blog/SidebarSearch'
-import TotalViews from '@/components/blog/TotalViews'
 import type { PostMeta } from '@/lib/types'
 
 export const metadata: Metadata = {
@@ -108,12 +106,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
   return (
     <>
       {/* Fixed left sidebar (xl+ only) */}
-      <aside className="hidden xl:flex fixed top-20 left-6 w-56 flex-col gap-5 z-10 overflow-y-auto max-h-[calc(100vh-5rem)] pb-8">
-        <div>
-          <h3 className="font-mono text-xs text-slate-700 mb-2 px-1">{'// search'}</h3>
-          <SidebarSearch />
-        </div>
-        <TotalViews />
+      <aside className="hidden xl:flex fixed top-20 left-6 w-56 flex-col gap-5 z-10">
         <div>
           <h3 className="font-mono text-xs text-slate-700 mb-3 px-1">{'// top.posts'}</h3>
           <ul className="flex flex-col gap-3">
