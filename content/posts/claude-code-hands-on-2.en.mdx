@@ -1,0 +1,222 @@
+---
+title: "Claude Code Hands-on #2 — MCP Servers and GitHub Integration"
+date: "2026-04-10"
+category: "Claude Code in Action"
+tags: ["Claude Code", "AI", "MCP", "Playwright", "GitHub Actions", "코딩어시스턴트"]
+excerpt: "A walkthrough of adding MCP servers to Claude Code for direct browser control, and integrating with GitHub Actions to automate PR reviews and issue handling."
+readTime: 12
+---
+
+> This post is a translated and summarized version of Anthropic's official course [Claude Code in Action](https://anthropic.skilljar.com/claude-code-in-action). This is the second entry in the Hands-on series.
+
+---
+
+## What Is an MCP Server
+
+Claude Code can be extended with **MCP (Model Context Protocol) servers** that go beyond its built-in capabilities.<br/>
+
+MCP servers run on a remote or local machine and grant Claude new tools and abilities it wouldn't otherwise have.<br/>
+
+One of the most widely used MCP servers is **Playwright**. Adding Playwright lets Claude directly control a web browser, which significantly opens up the possibilities within a web development workflow.
+
+---
+
+## Installing the Playwright MCP Server
+
+To add the Playwright server to Claude Code, run the following command in your terminal. (This should be run in a regular terminal, not inside Claude Code.)
+
+```bash
+claude mcp add playwright npx @playwright/mcp@latest
+```
+
+This command does two things:<br/>
+
+- Registers the MCP server under the name `playwright`
+- Records the command used to start the server on your local machine
+
+---
+
+## Configuring Permissions
+
+The first time you use an MCP server tool, Claude will ask for permission every single time. If the repeated prompts become tiresome, you can pre-approve them in the settings file.<br/>
+
+Open `.claude/settings.local.json` and add the server to the `allow` array as shown below.
+
+```json
+{
+  "permissions": {
+    "allow": ["mcp__playwright"],
+    "deny": []
+  }
+}
+```
+
+Note the double underscore (`__`) in `mcp__playwright`. With this in place, Claude will use Playwright tools directly without asking for permission each time.
+
+---
+
+## Practical Example — Improving Component Generation
+
+Let's look at how the Playwright MCP server fits into a real workflow.<br/>
+
+Instead of manually testing and tweaking prompts, you can ask Claude to:
+
+1. Open a browser and navigate to your application
+2. Generate a test component
+3. Analyze the visual styling and code quality
+4. Improve the generation prompt based on the analysis
+5. Generate a new component with the improved prompt to validate the result
+
+For example, you might say:
+
+> "Navigate to localhost:3000, generate a basic component, review the styling, and update the generation prompt at @src/lib/prompts/generation.tsx to produce better components going forward."
+
+Claude will interact with the app using its browser tools, inspect the generated output directly, and then modify the prompt file to drive better designs.<br/>
+
+The key advantage is that Claude can **see the actual visual output — not just the code**. This leads to far more accurate judgments about styling improvements.
+
+### Example Results
+
+Apply this approach and instead of a generic purple-blue gradient with standard Tailwind patterns, you can end up with much more creative results:
+
+- Warm sunset gradients (orange → pink → purple)
+- Ocean-depth themes (teal → emerald → cyan)
+- Asymmetric layouts with overlapping elements
+- Creative spacing and unconventional arrangements
+
+---
+
+## Exploring Other MCP Servers
+
+Playwright is just one part of the MCP server ecosystem. Many others are available:<br/>
+
+- Querying and modifying databases
+- API testing and monitoring
+- File system operations
+- Cloud service integrations
+- Developer tool automation
+
+Find and add the MCP servers that fit your development environment, and Claude transforms from a simple code assistant into a development partner that interacts with your entire toolchain.
+
+---
+
+## GitHub Integration
+
+Claude Code offers official GitHub integration. Claude runs **directly inside GitHub Actions** to handle issues and pull requests.
+
+### Installation
+
+Run `/install-github-app` inside Claude and it will walk you through the setup:<br/>
+
+- Install the Claude Code app on GitHub
+- Add your API key
+- Automatically create a PR containing the workflow files
+
+Once you merge that PR, two GitHub Actions workflows are added to your `.github/workflows` directory.
+
+---
+
+## Built-in Workflows
+
+### Mention Action
+
+Mention **`@claude`** in an issue or PR to activate Claude.<br/>
+
+- Analyzes the request and forms an action plan
+- Accesses the full codebase and executes the task
+- Posts the results directly in the issue or PR
+
+### Pull Request Action
+
+When a PR is opened, Claude automatically:<br/>
+
+- Reviews the proposed changes
+- Analyzes the scope of impact
+- Posts a detailed report in the PR
+
+---
+
+## Customizing Workflows
+
+After merging the initial PR, you can modify the workflow files to suit your project.
+
+### Adding Project Setup
+
+Add a step to prepare the environment before Claude runs.
+
+```yaml
+- name: Project Setup
+  run: |
+    npm run setup
+    npm run dev:daemon
+```
+
+### Custom Instructions
+
+Provide Claude with upfront context about your project configuration.
+
+```yaml
+custom_instructions: |
+  The project is already set up with all dependencies installed.
+  The server is already running at localhost:3000. Logs from it
+  are being written to logs.txt. If needed, you can query the
+  db with the 'sqlite3' cli. If needed, use the mcp__playwright
+  set of tools to launch a browser and interact with the app.
+```
+
+### MCP Server Configuration
+
+MCP servers can also be enabled within GitHub Actions.
+
+```yaml
+mcp_config: |
+  {
+    "mcpServers": {
+      "playwright": {
+        "command": "npx",
+        "args": [
+          "@playwright/mcp@latest",
+          "--allowed-origins",
+          "localhost:3000;cdn.tailwindcss.com;esm.sh"
+        ]
+      }
+    }
+  }
+```
+
+### Tool Permissions
+
+When running Claude inside GitHub Actions, you must explicitly list each tool that is allowed.<br/>
+
+Unlike local development, there is no shortcut to bulk-approve permissions. Every tool from every MCP server must be registered individually.
+
+```yaml
+allowed_tools: "Bash(npm:*),Bash(sqlite3:*),mcp__playwright__browser_snapshot,mcp__playwright__browser_click,..."
+```
+
+---
+
+## Operational Tips
+
+Recommendations to keep in mind when setting up GitHub integration:<br/>
+
+- Start with the default workflows and customize incrementally
+- Provide project-specific context through `custom_instructions`
+- Be explicit about tool permissions when using MCP servers
+- Test the workflow with simple tasks before tackling complex ones
+- Add extra steps as needed to match your project's requirements
+
+<br />
+
+## Summary
+
+| Feature | Description |
+|---|---|
+| MCP servers | Extend Claude's capabilities with external tools |
+| Playwright MCP | Browser control — Claude sees the actual visual output |
+| `settings.local.json` | Pre-approve MCP tool permissions |
+| `/install-github-app` | Install GitHub Actions integration |
+| Mention Action | Request tasks by mentioning `@claude` in an issue or PR |
+| PR Action | Automatic code review when a PR is opened |
+| `custom_instructions` | Provide project context to GitHub Actions |
+| `allowed_tools` | Explicitly register tool permissions in the Actions environment |

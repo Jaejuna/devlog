@@ -1,0 +1,378 @@
+---
+title: "Linear Algebra Basics Chapter 3: Vectors, Linear Transformations, Matrix Multiplication, and Inverse Matrices"
+date: "2026-03-06"
+category: "MMD"
+tags: ["선형대수", "머신러닝", "벡터", "행렬곱셈", "뉴럴네트워크", "퍼셉트론"]
+excerpt: "A comprehensive guide to vector norms, dot products, scalar multiplication, the concept of linear transformations, matrix multiplication, inverse matrix computation, and how all these ideas connect in neural networks (the perceptron)."
+readTime: 13
+---
+
+In [Chapter 2](/blog/linear-algebra-2), we solved systems of equations using elimination and Gaussian elimination. In this post, we take a deep dive into **vectors** — the core data structure of machine learning — and explore **linear transformations**, **matrix multiplication**, **inverse matrices**, and how all of this connects to **neural networks**.
+
+> This post is based on Week 3 of DeepLearning.AI's *Mathematics for Machine Learning and Data Science* course.
+
+## What You'll Learn in This Post
+
+- **Addition, subtraction, scalar multiplication, and dot product** operations on vectors
+- Matrix-vector multiplication
+- The concept of **linear transformations** and how to represent them with matrices
+- **Matrix multiplication** — composing two linear transformations
+- Computing the **inverse matrix** and understanding when it exists
+- The **perceptron** — a neural network viewed through matrix operations
+
+---
+
+## What Is a Vector?
+
+A vector can be thought of as an **arrow** in a plane or higher-dimensional space. It has two key properties:
+
+- **Magnitude**: the length of the arrow
+- **Direction**: where the arrow points
+
+In machine learning, a single data instance (observation) is typically represented as a **vector**.
+<br />
+$$\vec{v} = \begin{bmatrix} 3 \\ 4 \end{bmatrix}$$
+
+---
+
+## Vector Norm
+
+The norm of a vector is its **magnitude** — the distance from the origin to that point.
+
+### L1-Norm (Manhattan Norm)
+
+The sum of the absolute values of all coordinates. This is equivalent to traveling along city blocks in a grid.
+<br />
+$$\|\vec{v}\|_1 = |v_1| + |v_2| + \cdots + |v_n|$$
+<br />
+$$\vec{v} = (3, 4) \Rightarrow \|\vec{v}\|_1 = 3 + 4 = 7$$
+
+### L2-Norm (Euclidean Norm)
+
+The square root of the sum of squared coordinates — the same as finding the hypotenuse using the Pythagorean theorem.
+<br />
+$$\|\vec{v}\|_2 = \sqrt{v_1^2 + v_2^2 + \cdots + v_n^2}$$
+<br />
+$$\vec{v} = (3, 4) \Rightarrow \|\vec{v}\|_2 = \sqrt{9 + 16} = \sqrt{25} = 5$$
+
+> **In practice?** The L2-norm is used in regularization to constrain the size of weights (L2 regularization, Ridge), while the L1-norm induces sparsity in L1 regularization (Lasso).
+
+---
+
+## Vector Addition and Subtraction
+
+Simply add or subtract the corresponding coordinates.
+<br />
+$$\vec{u} = (1, 3), \quad \vec{v} = (6, 2)$$
+<br />
+$$\vec{u} + \vec{v} = (1+6,\ 3+2) = (7, 5)$$
+<br />
+$$\vec{u} - \vec{v} = (1-6,\ 3-2) = (-5, 1)$$
+<br />
+Geometrically, $\vec{u} + \vec{v}$ is the **diagonal of the parallelogram** formed by the two vectors.
+
+---
+
+## Distance Between Vectors
+
+Compute the **difference** between two vectors, then apply the L1 or L2 norm.
+<br />
+$$\vec{u} = (3, 6), \quad \vec{v} = (5, 2)$$
+<br />
+$$\vec{u} - \vec{v} = (-2, 4)$$
+<br />
+$$\text{L1 distance} = |-2| + |4| = 6$$
+<br />
+$$\text{L2 distance} = \sqrt{(-2)^2 + 4^2} = \sqrt{4 + 16} = \sqrt{20}$$
+
+---
+
+## Scalar Multiplication
+
+Multiply each coordinate of a vector by a scalar (constant).
+<br />
+$$k \cdot \vec{v} = k \cdot \begin{bmatrix} v_1 \\ v_2 \end{bmatrix} = \begin{bmatrix} k v_1 \\ k v_2 \end{bmatrix}$$
+<br />
+- **Positive scalar**: same direction, magnitude changes
+- **Negative scalar**: direction reverses, magnitude changes
+- **Scalar = 0**: results in the zero vector
+<br />
+$$\vec{u} = (3, 5),\quad 6\vec{u} = (18, 30)$$
+
+---
+
+## Dot Product
+
+Multiply the corresponding coordinates and sum them all up. The result is a **scalar**.
+<br />
+$$\vec{a} \cdot \vec{b} = a_1 b_1 + a_2 b_2 + \cdots + a_n b_n$$
+<br />
+$$\vec{u} = (1, 2, 3),\quad \vec{v} = (0, 3, 5)$$
+<br />
+$$\vec{u} \cdot \vec{v} = (1 \cdot 0) + (2 \cdot 3) + (3 \cdot 5) = 0 + 6 + 15 = 21$$
+
+### Geometric Interpretation of the Dot Product
+
+The dot product is closely related to the **angle** between two vectors.
+<br />
+$$\vec{a} \cdot \vec{b} = \|\vec{a}\|_2 \cdot \|\vec{b}\|_2 \cdot \cos\theta$$
+
+| $\cos\theta$ value | Angle | Dot product sign |
+|---|---|---|
+| $\cos\theta > 0$ | $\theta < 90°$ (same direction) | positive |
+| $\cos\theta = 0$ | $\theta = 90°$ (orthogonal) | **0** |
+| $\cos\theta < 0$ | $\theta > 90°$ (opposite direction) | negative |
+
+> **Key insight**: If two vectors are **orthogonal**, their dot product is always 0.
+
+> **In practice?** Cosine similarity is the dot product divided by the product of the two vectors' L2-norms. It is widely used in natural language processing to measure similarity between sentences.
+
+---
+
+## Matrix-Vector Multiplication
+
+Compute the dot product of each **row** of the matrix with the vector.
+<br />
+$$\begin{bmatrix} a & b \\ c & d \end{bmatrix} \begin{bmatrix} x \\ y \end{bmatrix} = \begin{bmatrix} ax + by \\ cx + dy \end{bmatrix}$$
+<br />
+**Example:**
+<br />
+$$\begin{bmatrix} 3 & 5 & 1 \\ 2 & -1 & 4 \end{bmatrix} \begin{bmatrix} x \\ y \\ z \end{bmatrix} = \begin{bmatrix} 3x + 5y + z \\ 2x - y + 4z \end{bmatrix}$$
+
+> **Note**: The number of **columns** in the matrix must match the **length** of the vector.
+
+Matrix-vector multiplication is a compact way to represent a system of equations.
+
+---
+
+## Linear Transformation
+
+A linear transformation is a function that maps each point in a plane to another point in a **structured way**.
+<br />
+$$T: \mathbb{R}^n \rightarrow \mathbb{R}^m$$
+<br />
+The matrix-vector product $A\vec{x}$ is exactly a linear transformation. The matrix $A$ defines the transformation rule.
+
+### Finding the Matrix of a Linear Transformation
+
+To find the matrix of a linear transformation $T$:
+
+- **Column 1**: the result of $T(1, 0)$
+- **Column 2**: the result of $T(0, 1)$
+
+**Example:** If $T(1, 0) = (4, 1)$ and $T(0, 1) = (1, 2)$, then
+<br />
+$$A = \begin{bmatrix} 4 & 1 \\ 1 & 2 \end{bmatrix}$$
+
+---
+
+## Matrix Multiplication
+
+Matrix multiplication is the operation of **composing two linear transformations**. Applying transformation $B$ first, then $A$, gives $AB$.
+<br />
+$$C = AB$$
+<br />
+The $(i, j)$ entry of $C$ is the dot product of the $i$-th **row** of $A$ and the $j$-th **column** of $B$.
+<br />
+$$C_{ij} = \sum_k A_{ik} B_{kj}$$
+<br />
+**Example:**
+<br />
+$$A = \begin{bmatrix} 1 & 2 \\ 2 & -1 \\ 0 & 2 \end{bmatrix}, \quad B = \begin{bmatrix} 3 & 1 \\ 1 & -2 \end{bmatrix}$$
+<br />
+$$AB = \begin{bmatrix} (1\cdot3 + 2\cdot1) & (1\cdot1 + 2\cdot(-2)) \\ (2\cdot3 + (-1)\cdot1) & (2\cdot1 + (-1)\cdot(-2)) \\ (0\cdot3 + 2\cdot1) & (0\cdot1 + 2\cdot(-2)) \end{bmatrix} = \begin{bmatrix} 5 & -3 \\ 5 & 4 \\ 2 & -4 \end{bmatrix}$$
+
+> **Note**: $AB \neq BA$ — matrix multiplication is **not commutative**.
+
+> **Size condition**: If $A$ is $m \times k$ and $B$ is $k \times n$, then $AB$ is $m \times n$. The number of **columns** in $A$ must match the number of **rows** in $B$.
+
+---
+
+## Identity Matrix
+
+A matrix with all ones on the diagonal and zeros everywhere else.
+<br />
+$$I = \begin{bmatrix} 1 & 0 \\ 0 & 1 \end{bmatrix}, \quad I = \begin{bmatrix} 1 & 0 & 0 \\ 0 & 1 & 0 \\ 0 & 0 & 1 \end{bmatrix}$$
+<br />
+Applying the identity matrix as a linear transformation leaves any vector or matrix **unchanged**.
+<br />
+$$IA = AI = A$$
+<br />
+It plays the same role as multiplying by $1$ in ordinary arithmetic: $1 \times a = a$.
+
+---
+
+## Inverse Matrix
+
+The inverse of matrix $A$, written $A^{-1}$, satisfies:
+<br />
+$$A \cdot A^{-1} = A^{-1} \cdot A = I$$
+<br />
+In terms of linear transformations, the inverse matrix **undoes** the original transformation.
+
+### Computing the Inverse Matrix
+
+You can find the inverse by solving a system of linear equations.
+<br />
+$$A = \begin{bmatrix} 2 & 1 \\ 1 & 4 \end{bmatrix}, \quad A^{-1} = \begin{bmatrix} a & b \\ c & d \end{bmatrix}$$
+<br />
+From the condition $A \cdot A^{-1} = I$:
+<br />
+$$\begin{cases} 2a + c = 1 \\ a + 4c = 0 \end{cases} \Rightarrow a = \frac{4}{7},\ c = -\frac{1}{7}$$
+<br />
+$$\begin{cases} 2b + d = 0 \\ b + 4d = 1 \end{cases} \Rightarrow b = -\frac{1}{7},\ d = \frac{2}{7}$$
+<br />
+$$A^{-1} = \frac{1}{7}\begin{bmatrix} 4 & -1 \\ -1 & 2 \end{bmatrix}$$
+
+### Which Matrices Have an Inverse?
+
+- **Non-singular matrix**: inverse exists ($\det \neq 0$)
+- **Singular matrix**: inverse **does not exist** ($\det = 0$)
+<br />
+$$\det(A) = 0 \Rightarrow A^{-1} \text{ does not exist}$$
+
+> The inverse matrix is used to solve systems of equations in matrix form: $A\vec{x} = \vec{b}$ → $\vec{x} = A^{-1}\vec{b}$
+
+---
+
+## Neural Networks and Matrices — The Perceptron
+
+Let's see how the concepts we've learned are used in machine learning models.
+
+### The Perceptron
+
+The perceptron is the simplest form of a neural network. It computes the input data through a matrix product, then outputs 1 (activated) if the result exceeds a threshold, and 0 otherwise.
+<br />
+$$\text{output} = \begin{cases} 1 & \text{if } \vec{w} \cdot \vec{x} \geq \text{threshold} \\ 0 & \text{otherwise} \end{cases}$$
+
+| Component | Matrix/Vector Role |
+|---|---|
+| Input data $\vec{x}$ | vector (each feature is an element) |
+| Weights $\vec{w}$ | vector (model parameters) |
+| $\vec{w} \cdot \vec{x}$ | dot product → scalar output |
+| threshold | determines whether to activate |
+
+### AND Gate Example
+
+| Lottery win | Exam pass | Scholarship |
+|---|---|---|
+| 0 | 0 | 0 |
+| 1 | 0 | 0 |
+| 0 | 1 | 0 |
+| 1 | 1 | 1 |
+
+Set weights to lottery=1, exam=1, threshold=1.5:
+<br />
+$$\vec{w} = (1, 1), \quad \text{threshold} = 1.5$$
+<br />
+- $(0, 0)$: $0 < 1.5$ → 0 ✓
+- $(1, 0)$: $1 < 1.5$ → 0 ✓
+- $(0, 1)$: $1 < 1.5$ → 0 ✓
+- $(1, 1)$: $2 \geq 1.5$ → 1 ✓
+
+This is exactly how an AND gate is implemented as a perceptron.
+
+### In Larger Models
+
+When processing multiple data instances at once, **matrix multiplication** is used.
+<br />
+$$X \cdot W = \text{prediction matrix}$$
+<br />
+- $X$: data matrix (each row is one data instance)
+- $W$: weight matrix (model parameters)
+
+> Deep learning models repeat this kind of matrix multiplication across hundreds to thousands of layers. This is why deep learning requires GPUs — they are optimized for matrix operations.
+
+---
+
+## Summary
+
+| Concept | Description |
+|---|---|
+| **Vector** | A unit of data representation with magnitude and direction |
+| **L1-norm** | Sum of absolute coordinate values (Manhattan distance) |
+| **L2-norm** | Square root of sum of squared coordinates (Euclidean distance) |
+| **Dot product** | Scalar value obtained by multiplying and summing corresponding coordinates |
+| **Orthogonal** | Dot product = 0, two vectors at 90° |
+| **Linear transformation** | A structured transformation expressed as a matrix-vector product |
+| **Matrix multiplication** | Composition of two linear transformations (not commutative) |
+| **Identity matrix** | A matrix that leaves any matrix unchanged ($AI = IA = A$) |
+| **Inverse matrix** | A matrix that undoes the original transformation (exists only for non-singular matrices) |
+| **Perceptron** | A simple neural network implemented with a dot product and threshold |
+
+---
+
+<br />
+
+## Quiz
+
+**Q1. Find the L1-norm and L2-norm of the following vector.**
+<br />
+$$\vec{v} = (-3, 4)$$
+<br />
+<details>
+<summary>Show answer</summary>
+<br />
+$$\|\vec{v}\|_1 = |-3| + |4| = 3 + 4 = 7$$
+<br />
+$$\|\vec{v}\|_2 = \sqrt{(-3)^2 + 4^2} = \sqrt{9 + 16} = \sqrt{25} = 5$$
+<br />
+</details>
+
+---
+
+**Q2. Given $\vec{u} = (2, -1, 3)$ and $\vec{v} = (1, 4, -2)$, find the dot product.**
+
+<details>
+<summary>Show answer</summary>
+<br />
+$$\vec{u} \cdot \vec{v} = (2 \cdot 1) + ((-1) \cdot 4) + (3 \cdot (-2)) = 2 - 4 - 6 = -8$$
+<br />
+Since the dot product is negative, the angle between the two vectors is **greater than 90°**.
+
+</details>
+
+---
+
+**Q3. Compute the following matrix multiplication.**
+<br />
+$$\begin{bmatrix} 2 & 0 \\ 1 & 3 \end{bmatrix} \begin{bmatrix} 1 & 4 \\ 2 & -1 \end{bmatrix}$$
+<br />
+<details>
+<summary>Show answer</summary>
+<br />
+$$\begin{bmatrix} (2\cdot1 + 0\cdot2) & (2\cdot4 + 0\cdot(-1)) \\ (1\cdot1 + 3\cdot2) & (1\cdot4 + 3\cdot(-1)) \end{bmatrix} = \begin{bmatrix} 2 & 8 \\ 7 & 1 \end{bmatrix}$$
+<br />
+</details>
+
+---
+
+**Q4. Express the linear transformation $T(1, 0) = (2, -1)$, $T(0, 1) = (3, 4)$ as a matrix.**
+
+<details>
+<summary>Show answer</summary>
+
+Column 1 = $T(1, 0) = (2, -1)$, Column 2 = $T(0, 1) = (3, 4)$
+<br />
+$$A = \begin{bmatrix} 2 & 3 \\ -1 & 4 \end{bmatrix}$$
+<br />
+</details>
+
+---
+
+**Q5. Determine whether the following matrix has an inverse, and find it if it does.**
+<br />
+$$A = \begin{bmatrix} 2 & 4 \\ 1 & 2 \end{bmatrix}$$
+<br />
+<details>
+<summary>Show answer</summary>
+<br />
+$$\det(A) = (2 \times 2) - (4 \times 1) = 4 - 4 = 0$$
+<br />
+Since the determinant is 0, $A$ is a **singular matrix** and **no inverse exists**.
+
+</details>
+
+---
+
+In the next post, we will cover the **geometric meaning of the determinant (as area)**, **eigenvalue and eigenvector computation**, **dimensionality reduction (PCA)**, and **Markov matrices**.

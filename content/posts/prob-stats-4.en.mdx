@@ -1,0 +1,301 @@
+---
+title: "ML Probability & Statistics Chapter 4: Confidence Intervals and Hypothesis Testing"
+date: "2026-03-06"
+category: "MMD"
+tags: ["확률", "통계", "머신러닝", "신뢰구간", "가설검정", "t분포", "p값"]
+excerpt: "A complete guide to confidence intervals, the t-distribution, hypothesis testing fundamentals (null/alternative hypotheses, p-values, rejection regions, statistical power), various t-tests, and A/B testing."
+readTime: 14
+---
+
+In [Chapter 3](/blog/prob-stats-3) we covered MLE and MAP for estimating population parameters from samples. This chapter focuses on **quantifying the uncertainty** of those estimates with **confidence intervals**, and on **hypothesis testing** — using data to validate statistical claims.
+
+---
+
+## 1. Confidence Intervals
+
+### What Is a Confidence Interval?
+
+A point estimate reduces a parameter to a single value. But because samples always vary, **interval estimation** is more informative.
+
+**Confidence Interval (CI)**: a range of values expected to contain the true parameter
+<br />
+$$\bar{x} \pm \text{margin of error}$$
+<br />
+- **95% CI**: if you repeat the same experiment 100 times, roughly 95 of the resulting intervals will contain the population mean
+- A CI is *not* the probability that the parameter lies in this particular interval — the parameter is fixed; it's the interval that changes
+
+### Margin of Error
+
+$$\text{ME} = z^* \cdot \frac{\sigma}{\sqrt{n}}$$
+
+| Confidence Level | $z^*$ |
+|-----------------|-------|
+| 90% | 1.645 |
+| 95% | 1.960 |
+| 99% | 2.576 |
+
+**Effect of sample size**: larger $n$ shrinks $\frac{\sigma}{\sqrt{n}}$, producing a narrower (more precise) CI.
+
+**Steps to compute a CI**:
+1. Calculate the point estimate ($\bar{x}$)
+2. Choose a confidence level → determine $z^*$
+3. Compute the standard error: $SE = \frac{\sigma}{\sqrt{n}}$
+4. Build the CI: $\bar{x} \pm z^* \cdot SE$
+
+### When the Population SD Is Unknown — the t-Distribution
+
+In practice, $\sigma$ is almost never known. Substituting the sample standard deviation $s$ introduces additional uncertainty, so we use the **t-distribution** instead.
+<br />
+$$t = \frac{\bar{x} - \mu}{s/\sqrt{n}}$$
+<br />
+- Degrees of freedom (df) = $n - 1$
+- Smaller $n$ → heavier tails (reflecting greater uncertainty)
+- As $n$ grows, the t-distribution converges to the standard normal
+
+CI using the t-distribution:
+<br />
+$$\bar{x} \pm t^*_{n-1} \cdot \frac{s}{\sqrt{n}}$$
+
+### Confidence Interval for a Proportion
+
+Estimating the population proportion $p$ from binary outcomes (success/failure):
+<br />
+$$\hat{p} \pm z^* \cdot \sqrt{\frac{\hat{p}(1-\hat{p})}{n}}$$
+<br />
+Conditions for the normal approximation to hold: $n\hat{p} \geq 10$ and $n(1-\hat{p}) \geq 10$
+
+---
+
+## 2. Hypothesis Testing
+
+### Null and Alternative Hypotheses
+
+| | Description |
+|--|-------------|
+| **Null hypothesis** $H_0$ | No effect, no difference — the "default assumption" |
+| **Alternative hypothesis** $H_1$ | The claim we are trying to establish |
+
+Example:
+- $H_0$: The new drug and the existing drug are equally effective ($\mu_1 = \mu_2$)
+- $H_1$: The new drug is more effective ($\mu_1 > \mu_2$)
+
+### Types of Errors
+
+|  | $H_0$ is True | $H_0$ is False |
+|--|--------------|---------------|
+| **Reject** | Type I Error (False Positive) | Correct decision |
+| **Fail to reject** | Correct decision | Type II Error (False Negative) |
+
+- **Type I error rate** = significance level $\alpha$ (typically 0.05)
+- **Type II error rate** = $\beta$
+- **Statistical Power** = $1 - \beta$ (probability of correctly rejecting a false $H_0$)
+
+### Significance Level
+
+$\alpha$ is the maximum tolerated probability of a Type I error.
+
+- $\alpha = 0.05$: when $H_0$ is true, we incorrectly reject it 5% of the time
+- Lowering $\alpha$ reduces Type I errors but increases Type II errors
+
+### One-Tailed vs. Two-Tailed Tests
+
+| Test Type | $H_1$ | Rejection Region |
+|-----------|-------|-----------------|
+| Right-tailed | $\mu > \mu_0$ | Right tail |
+| Left-tailed | $\mu < \mu_0$ | Left tail |
+| Two-tailed | $\mu \neq \mu_0$ | Both tails |
+
+In a two-tailed test, $\alpha$ is split evenly between the tails, placing $\alpha/2$ in each.
+
+### p-value
+
+**p-value**: the probability of observing a test statistic at least as extreme as the one obtained, assuming $H_0$ is true
+<br />
+$$p\text{-value} < \alpha \Rightarrow \text{Reject } H_0$$
+$$p\text{-value} \geq \alpha \Rightarrow \text{Fail to reject } H_0 \text{ (not the same as "accepting" it)}$$
+
+> Note: A small p-value means "this result would be unlikely by chance alone" — suggesting the effect is likely real.
+
+### Rejection Region and Critical Values
+
+**Critical value**: the boundary of the test statistic that corresponds to $\alpha$
+
+If the test statistic falls in the rejection region, we reject $H_0$.
+
+Example: two-tailed test, $\alpha = 0.05$ → reject if $z < -1.96$ or $z > 1.96$
+
+### Statistical Power
+
+$$\text{Power} = P(\text{reject } H_0 \mid H_1 \text{ is true}) = 1 - \beta$$
+<br />
+To increase power:
+- Increase the sample size $n$
+- Increase $\alpha$ (accept more Type I error)
+- A larger effect size naturally increases power
+
+---
+
+## 3. t-Tests
+
+### One-Sample t-Test
+
+Tests whether a single sample mean differs from a specified value $\mu_0$.
+<br />
+$$t = \frac{\bar{x} - \mu_0}{s/\sqrt{n}}, \quad df = n-1$$
+<br />
+Example: "Is the average score of this class equal to 70?"
+
+### Independent Two-Sample t-Test
+
+Tests whether the means of two independent groups differ.
+<br />
+$$t = \frac{(\bar{x}_1 - \bar{x}_2) - 0}{\sqrt{\frac{s_1^2}{n_1} + \frac{s_2^2}{n_2}}}$$
+<br />
+- Degrees of freedom: computed via Welch's approximation (for unequal variances)
+- $H_0$: $\mu_1 = \mu_2$
+
+### Two-Sample Proportion Test
+
+Tests whether the proportions of two groups differ.
+<br />
+$$z = \frac{(\hat{p}_1 - \hat{p}_2)}{\sqrt{\hat{p}(1-\hat{p})\left(\frac{1}{n_1} + \frac{1}{n_2}\right)}}$$
+<br />
+where $\hat{p}$ is the pooled proportion:
+<br />
+$$\hat{p} = \frac{x_1 + x_2}{n_1 + n_2}$$
+
+### Paired t-Test
+
+Tests the mean difference between before-and-after measurements on the same subjects.
+<br />
+$$d_i = x_{i,\text{after}} - x_{i,\text{before}}, \quad t = \frac{\bar{d}}{s_d/\sqrt{n}}$$
+<br />
+Example: change in blood pressure before and after taking a medication — each patient serves as their own control.
+
+---
+
+## 4. A/B Testing
+
+A/B testing is the practical application of the **two-sample test** framework.
+
+**Procedure**:
+1. Set up $H_0$: the conversion rates of A and B are equal
+2. Choose a significance level $\alpha$ (typically 0.05)
+3. Collect sufficient data (determine sample size based on desired power)
+4. Compute the test statistic
+5. Check the p-value → decide whether to reject $H_0$
+
+**Common pitfalls**:
+- **Multiple comparisons problem**: testing many metrics simultaneously inflates the Type I error rate → apply Bonferroni correction or similar adjustments
+- **No early stopping**: stopping the experiment the moment results look significant dramatically increases False Positives
+- **Practical vs. statistical significance**: a tiny p-value doesn't automatically mean the effect is meaningful — always check the effect size
+
+---
+
+## Summary
+
+| Concept | Key Point |
+|---------|-----------|
+| Confidence Interval | $\bar{x} \pm z^* \cdot SE$ — estimates a range for the parameter |
+| t-Distribution | Used when $\sigma$ is unknown; df = $n-1$ |
+| p-value | Probability of observing the data (or more extreme) under $H_0$ |
+| Type I Error | $\alpha$ — rejecting a true $H_0$ |
+| Type II Error | $\beta$ — failing to reject a false $H_0$ |
+| Statistical Power | $1 - \beta$ — ability to detect a real effect |
+| Paired t-Test | Compares before-and-after measurements on the same subjects |
+
+<br />
+
+## Quiz
+
+**Q1. Which statement correctly interprets a 95% confidence interval?**
+
+a) There is a 95% probability that the population mean lies within this interval.
+b) If the experiment is repeated many times, about 95% of the resulting intervals will contain the population mean.
+c) There is a 95% probability that the sample mean lies within this interval.
+d) 95% of the sample values fall within this interval.
+
+<details>
+<summary>Show Answer</summary>
+
+**Answer: b**
+
+A confidence interval does not express the probability that the parameter is in *this* specific interval. The parameter is fixed; it's the interval that varies from sample to sample. A 95% CI means: "if we construct intervals using this procedure repeatedly, roughly 95 out of 100 will contain the true parameter."
+
+</details>
+
+---
+
+**Q2. Why do we use the t-distribution instead of the z-distribution?**
+
+a) When the sample follows a normal distribution
+b) When the population standard deviation $\sigma$ is unknown and we substitute $s$
+c) When the sample size is 30 or more
+d) When analyzing binary data
+
+<details>
+<summary>Show Answer</summary>
+
+**Answer: b**
+
+Replacing $\sigma$ with $s$ introduces additional uncertainty. The t-distribution accounts for this with heavier tails, and converges to the standard normal as the sample size grows.
+
+</details>
+
+---
+
+**Q3. If the p-value is 0.03 and the significance level is $\alpha = 0.05$, what is the correct conclusion?**
+
+a) Accept the null hypothesis.
+b) The alternative hypothesis is false.
+c) Reject the null hypothesis.
+d) No conclusion can be drawn.
+
+<details>
+<summary>Show Answer</summary>
+
+**Answer: c**
+
+Since p-value (0.03) < $\alpha$ (0.05), we reject $H_0$. Note: this does not "prove" $H_0$ is false — it means the observed data are sufficiently inconsistent with $H_0$ to warrant rejection.
+
+</details>
+
+---
+
+**Q4. When is a paired t-test more appropriate than an independent two-sample t-test?**
+
+a) When the two groups have different sample sizes
+b) When comparing before-and-after measurements from the same subjects
+c) When both groups have equal variances
+d) When the sample size is large
+
+<details>
+<summary>Show Answer</summary>
+
+**Answer: b**
+
+Before-and-after measurements on the same subject are not independent. By computing the difference ($d_i$), we remove between-subject variability, which increases statistical power. Example: comparing a patient's blood pressure before and after treatment.
+
+</details>
+
+---
+
+**Q5. Why is "early stopping" a problem in A/B testing?**
+
+a) Because the sample size grows too large
+b) Because repeatedly testing at every time point inflates the Type I error rate well above the nominal $\alpha$
+c) Because a z-distribution should be used instead of a t-distribution
+d) Because statistical power decreases
+
+<details>
+<summary>Show Answer</summary>
+
+**Answer: b**
+
+Continuously monitoring interim results and stopping as soon as they appear significant creates a multiple comparisons problem. Even when there is no real effect, the probability of observing a spuriously significant result far exceeds $\alpha$.
+
+</details>
+
+---
+
+The next chapter covers **Information Theory** — entropy, cross-entropy, KL divergence, and the mathematical foundations behind the loss functions used in machine learning.

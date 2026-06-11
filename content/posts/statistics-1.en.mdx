@@ -1,0 +1,513 @@
+---
+title: "Statistics Fundamentals Ch.1: Data Types, Location & Variability Estimation"
+date: "2026-03-04"
+category: "데이터사이언스"
+tags: ["통계", "데이터분석", "pandas", "Python"]
+excerpt: "A practical overview of data types (continuous, discrete, categorical, etc.), location estimation (mean, median), and variability estimation (variance, standard deviation), with code examples throughout."
+readTime: 8
+---
+
+When studying statistics and machine learning, one of the first questions you encounter is: "What kind of data is this?" Correctly identifying the data type is essential for choosing the right analysis method.
+
+> This post is based on Chapter 1 of *Practical Statistics for Data Scientists*.
+
+## 1.1 Elements of Structured Data
+
+| Type | Description | Examples |
+|------|-------------|---------|
+| **Continuous** | Can take any value within a range | Height, weight, temperature |
+| **Discrete** | Count or integer-valued data | Number of visitors, purchase count |
+| **Categorical** | Takes only values within a defined set of categories | Blood type, region |
+| **Binary** | A categorical variable with only two possible values | Pass/fail, 0/1 |
+| **Ordinal** | A categorical variable with a meaningful order among values | Satisfaction (high/medium/low), grade |
+
+Beyond these, data is also classified by storage structure into **structured**, **semi-structured**, and **unstructured** formats.
+
+**In practice:** Before feeding data into a machine learning model, identifying data types is the very first step.<br />Categorical variables require one-hot encoding or label encoding, while ordinal variables need an encoding that preserves their order. Training a model with the wrong data type will skew the results.
+
+```python
+import pandas as pd
+
+df = pd.DataFrame({
+    "height":       [165.3, 172.0, 180.5],   # continuous
+    "visit_count":  [3, 7, 12],               # discrete
+    "blood_type":   ["A", "B", "O"],          # categorical
+    "passed":       [True, False, True],       # binary
+    "satisfaction": pd.Categorical(
+                        ["high", "medium", "low"],
+                        categories=["low", "medium", "high"],
+                        ordered=True            # ordinal
+                    ),
+})
+
+print(df.dtypes)
+# height          float64
+# visit_count       int64
+# blood_type       object
+# passed             bool
+# satisfaction   category
+```
+
+## 1.2 Tabular Data
+
+The most fundamental data structure in machine learning is the table (matrix) format.
+
+- **Data frame**: A table-structured data object. The most basic structure in statistics and ML.
+- **Feature**: A column in the table (also called an attribute or variable).
+- **Record**: A row in the table (also called a case, observation, instance, or sample).
+- **Outcome**: The predicted value derived from a statistical or ML model — the dependent variable derived from the independent variables.
+
+```python
+import pandas as pd
+
+# Create a data frame
+df = pd.DataFrame({
+    "age":      [25, 32, 28, 45],       # features
+    "income":   [3000, 5200, 4100, 7800],
+    "purchased": [0, 1, 0, 1],          # outcome (label)
+})
+
+# Separate features (X) and outcome (y)
+X = df[["age", "income"]]   # feature matrix
+y = df["purchased"]          # target vector
+
+print(f"Number of records: {len(df)}")     # 4
+print(f"Number of features: {X.shape[1]}") # 2
+```
+
+### Key pandas Features
+
+A pandas `DataFrame` automatically assigns sequential integer indices to all rows and also supports hierarchical (multi-level) indices, making it efficient for handling large-scale data.
+
+**In practice:** Data provided in competitions like Kaggle is almost always in this tabular structure.<br />Feature engineering — combining and transforming existing features to improve model performance — is a core skill in real-world data analysis.
+
+```python
+# Default integer index
+df = pd.DataFrame({"value": [10, 20, 30]})
+print(df.index)  # RangeIndex(start=0, stop=3, step=1)
+
+# Multi-level (hierarchical) index
+arrays = [["Seoul", "Seoul", "Busan"], ["Gangnam", "Mapo", "Haeundae"]]
+index = pd.MultiIndex.from_arrays(arrays, names=["city", "district"])
+df_multi = pd.DataFrame({"population": [56, 38, 42]}, index=index)
+print(df_multi)
+```
+
+## 1.3 Location Estimation
+
+These are summary statistics that describe the central tendency of data.
+
+| Metric | Description | Characteristic |
+|--------|-------------|---------------|
+| **Mean** | Sum of all values / count | Sensitive to outliers |
+| **Weighted mean** | Sum of (value × weight) / sum of weights | Reflects importance |
+| **Median** | The middle value after sorting | Robust to outliers |
+| **Weighted median** | The value at the midpoint of the cumulative weight sum | — |
+| **Trimmed mean** | Mean after removing a portion of extreme values | Robust |
+
+> **Robust**: The property of being insensitive to outliers. The median and trimmed mean are more robust than the mean.
+
+**In practice:** In domains where extreme values are common — such as salaries, housing prices, or traffic data — the median is used as a KPI instead of the mean.<br />For example, "average session duration for monthly active users" can be distorted by a small number of heavy users, so the median or trimmed mean is typically reported alongside the mean.
+
+```python
+import numpy as np
+from scipy import stats
+
+data = [10, 12, 11, 14, 13, 100]  # 100 is an outlier
+
+# Mean — heavily affected by the outlier
+print(f"Mean: {np.mean(data):.1f}")                        # 26.7
+
+# Median — robust to outliers
+print(f"Median: {np.median(data):.1f}")                    # 12.5
+
+# Trimmed mean — average after removing top/bottom 10%
+print(f"Trimmed mean: {stats.trim_mean(data, 0.1):.1f}")  # 12.0
+
+# Weighted mean — giving more weight to recent data
+weights = [1, 1, 1, 2, 2, 3]
+print(f"Weighted mean: {np.average(data, weights=weights):.1f}")
+```
+
+## 1.4 Variability Estimation
+
+These metrics describe how spread out (dispersed) the data is.
+
+### Key Metrics
+
+**Deviation**
+The difference between an observed value and a reference value (usually the mean or median).
+<br />
+$$\text{Deviation} = x_i - \bar{x}$$
+<br />
+**Variance**
+The average of the squared deviations. Sample variance divides by n−1 (Bessel's correction).
+<br />
+$$s^2 = \frac{1}{n-1} \sum_{i=1}^{n}(x_i - \bar{x})^2$$
+<br />
+**Standard deviation**
+The square root of the variance. Because it's in the same units as the original data, it's intuitive to interpret.
+<br />
+$$s = \sqrt{s^2}$$
+
+
+**Mean Absolute Deviation (MAD)**
+The average distance of each value from the mean. Based on the L1 norm, it is less sensitive to outliers.
+<br />
+$$\text{MAD} = \frac{1}{n}\sum_{i=1}^{n}|x_i - \bar{x}|$$
+<br />
+**Median Absolute Deviation**
+The median of the absolute distances from the median. The most robust variability metric.
+<br />
+$$\text{MAD}_\text{med} = \text{median}(|x_i - \text{median}(x)|)$$
+<br />
+**Range**
+<br />
+$$\text{Range} = \max(x) - \min(x)$$
+<br />
+**Interquartile Range (IQR)**
+The spread of the middle 50% of the data. Used as the basis for box plots.
+<br />
+$$\text{IQR} = Q_3 - Q_1$$
+
+```python
+import numpy as np
+import pandas as pd
+from scipy import stats
+
+data = np.array([2, 4, 4, 4, 5, 5, 7, 9, 100])  # 100 is an outlier
+
+# Basic variability metrics
+print(f"Variance (sample): {np.var(data, ddof=1):.2f}")
+print(f"Std deviation:     {np.std(data, ddof=1):.2f}")
+print(f"Range:             {data.max() - data.min()}")
+
+# All at once with pandas
+s = pd.Series(data)
+print(s.describe())
+# count     9.000000
+# mean     16.667
+# std      31.927
+# min       2.000
+# 25%       4.000   ← Q1
+# 50%       5.000   ← median
+# 75%       7.000   ← Q3
+# max     100.000
+
+# IQR
+q1, q3 = s.quantile(0.25), s.quantile(0.75)
+iqr = q3 - q1
+print(f"IQR: {iqr}")          # 3.0
+
+# Outlier detection (IQR-based)
+lower = q1 - 1.5 * iqr
+upper = q3 + 1.5 * iqr
+outliers = s[(s < lower) | (s > upper)]
+print(f"Outliers: {outliers.tolist()}")   # [100]
+```
+
+**In practice:** Standard deviation is a key metric in risk management.<br />In finance, asset volatility is measured as the standard deviation of returns. In A/B testing, effect sizes are normalized by standard deviation for comparison.<br />IQR is frequently used as the criterion for anomaly detection.
+
+### Mean Absolute Deviation vs. Median Absolute Deviation
+
+```python
+from scipy.stats import median_abs_deviation
+
+data_normal  = [2, 4, 4, 4, 5, 5, 7, 9]
+data_outlier = [2, 4, 4, 4, 5, 5, 7, 9, 100]
+
+for label, data in [("Normal data", data_normal), ("With outlier", data_outlier)]:
+    arr = np.array(data)
+    mad_mean   = np.mean(np.abs(arr - np.mean(arr)))
+    mad_median = median_abs_deviation(arr)
+    print(f"[{label}]")
+    print(f"  Mean Absolute Deviation (MAD):   {mad_mean:.2f}")
+    print(f"  Median Absolute Deviation (MADmed): {mad_median:.2f}")
+    print()
+
+# [Normal data]
+#   Mean Absolute Deviation (MAD):   1.75
+#   Median Absolute Deviation (MADmed): 1.00
+
+# [With outlier]
+#   Mean Absolute Deviation (MAD):   17.28   ← strongly affected by outlier
+#   Median Absolute Deviation (MADmed): 1.00  ← robust to outlier
+```
+
+### Order Statistics and Percentiles
+
+**Order statistics**: The values at each position when data is sorted by magnitude.
+
+**Percentile**: The point below which P% of all data values fall.
+
+```python
+data = [15, 20, 35, 40, 50, 55, 60, 75, 80, 100]
+
+p25 = np.percentile(data, 25)   # Q1
+p50 = np.percentile(data, 50)   # median
+p75 = np.percentile(data, 75)   # Q3
+p90 = np.percentile(data, 90)   # top 10%
+
+print(f"25th percentile (Q1): {p25}")  # 36.25
+print(f"50th percentile (Q2): {p50}")  # 52.5
+print(f"75th percentile (Q3): {p75}")  # 71.25
+print(f"90th percentile:      {p90}")  # 82.0
+```
+
+---
+
+Accurately identifying your data type and choosing robust metrics (median, trimmed mean, median absolute deviation, IQR) based on the presence of outliers is the starting point of good data analysis.
+
+Statistical fundamentals are not just abstract theory. These concepts appear repeatedly at every stage of the data analysis pipeline — from EDA to feature engineering, model selection, and result interpretation. The key is not memorizing formulas, but understanding what each metric tells you in the real world.
+
+## 1.5 Exploring Data Distribution
+
+A single summary metric (mean, median, etc.) is often not enough to understand the overall shape of numeric data. Visualizing the distribution directly is essential.
+
+| Visualization | Description | Characteristic |
+|---------------|-------------|---------------|
+| **Box plot** | Displays Q1, median, Q3, IQR, and outliers at a glance | Summarizes distribution, detects outliers |
+| **Frequency table** | A table recording the count of data within each bin | Quantitative view of distribution |
+| **Histogram** | Bar chart with bins on the x-axis and frequency on the y-axis | Intuitive view of distribution shape |
+| **Density plot** | A smooth curve version of a histogram (Kernel Density Estimation, KDE) | Represents continuous distribution |
+
+> **Box plot vs. histogram**: Box plots are better for comparing multiple groups side-by-side; histograms are better for understanding the shape of a single variable's distribution (normal, skewed, etc.).
+
+**In practice:** The first step of EDA (Exploratory Data Analysis) is to draw histograms and box plots for every numeric variable. If a distribution is heavily skewed, applying a log transform can improve model performance. Density plots are useful for overlapping and comparing the distributions of two groups.
+
+```python
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from scipy.stats import gaussian_kde
+
+np.random.seed(42)
+data = np.concatenate([np.random.normal(50, 10, 200),
+                       np.random.normal(80, 5, 50)])   # bimodal distribution
+
+fig, axes = plt.subplots(1, 3, figsize=(14, 4))
+
+# Box plot
+axes[0].boxplot(data, vert=True)
+axes[0].set_title("Box Plot")
+axes[0].set_ylabel("Value")
+
+# Histogram
+axes[1].hist(data, bins=20, edgecolor="white", color="steelblue")
+axes[1].set_title("Histogram")
+axes[1].set_xlabel("Bin")
+axes[1].set_ylabel("Frequency")
+
+# Density plot (KDE)
+kde = gaussian_kde(data)
+x = np.linspace(data.min(), data.max(), 300)
+axes[2].plot(x, kde(x), color="steelblue", linewidth=2)
+axes[2].fill_between(x, kde(x), alpha=0.3, color="steelblue")
+axes[2].set_title("Density Plot (KDE)")
+axes[2].set_xlabel("Value")
+axes[2].set_ylabel("Density")
+
+plt.tight_layout()
+plt.show()
+
+# Frequency table
+pd.cut(data, bins=6).value_counts().sort_index()
+```
+
+## 1.6 Exploring Binary and Categorical Data
+
+Categorical data cannot be summarized with arithmetic operations, so frequency-based summary metrics and visualizations are used instead.
+
+| Concept | Description |
+|---------|-------------|
+| **Mode** | The most frequently occurring category or value in the data |
+| **Expected value** | A weighted average of each category's value multiplied by its probability of occurrence |
+| **Bar chart** | Represents the frequency or proportion of each category as bars |
+| **Pie chart** | Represents the proportion of each category as a slice (best when there are few categories) |
+
+> **Expected value example**: For a fair die, E[X] = 1×(1/6) + 2×(1/6) + ... + 6×(1/6) = **3.5**
+
+**In practice:** In recommendation systems, you start by looking at the frequency distribution of categorical variables when analyzing click-through rates (CTR) and conversion rates. This stage is also where you detect class imbalance — for example, fraudulent transactions making up only 0.1% in a fraud detection dataset. In such cases, accuracy is misleading as an evaluation metric; you should use F1-score or AUC instead.
+
+```python
+import pandas as pd
+import matplotlib.pyplot as plt
+from scipy import stats
+
+df = pd.DataFrame({
+    "blood_type": ["A", "B", "O", "A", "AB", "O", "A", "B", "O", "A"],
+    "passed":     [1, 0, 1, 1, 0, 0, 1, 1, 0, 1],
+})
+
+# Mode
+mode_result = stats.mode(df["blood_type"], keepdims=True)
+print(f"Mode: {mode_result.mode[0]}")   # A
+
+# Frequency table
+freq = df["blood_type"].value_counts()
+print(freq)
+
+# Expected value (passed: 0 or 1)
+p_pass = df["passed"].mean()  # probability of passing
+expected = 1 * p_pass + 0 * (1 - p_pass)
+print(f"Expected value (pass probability): {expected:.2f}")
+
+fig, axes = plt.subplots(1, 2, figsize=(10, 4))
+
+# Bar chart
+freq.plot(kind="bar", ax=axes[0], color="steelblue", edgecolor="white")
+axes[0].set_title("Blood Type Bar Chart")
+axes[0].set_ylabel("Frequency")
+axes[0].tick_params(axis="x", rotation=0)
+
+# Pie chart
+freq.plot(kind="pie", ax=axes[1], autopct="%1.1f%%", startangle=90)
+axes[1].set_title("Blood Type Pie Chart")
+axes[1].set_ylabel("")
+
+plt.tight_layout()
+plt.show()
+```
+
+## 1.7 Correlation
+
+Correlation quantifies the strength and direction of the linear relationship between two numeric variables.
+
+**Pearson Correlation Coefficient**
+<br />
+$$r = \frac{\sum_{i=1}^{N}(x_i - \bar{x})(y_i - \bar{y})}{(N-1)s_x s_y}$$
+<br />
+- $r = +1$: Perfect positive linear relationship
+- $r = 0$: No linear relationship
+- $r = -1$: Perfect negative linear relationship
+
+> **Caution**: Correlation does **not** imply causation. Just because two variables move together does not mean one causes the other. Ice cream sales and drowning incidents show a positive correlation, but the actual cause is a common confounding variable — summer — that drives both.
+
+**In practice:** During the feature selection stage in machine learning, a correlation matrix is used to check for multicollinearity. Feature pairs with a correlation coefficient of 0.9 or higher contain redundant information, so one of them is dropped or PCA is applied for dimensionality reduction. In finance, portfolio construction aims to reduce correlation between assets to diversify risk.
+
+**Correlation matrix**: A table organizing the pairwise correlation coefficients between multiple variables. The diagonal is always 1 (a variable's correlation with itself).
+
+**Scatterplot**: A chart where the x- and y-axes represent two different variables; the pattern of points reveals the relationship visually.
+
+```python
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+
+np.random.seed(0)
+n = 100
+df = pd.DataFrame({
+    "study_hours": np.random.uniform(1, 10, n),
+    "sleep_hours": np.random.uniform(4, 9, n),
+})
+df["exam_score"] = 50 + 5 * df["study_hours"] - 2 * df["sleep_hours"] + np.random.normal(0, 5, n)
+
+# Correlation coefficients
+print("Pearson correlation coefficients:")
+print(df.corr(numeric_only=True).round(2))
+#              study_hours  sleep_hours  exam_score
+# study_hours         1.00        -0.03        0.82
+# sleep_hours        -0.03         1.00       -0.28
+# exam_score          0.82        -0.28        1.00
+
+# Scatterplot + correlation matrix heatmap
+fig, axes = plt.subplots(1, 2, figsize=(12, 4))
+
+axes[0].scatter(df["study_hours"], df["exam_score"], alpha=0.6, color="steelblue")
+axes[0].set_xlabel("Study Hours")
+axes[0].set_ylabel("Exam Score")
+axes[0].set_title("Scatterplot: Study Hours vs Exam Score")
+
+corr = df.corr(numeric_only=True)
+im = axes[1].imshow(corr, cmap="coolwarm", vmin=-1, vmax=1)
+axes[1].set_xticks(range(len(corr.columns)))
+axes[1].set_yticks(range(len(corr.columns)))
+axes[1].set_xticklabels(corr.columns)
+axes[1].set_yticklabels(corr.columns)
+for i in range(len(corr)):
+    for j in range(len(corr)):
+        axes[1].text(j, i, f"{corr.iloc[i, j]:.2f}", ha="center", va="center")
+axes[1].set_title("Correlation Matrix")
+plt.colorbar(im, ax=axes[1])
+
+plt.tight_layout()
+plt.show()
+```
+
+## 1.8 Exploring Two or More Variables
+
+Real-world data almost always involves multiple variables interacting in complex ways. The approach varies depending on how many variables are being analyzed at once.
+
+| Analysis Type | Description | Examples |
+|---------------|-------------|---------|
+| **Univariate** | Distribution and summary statistics of a single variable | Mean of heights, histogram |
+| **Bivariate** | Exploring the relationship between two variables | Scatterplot of study hours vs. grades |
+| **Multivariate** | Analyzing three or more variables simultaneously | Relationship between gender, age, and income |
+
+**In practice:** Most data analysis reports follow these three steps in order. Start with univariate analysis to understand each variable individually, then bivariate analysis to examine relationships with the target variable, and finally multivariate analysis to explore complex patterns. Contingency tables are commonly used to break down A/B test results by gender or age group, while violin plots are often preferred over box plots for comparing group distributions because they convey more information.
+
+Additional commonly used visualizations:
+
+| Visualization | Description |
+|---------------|-------------|
+| **Contingency table** | A cross-tabulation of frequencies for two categorical variables |
+| **Hexagonal binning** | Represents density using hexagonal cells when there are too many points |
+| **Contour plot** | Represents the density of two variables using contour lines |
+| **Violin plot** | Combines a box plot with kernel density estimation |
+
+```python
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+
+np.random.seed(42)
+n = 300
+df = pd.DataFrame({
+    "group":   np.random.choice(["A", "B", "C"], n),
+    "score":   np.concatenate([
+                  np.random.normal(60, 10, 100),
+                  np.random.normal(75, 8, 100),
+                  np.random.normal(55, 15, 100),
+              ]),
+    "var_x":   np.random.normal(0, 1, n),
+    "var_y":   np.random.normal(0, 1, n),
+    "gender":  np.random.choice(["M", "F"], n),
+    "result":  np.random.choice(["Pass", "Fail"], n),
+})
+
+fig, axes = plt.subplots(2, 2, figsize=(14, 10))
+
+# Violin plot
+groups = [df[df["group"] == g]["score"].values for g in ["A", "B", "C"]]
+axes[0, 0].violinplot(groups, positions=[1, 2, 3], showmedians=True)
+axes[0, 0].set_xticks([1, 2, 3])
+axes[0, 0].set_xticklabels(["A", "B", "C"])
+axes[0, 0].set_title("Violin Plot: Score Distribution by Group")
+
+# Hexagonal binning
+hb = axes[0, 1].hexbin(df["var_x"], df["var_y"], gridsize=20, cmap="Blues")
+axes[0, 1].set_title("Hexagonal Binning (Hexbin)")
+plt.colorbar(hb, ax=axes[0, 1], label="Frequency")
+
+# Contour plot
+from scipy.stats import gaussian_kde
+xy = np.vstack([df["var_x"], df["var_y"]])
+kde = gaussian_kde(xy)
+xi = np.linspace(-3, 3, 100)
+yi = np.linspace(-3, 3, 100)
+Xi, Yi = np.meshgrid(xi, yi)
+Zi = kde(np.vstack([Xi.ravel(), Yi.ravel()])).reshape(Xi.shape)
+axes[1, 0].contourf(Xi, Yi, Zi, levels=10, cmap="Blues")
+axes[1, 0].set_title("Contour Plot")
+
+# Contingency table
+ct = pd.crosstab(df["gender"], df["result"])
+print("Contingency table:\n", ct)
+ct.plot(kind="bar", ax=axes[1, 1], color=["#e74c3c", "#3498db"], edgecolor="white")
+axes[1, 1].set_title("Contingency Table: Gender × Pass/Fail")
+axes[1, 1].tick_params(axis="x", rotation=0)
+axes[1, 1].legend(title="Result")
+
+plt.tight_layout()
+plt.show()
+```

@@ -1,0 +1,586 @@
+---
+title: "Probability & Statistics Coding Assignments: Building ML Statistical Tools in Python"
+date: "2026-03-06"
+category: "MMD"
+tags: ["확률", "통계", "Python", "NumPy", "scipy", "코딩과제", "머신러닝"]
+excerpt: "Bayesian updates, distribution simulation, CLT verification, MLE/MAP implementation, confidence intervals, hypothesis testing, and a full A/B test pipeline — implementing probability & statistics chapters 1–4 in code."
+readTime: 18
+---
+
+This post is a coding assignment where you implement the concepts from [Probability & Statistics chapters 1–4](/blog/prob-stats-1) directly using **Python/NumPy/scipy**. Try solving each problem on your own before checking the solution.
+
+> **Environment**: Python 3.x, NumPy, SciPy, Matplotlib (optional)
+
+```python
+import numpy as np
+from scipy import stats, optimize
+import matplotlib.pyplot as plt
+```
+
+---
+
+## Part 1. Probability Basics — Bayesian Updates
+
+### Assignment 1-1. Implementing Bayesian Update
+
+Build a spam filter using Bayesian updates. The posterior probability is updated sequentially as each word is observed.
+
+```python
+def bayes_update(
+    prior: float,
+    likelihood_given_spam: float,
+    likelihood_given_ham: float
+) -> float:
+    """
+    Update the spam posterior probability from a single observation
+    prior: P(spam) — the prior probability
+    Returns: P(spam | observation)
+    """
+    pass
+
+def sequential_bayes(
+    initial_prior: float,
+    observations: list[tuple[float, float]]
+) -> list[float]:
+    """
+    Sequentially apply Bayesian updates for multiple word observations
+    observations: [(P(word|spam), P(word|ham)), ...]
+    Returns: list of posterior probabilities at each step
+    """
+    pass
+
+# Test
+prior = 0.2  # baseline spam probability: 20%
+observations = [
+    (0.60, 0.05),  # found "free"
+    (0.40, 0.10),  # found "click"
+    (0.70, 0.02),  # found "winner"
+]
+posteriors = sequential_bayes(prior, observations)
+for i, p in enumerate(posteriors):
+    print(f"After word {i+1}: spam probability = {p:.1%}")
+```
+
+<details>
+<summary>View Solution</summary>
+
+```python
+def bayes_update(
+    prior: float,
+    likelihood_given_spam: float,
+    likelihood_given_ham: float
+) -> float:
+    # P(obs) = P(obs|spam)*P(spam) + P(obs|ham)*P(ham)
+    p_obs = likelihood_given_spam * prior + likelihood_given_ham * (1 - prior)
+    # P(spam|obs) = P(obs|spam) * P(spam) / P(obs)
+    return likelihood_given_spam * prior / p_obs
+
+def sequential_bayes(
+    initial_prior: float,
+    observations: list[tuple[float, float]]
+) -> list[float]:
+    posteriors = []
+    prior = initial_prior
+    for lk_spam, lk_ham in observations:
+        prior = bayes_update(prior, lk_spam, lk_ham)
+        posteriors.append(prior)
+    return posteriors
+
+prior = 0.2
+observations = [(0.60, 0.05), (0.40, 0.10), (0.70, 0.02)]
+posteriors = sequential_bayes(prior, observations)
+for i, p in enumerate(posteriors):
+    print(f"After word {i+1}: spam probability = {p:.1%}")
+# Output:
+# After word 1: spam probability = 75.0%
+# After word 2: spam probability = 85.7%
+# After word 3: spam probability = 97.7%
+```
+
+**Key insight**: The posterior at each step becomes the prior for the next step. This is the sequential nature of Bayesian updating.
+
+</details>
+
+---
+
+## Part 2. Distribution Simulation
+
+### Assignment 2-1. Visualizing the Central Limit Theorem
+
+Verify through simulation that the distribution of sample means converges to a normal distribution, even when the population is not normally distributed.
+
+```python
+def simulate_clt(
+    population: str = "uniform",   # "uniform", "exponential", "binomial"
+    n_sample: int = 30,
+    n_simulations: int = 5000
+) -> np.ndarray:
+    """
+    Simulate the distribution of sample means
+    Returns: array of sample means from each simulation
+    """
+    pass
+
+# Check normality while varying sample size across distributions
+for n in [1, 5, 30, 100]:
+    sample_means = simulate_clt("exponential", n_sample=n)
+    skewness = stats.skew(sample_means)
+    print(f"n={n:3d}: skewness={skewness:.3f}  (closer to 0 = more normal)")
+```
+
+<details>
+<summary>View Solution</summary>
+
+```python
+def simulate_clt(
+    population: str = "uniform",
+    n_sample: int = 30,
+    n_simulations: int = 5000
+) -> np.ndarray:
+    sample_means = np.zeros(n_simulations)
+    for i in range(n_simulations):
+        if population == "uniform":
+            sample = np.random.uniform(0, 1, n_sample)
+        elif population == "exponential":
+            sample = np.random.exponential(scale=1.0, size=n_sample)
+        elif population == "binomial":
+            sample = np.random.binomial(n=10, p=0.2, size=n_sample)
+        else:
+            raise ValueError(f"Unknown population: {population}")
+        sample_means[i] = np.mean(sample)
+    return sample_means
+
+# NumPy vectorized version (faster)
+def simulate_clt_fast(population: str = "exponential", n_sample: int = 30, n_simulations: int = 5000) -> np.ndarray:
+    if population == "exponential":
+        data = np.random.exponential(1.0, size=(n_simulations, n_sample))
+    elif population == "uniform":
+        data = np.random.uniform(0, 1, size=(n_simulations, n_sample))
+    return np.mean(data, axis=1)
+
+for n in [1, 5, 30, 100]:
+    sample_means = simulate_clt_fast("exponential", n_sample=n)
+    skewness = stats.skew(sample_means)
+    print(f"n={n:3d}: skewness={skewness:.3f}")
+# As n increases, skewness converges to 0 → approximates a normal distribution
+```
+
+**Insight**: Even a highly skewed distribution like the exponential (skewness = 2) produces sample means that are nearly normally distributed once n ≥ 30.
+
+</details>
+
+---
+
+### Assignment 2-2. Sampling and Analyzing a Bivariate Normal Distribution
+
+Sample from a 2D normal distribution with a given mean vector and covariance matrix, then verify its properties.
+
+```python
+def analyze_bivariate_normal(
+    mu: np.ndarray,
+    cov: np.ndarray,
+    n: int = 1000
+) -> dict:
+    """
+    Sample from a bivariate normal distribution and compute statistics
+    Returns: {"samples": ..., "sample_mean": ..., "sample_cov": ..., "correlation": ...}
+    """
+    pass
+
+# Test: height and weight (strong positive correlation)
+mu = np.array([170, 65])     # mean height (cm) and weight (kg)
+cov = np.array([
+    [100, 35],   # Var(height)=100, Cov(height,weight)=35
+    [35,  50]    # Cov(weight,height)=35, Var(weight)=50
+])
+result = analyze_bivariate_normal(mu, cov)
+print(f"Sample mean: {result['sample_mean']}")
+print(f"Sample correlation: {result['correlation']:.3f}")
+print(f"Theoretical correlation: {35 / np.sqrt(100 * 50):.3f}")
+```
+
+<details>
+<summary>View Solution</summary>
+
+```python
+def analyze_bivariate_normal(
+    mu: np.ndarray,
+    cov: np.ndarray,
+    n: int = 1000
+) -> dict:
+    np.random.seed(42)
+    samples = np.random.multivariate_normal(mu, cov, size=n)
+    sample_cov = np.cov(samples.T)
+    # correlation = Cov / (std1 * std2)
+    correlation = sample_cov[0, 1] / np.sqrt(sample_cov[0, 0] * sample_cov[1, 1])
+    return {
+        "samples": samples,
+        "sample_mean": np.mean(samples, axis=0),
+        "sample_cov": sample_cov,
+        "correlation": correlation
+    }
+
+mu = np.array([170, 65])
+cov = np.array([[100, 35], [35, 50]])
+result = analyze_bivariate_normal(mu, cov)
+print(f"Sample mean: {result['sample_mean']}")
+print(f"Sample correlation: {result['correlation']:.3f}")
+print(f"Theoretical correlation: {35 / np.sqrt(100 * 50):.3f}")
+# Theoretical value: 35 / sqrt(5000) ≈ 0.495
+```
+
+</details>
+
+---
+
+## Part 3. Implementing MLE and MAP
+
+### Assignment 3-1. Gaussian MLE
+
+Given data, implement the MLE estimates ($\hat{\mu}$, $\hat{\sigma}^2$) for a normal distribution analytically — no numerical optimization needed.
+
+```python
+def mle_gaussian(data: np.ndarray) -> tuple[float, float]:
+    """
+    MLE for a Gaussian distribution
+    Returns: (mu_hat, sigma_sq_hat)
+    -- MLE divides by n (not an unbiased estimator!)
+    """
+    pass
+
+np.random.seed(0)
+data = np.random.normal(loc=5.0, scale=2.0, size=100)
+mu_hat, sigma_sq_hat = mle_gaussian(data)
+print(f"MLE mean: {mu_hat:.3f}  (true: 5.0)")
+print(f"MLE variance: {sigma_sq_hat:.3f}  (true: 4.0)")
+print(f"Unbiased variance: {np.var(data, ddof=1):.3f}")
+```
+
+<details>
+<summary>View Solution</summary>
+
+```python
+def mle_gaussian(data: np.ndarray) -> tuple[float, float]:
+    n = len(data)
+    mu_hat = np.mean(data)
+    # MLE: divide by n (biased estimator)
+    sigma_sq_hat = np.sum((data - mu_hat) ** 2) / n
+    return mu_hat, sigma_sq_hat
+
+np.random.seed(0)
+data = np.random.normal(loc=5.0, scale=2.0, size=100)
+mu_hat, sigma_sq_hat = mle_gaussian(data)
+print(f"MLE mean: {mu_hat:.3f}")
+print(f"MLE variance: {sigma_sq_hat:.3f}  ← slightly underestimates")
+print(f"Unbiased variance: {np.var(data, ddof=1):.3f}  ← divides by n-1 (unbiased)")
+```
+
+**Key point**: The MLE variance divides by $n$, which slightly **underestimates** the population variance. The sample variance corrects for this by dividing by $n-1$.
+
+</details>
+
+---
+
+### Assignment 3-2. MAP Estimation for Coin Flipping
+
+Implement MAP estimation under a Beta-Binomial model and show that it converges to the MLE as data accumulates.
+
+```python
+def map_beta_binomial(
+    heads: int,
+    n_trials: int,
+    alpha_prior: float,
+    beta_prior: float
+) -> tuple[float, float]:
+    """
+    MAP estimation of a binomial parameter using a Beta prior
+    Returns: (mle_estimate, map_estimate)
+    """
+    pass
+
+# Experiment: 8 heads observed (out of 10 trials)
+# Compare MLE vs MAP at different sample sizes
+for n, h in [(10, 8), (100, 80), (1000, 800)]:
+    mle, map_est = map_beta_binomial(h, n, alpha_prior=3, beta_prior=3)
+    print(f"n={n:4d}, heads={h:3d}: MLE={mle:.3f}, MAP={map_est:.3f}")
+```
+
+<details>
+<summary>View Solution</summary>
+
+```python
+def map_beta_binomial(
+    heads: int,
+    n_trials: int,
+    alpha_prior: float,
+    beta_prior: float
+) -> tuple[float, float]:
+    mle = heads / n_trials
+
+    # Posterior: Beta(alpha_prior + heads, beta_prior + tails)
+    alpha_post = alpha_prior + heads
+    beta_post = beta_prior + (n_trials - heads)
+
+    # MAP = mode of the posterior distribution
+    # Mode of Beta(a, b) = (a-1) / (a+b-2)
+    map_estimate = (alpha_post - 1) / (alpha_post + beta_post - 2)
+
+    return mle, map_estimate
+
+for n, h in [(10, 8), (100, 80), (1000, 800)]:
+    mle, map_est = map_beta_binomial(h, n, alpha_prior=3, beta_prior=3)
+    print(f"n={n:4d}, heads={h:3d}: MLE={mle:.3f}, MAP={map_est:.3f}")
+# Output:
+# n=  10, heads=  8: MLE=0.800, MAP=0.714  ← prior has strong influence
+# n= 100, heads= 80: MLE=0.800, MAP=0.794  ← converging
+# n=1000, heads=800: MLE=0.800, MAP=0.799  ← nearly identical
+```
+
+**Insight**: As data accumulates, MAP → MLE. The prior's influence gets washed out.
+
+</details>
+
+---
+
+## Part 4. Implementing Confidence Intervals
+
+### Assignment 4-1. t-Distribution Confidence Interval
+
+Implement a confidence interval for the mean using the t-distribution, without relying on scipy.
+
+```python
+def confidence_interval(
+    data: np.ndarray,
+    confidence: float = 0.95
+) -> tuple[float, float]:
+    """
+    Confidence interval for the mean using the t-distribution
+    Returns: (lower, upper)
+    """
+    pass
+
+np.random.seed(42)
+data = np.random.normal(loc=170, scale=10, size=30)
+lower, upper = confidence_interval(data)
+print(f"Sample mean: {np.mean(data):.2f}")
+print(f"95% CI: ({lower:.2f}, {upper:.2f})")
+
+# Verify with scipy
+ci = stats.t.interval(0.95, df=len(data)-1, loc=np.mean(data), scale=stats.sem(data))
+print(f"scipy CI: ({ci[0]:.2f}, {ci[1]:.2f})")
+```
+
+<details>
+<summary>View Solution</summary>
+
+```python
+def confidence_interval(
+    data: np.ndarray,
+    confidence: float = 0.95
+) -> tuple[float, float]:
+    n = len(data)
+    mean = np.mean(data)
+    se = np.std(data, ddof=1) / np.sqrt(n)
+    df = n - 1
+    alpha = 1 - confidence
+    t_crit = stats.t.ppf(1 - alpha / 2, df=df)
+    margin = t_crit * se
+    return mean - margin, mean + margin
+```
+
+**Key points**:
+- `ddof=1`: sample standard deviation (unbiased estimator)
+- `stats.t.ppf(1 - α/2, df)`: two-tailed critical value $t^*$
+
+</details>
+
+---
+
+## Part 5. Implementing Hypothesis Tests
+
+### Assignment 5-1. Paired t-Test
+
+Implement a paired t-test to compare task completion times for the same users before and after a UI change.
+
+```python
+def paired_ttest(
+    before: np.ndarray,
+    after: np.ndarray,
+    alternative: str = "two-sided"
+) -> tuple[float, float]:
+    """
+    Paired t-test
+    alternative: "two-sided", "greater", "less"
+    Returns: (t_statistic, p_value)
+    """
+    pass
+
+np.random.seed(10)
+n = 30
+before = np.random.normal(120, 20, n)
+after = before - np.random.normal(10, 5, n)  # true improvement of ~10 seconds
+
+t_stat, p_val = paired_ttest(before, after, alternative="greater")
+print(f"t={t_stat:.4f}, p={p_val:.4f}")
+print(f"Conclusion: {'Significant improvement' if p_val < 0.05 else 'No significant improvement'}")
+```
+
+<details>
+<summary>View Solution</summary>
+
+```python
+def paired_ttest(
+    before: np.ndarray,
+    after: np.ndarray,
+    alternative: str = "two-sided"
+) -> tuple[float, float]:
+    d = before - after  # positive means "before > after", i.e. time decreased
+    n = len(d)
+    t_stat = np.mean(d) / (np.std(d, ddof=1) / np.sqrt(n))
+    df = n - 1
+
+    if alternative == "two-sided":
+        p_value = 2 * stats.t.sf(abs(t_stat), df)
+    elif alternative == "greater":
+        p_value = stats.t.sf(t_stat, df)
+    else:
+        p_value = stats.t.cdf(t_stat, df)
+
+    return t_stat, p_value
+
+# Verify with scipy
+t_ref, p_ref = stats.ttest_rel(before, after, alternative="greater")
+print(f"scipy: t={t_ref:.4f}, p={p_ref:.4f}")
+```
+
+**Key insight**: A paired t-test is simply a one-sample t-test on the differences $d_i$. By absorbing between-subject variability, it has higher statistical power than an independent two-sample t-test.
+
+</details>
+
+---
+
+### Assignment 5-2. Simulating the Danger of Early Stopping
+
+Simulate how the Type I error rate inflates when an A/B test with no real effect is stopped early.
+
+```python
+def simulate_early_stopping(
+    n_max: int = 1000,
+    check_every: int = 50,
+    alpha: float = 0.05,
+    n_experiments: int = 500
+) -> dict:
+    """
+    Measure error rates in an A/B test with no true effect
+    H0: p_A = p_B = 0.1 (truth: no difference)
+
+    Returns: {
+        "early_stop_error_rate": float,
+        "proper_error_rate": float
+    }
+    """
+    pass
+
+np.random.seed(0)
+results = simulate_early_stopping()
+print(f"Early stopping Type I error rate: {results['early_stop_error_rate']:.1%}  (nominal α=5%)")
+print(f"Proper stopping Type I error rate: {results['proper_error_rate']:.1%}  (nominal α=5%)")
+```
+
+<details>
+<summary>View Solution</summary>
+
+```python
+def simulate_early_stopping(
+    n_max: int = 1000,
+    check_every: int = 50,
+    alpha: float = 0.05,
+    n_experiments: int = 500
+) -> dict:
+    true_p = 0.1
+    early_errors = 0
+    proper_errors = 0
+
+    for _ in range(n_experiments):
+        a = np.random.binomial(1, true_p, n_max)
+        b = np.random.binomial(1, true_p, n_max)
+
+        # Early stopping: peek at interim results
+        peeked = False
+        for n in range(check_every, n_max + 1, check_every):
+            pa, pb = np.mean(a[:n]), np.mean(b[:n])
+            pp = (pa + pb) / 2
+            se = np.sqrt(pp * (1 - pp) * 2 / n)
+            if se == 0:
+                continue
+            p_val = 2 * stats.norm.sf(abs((pa - pb) / se))
+            if p_val < alpha:
+                peeked = True
+                break
+        if peeked:
+            early_errors += 1
+
+        # Proper stopping: test only at the end
+        pa_f, pb_f = np.mean(a), np.mean(b)
+        pp_f = (pa_f + pb_f) / 2
+        se_f = np.sqrt(pp_f * (1 - pp_f) * 2 / n_max)
+        if se_f > 0 and 2 * stats.norm.sf(abs((pa_f - pb_f) / se_f)) < alpha:
+            proper_errors += 1
+
+    return {
+        "early_stop_error_rate": early_errors / n_experiments,
+        "proper_error_rate": proper_errors / n_experiments
+    }
+# Example output:
+# Early stopping Type I error rate: 26.4%  (nominal α=5%)
+# Proper stopping Type I error rate:  5.2%  (nominal α=5%)
+```
+
+</details>
+
+---
+
+## Bonus: Full A/B Test Pipeline
+
+```python
+def ab_test_pipeline(
+    control_conversions: int,
+    control_total: int,
+    treatment_conversions: int,
+    treatment_total: int,
+    alpha: float = 0.05
+) -> None:
+    """Print a full A/B test results report"""
+    p_c = control_conversions / control_total
+    p_t = treatment_conversions / treatment_total
+    p_pool = (control_conversions + treatment_conversions) / (control_total + treatment_total)
+    se = np.sqrt(p_pool * (1 - p_pool) * (1/control_total + 1/treatment_total))
+    z = (p_t - p_c) / se
+    p_val = 2 * stats.norm.sf(abs(z))
+    ci_diff = (p_t - p_c) + np.array([-1, 1]) * stats.norm.ppf(1 - alpha/2) * se
+
+    print("=" * 50)
+    print("A/B Test Results Report")
+    print("=" * 50)
+    print(f"Control   conversion rate: {p_c:.2%}  (n={control_total:,})")
+    print(f"Treatment conversion rate: {p_t:.2%}  (n={treatment_total:,})")
+    print(f"Difference: {p_t - p_c:+.2%}")
+    print(f"95% CI (difference): [{ci_diff[0]:.2%}, {ci_diff[1]:.2%}]")
+    print(f"z-statistic: {z:.3f}  |  p-value: {p_val:.4f}")
+    print("-" * 50)
+    if p_val < alpha:
+        print(f"Conclusion: p={p_val:.4f} < α={alpha} → Reject null hypothesis")
+        print("            The difference is statistically significant.")
+    else:
+        print(f"Conclusion: p={p_val:.4f} ≥ α={alpha} → No significant difference found")
+    print("=" * 50)
+
+ab_test_pipeline(
+    control_conversions=500, control_total=10000,
+    treatment_conversions=560, treatment_total=10000
+)
+```
+
+---
+
+The next post will cover **information theory** — entropy, cross-entropy, and KL divergence.

@@ -1,0 +1,157 @@
+---
+title: "Calculus Bible Chapter 3: Applications of Differentiation"
+date: "2026-03-20"
+category: "미분적분학 바이블"
+tags: ["미적분", "도함수", "최적화", "평균값 정리", "뉴턴의 방법", "James Stewart", "수학"]
+excerpt: "James Stewart's Calculus Chapter 3 — a concise summary of absolute extrema, the Mean Value Theorem, derivatives and the shape of graphs, optimization, Newton's Method, and antiderivatives."
+readTime: 16
+---
+
+> This post summarizes Chapter 3 of James Stewart's *Calculus*.
+
+## 3.1 Maximum and Minimum Values
+
+Optimization problems ultimately reduce to finding the maximum or minimum value of a function. (p.150)
+
+> Let $c$ be a number in the domain $D$ of $f$. Then for all $x$ in $D$:
+> - If $f(c) \ge f(x)$, then $f(c)$ is the **absolute maximum$^{absolute\ maximum}$** of $f$ on $D$.
+> - If $f(c) \le f(x)$, then $f(c)$ is the **absolute minimum$^{absolute\ minimum}$** of $f$ on $D$.
+
+The maximum and minimum values of $f$ are called the **extreme values$^{extreme\ values}$** of $f$.
+
+When $x$ is near $c$:
+- If $f(c) \ge f(x)$, then $f(c)$ is a **local maximum$^{local\ maximum}$** of $f$.
+- If $f(c) \le f(x)$, then $f(c)$ is a **local minimum$^{local\ minimum}$** of $f$.
+
+**Fermat's Theorem$^{Fermat's\ Theorem}$** (p.152)
+
+> If $f$ has a local maximum or minimum at $c$ and $f'(c)$ exists, then $f'(c) = 0$. (The converse does not hold.)
+
+**Critical Numbers** (p.154)
+
+> A **critical number$^{critical\ number}$** of a function $f$ is a number $c$ in the domain of $f$ such that either $f'(c) = 0$ or $f'(c)$ does not exist.
+
+## 3.2 The Mean Value Theorem
+
+**Rolle's Theorem$^{Rolle's\ Theorem}$** (p.157)
+
+> Suppose $f$ satisfies the following three conditions:
+> - $f$ is continuous on the closed interval $[a, b]$.
+> - $f$ is differentiable on the open interval $(a, b)$.
+> - $f(a) = f(b)$
+>
+> Then there exists a number $c$ in $(a, b)$ such that $f'(c) = 0$.
+
+**The Mean Value Theorem** (p.159)
+
+> Suppose $f$ satisfies the following conditions:
+> 1. $f$ is continuous on the closed interval $[a, b]$.
+> 2. $f$ is differentiable on the open interval $(a, b)$.
+>
+> Then there exists a number $c$ in $(a, b)$ such that:
+<br />
+$$f'(c)=\frac{f(b)-f(a)}{b-a}$$
+<br />
+or equivalently:
+<br />
+$$f(b)-f(a)= f'(c)(b-a)$$
+<br />
+**In plain terms**: "There is always a point where the instantaneous rate of change equals the average rate of change over the interval."
+
+The Mean Value Theorem can be used to prove several fundamental facts in calculus. (See corollaries on p.162.)
+
+## 3.3 How Derivatives Affect the Shape of a Graph
+
+Most applications of calculus depend on the ability to deduce information about a function $f$ from information about its derivatives. (p.164)
+
+**What $f'$ tells us about $f$**
+
+**Increasing/Decreasing Test**
+
+> (a) If $f'(x) > 0$ on an interval, then $f$ is increasing on that interval.
+> (b) If $f'(x) < 0$ on an interval, then $f$ is decreasing on that interval.
+
+**The First Derivative Test**
+
+> Let $c$ be a critical number of a continuous function $f$.
+> (a) If $f'$ changes from positive to negative at $c$, then $f$ has a local maximum at $c$.
+> (b) If $f'$ changes from negative to positive at $c$, then $f$ has a local minimum at $c$.
+> (c) If $f'$ does not change sign at $c$, then $f$ has neither a local maximum nor a local minimum at $c$.
+
+**What $f''$ tells us about $f$** (p.167)
+
+> If the graph of $f$ lies above all of its tangents on an interval $I$, then $f$ is **concave upward$^{Concave\ Upward}$** on $I$.
+> If the graph of $f$ lies below all of its tangents on an interval $I$, then $f$ is **concave downward$^{Concave\ Downward}$** on $I$.
+
+**Inflection Points** (p.168)
+
+> A point $P$ on the curve $y = f(x)$ is called an **inflection point$^{inflection\ point}$** if $f$ is continuous at $P$ and the curve changes concavity (from upward to downward, or from downward to upward) at $P$.
+
+**Concavity Test** (p.168)
+
+> (a) If $f''(x) > 0$ for all $x$ in $I$, then the graph of $f$ is concave upward on $I$.
+> (b) If $f''(x) < 0$ for all $x$ in $I$, then the graph of $f$ is concave downward on $I$.
+
+**The Second Derivative Test** (p.169)
+
+> Suppose $f''$ is continuous near $c$.
+> (a) If $f'(c) = 0$ and $f''(c) > 0$, then $f$ has a local minimum at $c$.
+> (b) If $f'(c) = 0$ and $f''(c) < 0$, then $f$ has a local maximum at $c$.
+
+## 3.4 Curve Sketching
+
+SKIP (p.172)
+
+## 3.5 Optimization Problems
+
+We can apply the methods for finding extreme values to solve optimization problems. (p.180)
+These include problems that maximize area, volume, or profit, and problems that minimize distance, time, or cost.
+
+**Steps for Solving Optimization Problems**
+
+1. **Understand the problem.** Read it carefully until you understand it. Identify: what you want to find, what is given, and what conditions are imposed.
+2. **Draw a diagram.**
+3. **Introduce notation.** Assign a symbol to the quantity to be maximized or minimized (call it $Q$). Also assign symbols to other unknown quantities and label them on the diagram (e.g., area $A$, height $h$, time $t$, etc.).
+4. **Express $Q$ in terms of the symbols from Step 3.**
+5. **If $Q$ is expressed as a function of more than one variable**, use the given information to find equations relating those variables. Eliminate variables to express $Q$ as a function of a single variable: $Q = f(x)$. Determine the domain of this function.
+6. **Find the absolute maximum or minimum** of $f$ using the methods from Sections 3.1 and 3.3.
+
+See worked examples on p.181 and beyond.
+
+## 3.6 Newton's Method
+
+There is no general formula for the exact roots of polynomial equations of degree five or higher, or for transcendental equations involving trigonometric functions. (p.190)
+
+For example, suppose we want to solve:
+<br />
+$$48x(1+x)^{60}-(1+x)^{60}+1=0$$
+<br />
+Numerical roots are most commonly found using the **Newton-Raphson method$^{Newton\text{-}Raphson\ method}$**, or simply **Newton's method$^{Newton's\ method}$**:
+<br />
+$$x_{n+1}=x_n-\frac{f(x_n)}{f'(x_n)}$$
+<br />
+If the sequence $x_n$ converges to $r$ as $n$ grows large, we say the sequence converges to $r$ and write:
+<br />
+$$\lim_{n \to \infty} x_n = r$$
+<br />
+Note, however, that Newton's method does not work for every function. For some functions the successive approximations may diverge, or the method may converge very slowly.
+
+## 3.7 Antiderivatives
+
+> A function $F$ is called an **antiderivative$^{antiderivative}$** of $f$ on an interval $I$ if $F'(x) = f(x)$ for all $x$ in $I$. (p.196)
+
+> If $F$ is an antiderivative of $f$ on an interval $I$, then the most general antiderivative of $f$ on $I$ is $F(x) + C$, where $C$ is an arbitrary constant.
+
+<br />
+
+## Summary
+
+- **Absolute extrema**: extreme values over the entire domain — candidates are found at critical numbers
+- **Fermat's Theorem**: if an extreme value exists, then $f'(c) = 0$ (converse fails)
+- **Rolle's Theorem**: if $f(a) = f(b)$, there must exist $c$ with $f'(c) = 0$
+- **Mean Value Theorem**: there always exists a point where the instantaneous rate equals the average rate of change
+- **Increasing/Decreasing**: $f' > 0$ means increasing; $f' < 0$ means decreasing
+- **Concavity**: $f'' > 0$ means concave up; $f'' < 0$ means concave down
+- **Optimization**: define variables → build objective function → find extrema via derivatives
+- **Newton's Method**: numerically approximates roots of equations using tangent lines
+- **Antiderivatives**: $F(x)$ satisfying $F'(x) = f(x)$ — general solution is $F(x) + C$

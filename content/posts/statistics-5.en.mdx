@@ -1,0 +1,482 @@
+---
+title: "Statistics Fundamentals Chapter 5: Classification"
+date: "2026-03-04"
+category: "데이터사이언스"
+tags: ["통계", "분류", "로지스틱회귀", "머신러닝", "Python"]
+excerpt: "A hands-on guide to classification algorithms — covering Naive Bayes, discriminant analysis, logistic regression, confusion matrices, ROC/AUC, and techniques for handling imbalanced data, all with code examples."
+readTime: 13
+---
+
+Chapter 4 covered regression for predicting continuous response variables. Chapter 5 shifts to classification — answering the question: "Which class does this data point belong to?" Spam detection, cancer diagnosis, and customer churn prediction are all classification problems.
+
+> This post is based on Chapter 5 of *Practical Statistics for Data Scientists*.
+
+## 5.1 Naive Bayes
+
+Naive Bayes applies Bayes' theorem under the simple (naive) assumption that features are conditionally independent given the class.
+
+### Bayes' Theorem
+
+$$P(C \mid X) = \frac{P(X \mid C) \cdot P(C)}{P(X)}$$
+
+| Term | Meaning |
+|------|---------|
+| **Prior $P(C)$** | The prior distribution of class $C$ before observing data |
+| **Likelihood $P(X \mid C)$** | Probability of observing data $X$ given class $C$ |
+| **Posterior $P(C \mid X)$** | Probability of belonging to class $C$ given data $X$ |
+| **Conditional probability** | $P(B \mid A) = \dfrac{P(A \cap B)}{P(A)}$ |
+
+### Naive Bayes Classification Rule
+
+Assuming features $x_1, \ldots, x_n$ are conditionally independent given the class:
+<br />
+$$P(C \mid x_1, \ldots, x_n) \propto P(C) \prod_{i=1}^{n} P(x_i \mid C)$$
+<br />
+Prediction: select the class with the highest posterior probability.
+<br />
+$$\hat{C} = \arg\max_C \left[ \log P(C) + \sum_{i=1}^{n} \log P(x_i \mid C) \right]$$
+
+```python
+import numpy as np
+import pandas as pd
+from sklearn.naive_bayes import GaussianNB, MultinomialNB
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import classification_report, accuracy_score
+from sklearn.datasets import load_iris
+
+# Example 1: Gaussian Naive Bayes (continuous features)
+iris = load_iris()
+X, y = iris.data, iris.target
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+
+gnb = GaussianNB()
+gnb.fit(X_train, y_train)
+y_pred = gnb.predict(X_test)
+
+print("=== Gaussian Naive Bayes (Iris Classification) ===")
+print(f"Accuracy: {accuracy_score(y_test, y_pred):.4f}")
+print("\nClass prior probabilities P(C):")
+for cls, prior in zip(iris.target_names, gnb.class_prior_):
+    print(f"  {cls}: {prior:.3f}")
+
+# Example 2: Spam classification (manual Naive Bayes implementation)
+print("\n=== Naive Bayes from Scratch (Spam Classification) ===")
+# Word frequency data (simplified)
+np.random.seed(42)
+spam_words = np.random.poisson([5, 2, 8, 1], size=(200, 4))   # words common in spam
+ham_words  = np.random.poisson([1, 5, 1, 6], size=(200, 4))   # words common in ham
+
+X_spam = np.vstack([spam_words, ham_words])
+y_spam = np.array([1] * 200 + [0] * 200)
+
+X_tr, X_te, y_tr, y_te = train_test_split(X_spam, y_spam, test_size=0.3, random_state=42)
+
+mnb = MultinomialNB()
+mnb.fit(X_tr, y_tr)
+print(f"Accuracy: {mnb.score(X_te, y_te):.4f}")
+print("\nLog likelihoods (word-class association):")
+words = ['free', 'hello', 'winner', 'meeting']
+for w, log_ham, log_spam in zip(words, mnb.feature_log_prob_[0], mnb.feature_log_prob_[1]):
+    print(f"  '{w}': ham={np.exp(log_ham):.3f}, spam={np.exp(log_spam):.3f}")
+```
+
+> **Real-world use:** Fast and effective for spam filtering, sentiment analysis, and document classification. The independence assumption rarely holds in practice, yet the model still delivers solid real-world performance. Use MultinomialNB for text classification and GaussianNB for continuous features.
+
+## 5.2 Discriminant Analysis
+
+Discriminant analysis classifies data by projecting it onto directions that maximize the separation between classes.
+
+| Term | Description |
+|------|-------------|
+| **Covariance** | Strength of the linear relationship between two variables — positive: same direction, negative: opposite |
+| **Discriminant function** | A function that determines which group an observation belongs to |
+| **Discriminant weights** | Coefficients of the discriminant function — determine the direction of the discriminant axis |
+| **LDA** | Maximizes between-class variance, minimizes within-class variance — assumes equal covariance across classes |
+
+### Covariance
+
+$$\text{Cov}(X, Y) = \frac{1}{n-1} \sum_{i=1}^{n} (x_i - \bar{x})(y_i - \bar{y})$$
+
+### LDA Discriminant Function
+
+Assuming the covariance matrix $\Sigma$ is equal across classes:
+<br />
+$$g_k(x) = x^\top \Sigma^{-1} \mu_k - \frac{1}{2} \mu_k^\top \Sigma^{-1} \mu_k + \log P(C_k)$$
+<br />
+The algorithm finds the direction that maximizes the ratio of between-class variance to within-class variance.
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis, QuadraticDiscriminantAnalysis
+from sklearn.datasets import load_iris
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score
+
+matplotlib.rcParams['font.family'] = 'AppleGothic'
+matplotlib.rcParams['axes.unicode_minus'] = False
+
+iris = load_iris()
+X, y = iris.data, iris.target
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+
+# LDA
+lda = LinearDiscriminantAnalysis()
+lda.fit(X_train, y_train)
+print(f"LDA Accuracy: {accuracy_score(y_test, lda.predict(X_test)):.4f}")
+
+# QDA (when each class has a different covariance matrix)
+qda = QuadraticDiscriminantAnalysis()
+qda.fit(X_train, y_train)
+print(f"QDA Accuracy: {accuracy_score(y_test, qda.predict(X_test)):.4f}")
+
+# Dimensionality reduction with LDA: 4D → 2D
+lda_2d = LinearDiscriminantAnalysis(n_components=2)
+X_lda = lda_2d.fit_transform(X, y)
+
+plt.figure(figsize=(8, 5))
+colors = ['red', 'green', 'blue']
+for cls, color, name in zip([0, 1, 2], colors, iris.target_names):
+    mask = y == cls
+    plt.scatter(X_lda[mask, 0], X_lda[mask, 1], c=color, label=name, alpha=0.7)
+
+plt.xlabel('LD1 (Discriminant Axis 1)')
+plt.ylabel('LD2 (Discriminant Axis 2)')
+plt.title('LDA Discriminant Space (4D → 2D)')
+plt.legend()
+plt.grid(alpha=0.3)
+plt.show()
+
+print("\n=== LDA vs QDA Comparison ===")
+print("LDA: assumes equal covariance across classes → linear decision boundary")
+print("QDA: allows different covariance per class → quadratic boundary (more flexible, higher overfitting risk)")
+```
+
+> **Real-world use:** Face recognition (Eigenfaces), medical diagnosis (grouping patients by biomarkers), and financial risk classification. LDA also serves as a dimensionality reduction technique — unlike PCA, it leverages class label information.
+
+## 5.3 Logistic Regression
+
+The most widely used method for binary classification, logistic regression directly models the probability of class membership.
+
+| Term | Description |
+|------|-------------|
+| **Odds** | $\dfrac{p}{1-p}$ — ratio of the probability of an event occurring vs. not |
+| **Logit** | $\log\!\left(\dfrac{p}{1-p}\right)$ — transforms probability to the full real line |
+| **Inverse logit (sigmoid)** | $p = \dfrac{1}{1+e^{-z}}$ — transforms a real number to a probability (0–1) |
+| **MLE** | Maximum Likelihood Estimation — finds parameters that best explain the observed data |
+| **GLM** | Generalized Linear Model — extends linear models to various distributions via a link function |
+
+### Logistic Regression Model
+
+$$\log\!\left(\frac{p}{1-p}\right) = \beta_0 + \beta_1 x_1 + \cdots + \beta_p x_p$$
+<br />
+Apply the inverse transformation to recover the probability:
+<br />
+$$p = \frac{1}{1 + e^{-(\beta_0 + \beta_1 x_1 + \cdots + \beta_p x_p)}}$$
+
+### Logistic Function (Sigmoid)
+
+$$\sigma(z) = \frac{1}{1 + e^{-z}}$$
+
+```python
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import matplotlib
+import statsmodels.api as sm
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import classification_report
+
+matplotlib.rcParams['font.family'] = 'AppleGothic'
+matplotlib.rcParams['axes.unicode_minus'] = False
+np.random.seed(42)
+
+# Example: Credit risk classification (loan default prediction)
+n = 500
+income = np.random.normal(4000, 1500, n)       # Monthly income (10k KRW)
+debt_ratio = np.random.uniform(0.1, 0.9, n)    # Debt-to-income ratio
+credit_score = np.random.normal(700, 80, n)    # Credit score
+
+log_odds = (-5 + 0.001 * income - 2 * debt_ratio + 0.005 * credit_score
+            + np.random.normal(0, 0.5, n))
+prob = 1 / (1 + np.exp(-log_odds))
+default = (np.random.random(n) < (1 - prob)).astype(int)  # 1 = default
+
+df = pd.DataFrame({'default': default, 'income': income, 'debt_ratio': debt_ratio, 'credit_score': credit_score})
+
+# Logistic regression with statsmodels
+X = sm.add_constant(df[['income', 'debt_ratio', 'credit_score']])
+logit_model = sm.Logit(df['default'], X).fit(disp=False)
+
+print("=== Logistic Regression Coefficients ===")
+print(logit_model.params.round(4))
+
+print("\n=== Odds Ratio Interpretation ===")
+odds_ratios = np.exp(logit_model.params)
+for name, OR in odds_ratios.items():
+    print(f"  {name}: OR={OR:.4f} → 1-unit increase changes default odds by {(OR-1)*100:+.1f}%")
+
+# Sigmoid function visualization
+z = np.linspace(-6, 6, 300)
+sigma = 1 / (1 + np.exp(-z))
+
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 4))
+
+ax1.plot(z, sigma, 'b-', linewidth=2)
+ax1.axhline(0.5, color='red', linestyle='--', alpha=0.7, label='p=0.5 (decision boundary)')
+ax1.axvline(0, color='gray', linestyle='--', alpha=0.7)
+ax1.set_xlabel('Linear predictor z')
+ax1.set_ylabel('Probability p')
+ax1.set_title('Sigmoid Function (Logistic Response Function)')
+ax1.legend()
+ax1.grid(alpha=0.3)
+
+# Predicted probability distribution
+from sklearn.linear_model import LogisticRegression
+lr = LogisticRegression(max_iter=1000, random_state=42)
+lr.fit(df[['income', 'debt_ratio', 'credit_score']], df['default'])
+probs = lr.predict_proba(df[['income', 'debt_ratio', 'credit_score']])[:, 1]
+
+ax2.hist(probs[df['default'] == 0], bins=30, alpha=0.6, label='No Default', color='blue')
+ax2.hist(probs[df['default'] == 1], bins=30, alpha=0.6, label='Default', color='red')
+ax2.axvline(0.5, color='black', linestyle='--', label='Threshold 0.5')
+ax2.set_xlabel('Predicted Default Probability')
+ax2.set_ylabel('Count')
+ax2.set_title('Predicted Probability Distribution by Class')
+ax2.legend()
+
+plt.tight_layout()
+plt.show()
+```
+
+> **Real-world use:** Widely applied in credit risk assessment, disease diagnosis, customer churn prediction, and email spam classification. The odds ratio (exp(β)) provides an intuitive interpretation of each variable's effect, making it especially popular in regulated industries such as finance and healthcare.
+
+## 5.4 Evaluating Classification Models
+
+Accuracy alone is not enough to assess a classifier's performance — especially when class imbalance is present.
+
+### Confusion Matrix
+
+| Actual \ Predicted | Positive | Negative |
+|--------------------|----------|----------|
+| **Positive** | TP (True Positive) | FN (False Negative) |
+| **Negative** | FP (False Positive) | TN (True Negative) |
+
+### Key Performance Metrics
+
+$$\text{Accuracy} = \frac{TP + TN}{TP + FP + TN + FN}$$
+<br />
+$$\text{Sensitivity (Recall)} = \frac{TP}{TP + FN} \quad \text{— proportion of actual positives correctly identified}$$
+<br />
+$$\text{Specificity} = \frac{TN}{TN + FP} \quad \text{— proportion of actual negatives correctly identified}$$
+<br />
+$$\text{Precision} = \frac{TP}{TP + FP} \quad \text{— proportion of predicted positives that are truly positive}$$
+<br />
+$$F_1 = 2 \cdot \frac{\text{Precision} \times \text{Recall}}{\text{Precision} + \text{Recall}}$$
+
+### Lift
+
+$$\text{Lift} = \frac{P(\text{Positive} \mid \text{Model prediction})}{P(\text{Positive overall})}$$
+<br />
+Measures how much more efficiently the model identifies positives compared to random selection.
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib
+from sklearn.linear_model import LogisticRegression
+from sklearn.datasets import make_classification
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import (confusion_matrix, classification_report,
+                              roc_curve, auc, ConfusionMatrixDisplay)
+
+matplotlib.rcParams['font.family'] = 'AppleGothic'
+matplotlib.rcParams['axes.unicode_minus'] = False
+np.random.seed(42)
+
+X, y = make_classification(n_samples=1000, n_features=10, n_informative=5,
+                            weights=[0.7, 0.3], random_state=42)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+
+lr = LogisticRegression(max_iter=500, random_state=42)
+lr.fit(X_train, y_train)
+y_pred = lr.predict(X_test)
+y_prob = lr.predict_proba(X_test)[:, 1]
+
+print("=== Classification Performance Metrics ===")
+print(classification_report(y_test, y_pred, target_names=['Negative', 'Positive']))
+
+# Visualization
+fig, axes = plt.subplots(1, 3, figsize=(15, 4))
+
+# 1. Confusion Matrix
+cm = confusion_matrix(y_test, y_pred)
+disp = ConfusionMatrixDisplay(cm, display_labels=['Negative', 'Positive'])
+disp.plot(ax=axes[0], colorbar=False, cmap='Blues')
+axes[0].set_title('Confusion Matrix')
+
+# 2. ROC Curve
+fpr, tpr, thresholds = roc_curve(y_test, y_prob)
+roc_auc = auc(fpr, tpr)
+axes[1].plot(fpr, tpr, 'b-', linewidth=2, label=f'AUC = {roc_auc:.4f}')
+axes[1].plot([0, 1], [0, 1], 'k--', label='Random Classifier')
+axes[1].set_xlabel('1 - Specificity (FPR)')
+axes[1].set_ylabel('Sensitivity (TPR)')
+axes[1].set_title('ROC Curve')
+axes[1].legend()
+axes[1].grid(alpha=0.3)
+
+# 3. Lift Chart
+sorted_idx = np.argsort(-y_prob)
+y_sorted = y_test[sorted_idx]
+n_pos = y_test.sum()
+
+lifts = []
+proportions = np.linspace(0.01, 1, 100)
+for p in proportions:
+    n = int(p * len(y_test))
+    pos_in_top_n = y_sorted[:n].sum()
+    lift = (pos_in_top_n / n) / (n_pos / len(y_test))
+    lifts.append(lift)
+
+axes[2].plot(proportions * 100, lifts, 'b-', linewidth=2)
+axes[2].axhline(1, color='red', linestyle='--', label='Random baseline (Lift=1)')
+axes[2].set_xlabel('Top % of Predictions')
+axes[2].set_ylabel('Lift')
+axes[2].set_title('Lift Chart')
+axes[2].legend()
+axes[2].grid(alpha=0.3)
+
+plt.tight_layout()
+plt.show()
+
+print(f"\nAUC = {roc_auc:.4f}")
+print(f"Top 10% Lift = {lifts[9]:.2f}x (vs. random)")
+```
+
+> **Real-world use:** Cancer screening (high recall needed — missing a case is dangerous), spam filters (high precision needed — misclassifying legitimate email as spam is costly), marketing campaigns (lift to estimate ROI). The metric to optimize depends entirely on the business objective.
+
+## 5.5 Handling Imbalanced Data
+
+Real-world data is almost always imbalanced (e.g., 0.1% fraud in transactions, 5% positive cancer diagnoses). In these cases, raw accuracy becomes meaningless.
+
+| Technique | Description | Pros / Cons |
+|-----------|-------------|-------------|
+| **Undersampling** | Reduce the majority class sample size | Fast; information loss |
+| **Oversampling** | Duplicate or synthesize minority class samples | No information loss; risk of overfitting |
+| **SMOTE** | Generate synthetic samples between minority class neighbors | Increases diversity |
+| **Class weight adjustment** | Assign higher weight to the minority class in the loss function | Fast and simple |
+| **Threshold adjustment** | Change the classification threshold away from 0.5 | No additional data needed |
+
+### Z-Score (Standardization)
+
+Used to scale features before analyzing imbalanced data:
+<br />
+$$z = \frac{x - \mu}{\sigma}$$
+
+```python
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import matplotlib
+from sklearn.datasets import make_classification
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import classification_report, roc_auc_score
+from sklearn.preprocessing import StandardScaler
+from imblearn.over_sampling import SMOTE
+from imblearn.under_sampling import RandomUnderSampler
+
+matplotlib.rcParams['font.family'] = 'AppleGothic'
+matplotlib.rcParams['axes.unicode_minus'] = False
+np.random.seed(42)
+
+# Generate imbalanced data (95% negative, 5% positive)
+X, y = make_classification(n_samples=2000, n_features=10, n_informative=5,
+                            weights=[0.95, 0.05], random_state=42)
+print(f"Class distribution: negative={sum(y==0)}, positive={sum(y==1)} ({sum(y==1)/len(y)*100:.1f}%)")
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3,
+                                                     stratify=y, random_state=42)
+
+scaler = StandardScaler()
+X_train_sc = scaler.fit_transform(X_train)
+X_test_sc = scaler.transform(X_test)
+
+def evaluate(name, X_tr, y_tr, X_te=X_test_sc, y_te=y_test, **kwargs):
+    lr = LogisticRegression(max_iter=1000, random_state=42, **kwargs)
+    lr.fit(X_tr, y_tr)
+    y_pred = lr.predict(X_te)
+    y_prob = lr.predict_proba(X_te)[:, 1]
+    report = classification_report(y_te, y_pred, output_dict=True)
+    auc = roc_auc_score(y_te, y_prob)
+    print(f"\n[{name}]")
+    print(f"  Positive Recall: {report['1']['recall']:.3f} | Precision: {report['1']['precision']:.3f} | AUC: {auc:.3f}")
+
+# 1. Baseline: imbalanced as-is
+evaluate("Baseline (Imbalanced)", X_train_sc, y_train)
+
+# 2. Class weight adjustment
+evaluate("Class Weights", X_train_sc, y_train, class_weight='balanced')
+
+# 3. Undersampling
+rus = RandomUnderSampler(random_state=42)
+X_under, y_under = rus.fit_resample(X_train_sc, y_train)
+print(f"\nAfter undersampling: negative={sum(y_under==0)}, positive={sum(y_under==1)}")
+evaluate("Undersampling", X_under, y_under)
+
+# 4. SMOTE (oversampling)
+smote = SMOTE(random_state=42)
+X_smote, y_smote = smote.fit_resample(X_train_sc, y_train)
+print(f"After SMOTE: negative={sum(y_smote==0)}, positive={sum(y_smote==1)}")
+evaluate("SMOTE", X_smote, y_smote)
+
+# 5. Threshold adjustment (0.5 → 0.3)
+lr_base = LogisticRegression(max_iter=1000, random_state=42)
+lr_base.fit(X_train_sc, y_train)
+y_prob = lr_base.predict_proba(X_test_sc)[:, 1]
+y_pred_low_thresh = (y_prob >= 0.3).astype(int)
+
+report = classification_report(y_test, y_pred_low_thresh, output_dict=True)
+print(f"\n[Threshold 0.3 Adjustment]")
+print(f"  Positive Recall: {report['1']['recall']:.3f} | Precision: {report['1']['precision']:.3f}")
+
+# Precision-Recall tradeoff across thresholds
+from sklearn.metrics import precision_recall_curve
+precision, recall, thresh = precision_recall_curve(y_test, y_prob)
+
+plt.figure(figsize=(8, 4))
+plt.plot(recall, precision, 'b-', linewidth=2)
+plt.xlabel('Recall')
+plt.ylabel('Precision')
+plt.title('Precision-Recall Tradeoff (Effect of Threshold Adjustment)')
+plt.grid(alpha=0.3)
+plt.show()
+```
+
+### Choosing an Imbalance Handling Strategy
+
+| Situation | Recommended Approach |
+|-----------|----------------------|
+| Large dataset available | Undersampling (fast) |
+| Limited data | SMOTE or oversampling |
+| Difficult to generate more data | Class weight adjustment |
+| Clear business requirements | Threshold adjustment (precision/recall tradeoff) |
+| Fraud detection, cancer diagnosis | Maximize recall (missing a case is critical) |
+| Spam filter | Maximize precision (false positives hurt user experience) |
+
+> **Real-world use:** Financial fraud detection (positive rate under 0.1%), medical diagnosis, and equipment failure prediction are all classic imbalanced classification problems. If you only look at accuracy, a model that always predicts "negative" can score 99.9% — a dangerous trap. Always evaluate recall, AUC, and F1 together.
+
+---
+
+Chapter 5 key takeaways:
+
+- **Naive Bayes**: Feature independence assumption + Bayes' theorem → fast and strong for text classification
+- **LDA**: Maximizes between-class variance, assumes equal covariance → also useful as a dimensionality reduction technique
+- **Logistic Regression**: Directly models probability — interpreted via odds ratios, estimated by MLE
+- **Confusion Matrix**: TP, FP, FN, TN give a detailed picture of classification performance
+- **ROC/AUC**: Threshold-independent overall model performance — closer to 1 is better
+- **Lift**: Measures model efficiency vs. random selection — useful in marketing contexts
+- **Imbalanced Data**: Never rely on accuracy alone — address with SMOTE, class weights, or threshold adjustment

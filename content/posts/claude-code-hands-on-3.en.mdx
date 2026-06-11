@@ -1,0 +1,216 @@
+---
+title: "Claude Code Hands-on #3 — Controlling Tool Execution with Hooks"
+date: "2026-04-13"
+category: "Claude Code in Action"
+tags: ["Claude Code", "AI", "Hooks", "자동화", "보안", "코딩어시스턴트"]
+excerpt: "Claude Code's Hooks let you inject custom commands before or after any tool execution. From auto-running code formatters to blocking access to sensitive files — here's a practical walkthrough with real examples."
+readTime: 13
+---
+
+> This post is a translation and summary of Anthropic's official course [Claude Code in Action](https://anthropic.skilljar.com/claude-code-in-action). This is the third installment in the Hands-on series.
+
+---
+
+## What Are Hooks?
+
+**Hooks** let you run custom commands immediately before or after Claude executes a tool.<br/>
+
+Let's start with the normal flow. When a user sends a request, the Claude model generates a response and decides whether it needs to call a tool. Claude Code then executes that tool and returns the result.<br/>
+
+Hooks intercept this process, allowing **user-defined code to run right before or right after a tool executes**.
+
+---
+
+## Two Hook Types
+
+There are two kinds of hooks.<br/>
+
+**PreToolUse Hook** — runs before a tool executes. It can allow or block the tool call.<br/>
+
+**PostToolUse Hook** — runs after a tool executes. It can't undo what already happened, but it can trigger follow-up actions or send additional feedback back to Claude.
+
+---
+
+## Where to Configure Hooks
+
+Hooks are defined in Claude's settings files. You can add them in three places.<br/>
+
+| File | Scope |
+|---|---|
+| `~/.claude/settings.json` | Global — applies to all projects |
+| `.claude/settings.json` | Project — shared with the team |
+| `.claude/settings.local.json` | Project — personal only, not committed |
+
+You can edit the settings file directly, or use the `/hooks` command inside Claude Code to configure them interactively.
+
+---
+
+## PreToolUse Hook Structure
+
+A PreToolUse Hook consists of a matcher and a command to run.<br/>
+
+```json
+"PreToolUse": [
+  {
+    "matcher": "Read",
+    "hooks": [
+      {
+        "type": "command",
+        "command": "node /home/hooks/read_hook.js"
+      }
+    ]
+  }
+]
+```
+
+Before the `Read` tool runs, the specified command is invoked. The command receives details about the tool call and decides one of the following:<br/>
+
+- Allow the tool call to proceed normally
+- Block the tool call and send an error message to Claude
+
+---
+
+## PostToolUse Hook Structure
+
+A PostToolUse Hook runs after a tool has executed.<br/>
+
+```json
+"PostToolUse": [
+  {
+    "matcher": "Write|Edit|MultiEdit",
+    "hooks": [
+      {
+        "type": "command",
+        "command": "node /home/hooks/edit_hook.js"
+      }
+    ]
+  }
+]
+```
+
+The `|` character is an OR operator — the hook fires whenever any of `Write`, `Edit`, or `MultiEdit` runs.<br/>
+
+Since the action has already been taken, blocking is not possible. Instead, you handle follow-up work like formatting the file that was just edited or automatically running tests.
+
+---
+
+## Writing Hook Scripts
+
+When a hook fires, Claude passes the tool call details as JSON to the script via **stdin**.<br/>
+
+```json
+{
+  "session_id": "2d6a1e4d-6...",
+  "transcript_path": "/Users/sg/...",
+  "hook_event_name": "PreToolUse",
+  "tool_name": "Read",
+  "tool_input": {
+    "file_path": "/code/queries/.env"
+  }
+}
+```
+
+The script parses this data, inspects the tool name and input parameters, then makes its decision.
+
+### Controlling Flow with Exit Codes
+
+The script's **exit code** communicates the outcome back to Claude.<br/>
+
+| Exit Code | Meaning |
+|---|---|
+| `0` | Success — allow the tool call |
+| `2` | Block — only valid in PreToolUse |
+
+When exiting with code `2`, any message written to stderr is sent to Claude as feedback. Claude uses this message to understand why the action was blocked.
+
+---
+
+## Real-World Example — Protecting .env Files
+
+One of the most practical uses for hooks is blocking access to sensitive files like `.env`.<br/>
+
+Keep in mind that not only the `Read` tool but also the `Grep` tool can access file contents, so both need to be monitored.
+
+### Step 1 — Configure the Hook
+
+Add a PreToolUse Hook to `.claude/settings.local.json`.
+
+```json
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Read|Grep",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node ./hooks/read_hook.js"
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+### Step 2 — Write the Hook Script
+
+Create `./hooks/read_hook.js` with the following logic.
+
+```js
+async function main() {
+  const chunks = [];
+  for await (const chunk of process.stdin) {
+    chunks.push(chunk);
+  }
+
+  const toolArgs = JSON.parse(Buffer.concat(chunks).toString());
+
+  const readPath =
+    toolArgs.tool_input?.file_path || toolArgs.tool_input?.path || "";
+
+  if (readPath.includes('.env')) {
+    console.error("You cannot read the .env file");
+    process.exit(2);
+  }
+}
+
+main();
+```
+
+The script parses the JSON received from stdin, checks the file path, and if it contains `.env`, exits with code `2` to block the call.
+
+### Step 3 — Test It
+
+Save the configuration and restart Claude Code. Ask Claude to read a `.env` file and the hook will intercept the request, returning an error message.<br/>
+
+Claude will recognize that the action was blocked by a hook and inform the user accordingly.
+
+---
+
+## Ideas for What You Can Build
+
+There are many workflows you can implement with hooks.<br/>
+
+- **Code formatting** — automatically run Prettier or Black after editing a file
+- **Test automation** — run related tests automatically whenever a file changes
+- **Access control** — block read/write access to specific files or directories
+- **Code quality** — run a linter or type checker and feed the results back to Claude
+- **Logging** — keep a record of files Claude accessed or modified
+- **Convention enforcement** — verify adherence to naming conventions or coding standards
+
+PreToolUse Hooks control what Claude can do; PostToolUse Hooks augment what Claude has done. Combining the two lets you build sophisticated automation workflows tailored to your development environment.
+
+<br />
+
+## Summary
+
+| Concept | Description |
+|---|---|
+| `PreToolUse` Hook | Intercepts before tool execution — allow or block |
+| `PostToolUse` Hook | Intercepts after tool execution — run follow-up actions |
+| `matcher` | Specifies which tools to watch (`Read`, `Write`, `Read\|Grep`, etc.) |
+| Exit code `0` | Allow the tool call to proceed |
+| Exit code `2` | Block the tool call (PreToolUse only) |
+| `stderr` output | The block reason message sent back to Claude |
+| `/hooks` command | Interactively configure hooks from within Claude Code |

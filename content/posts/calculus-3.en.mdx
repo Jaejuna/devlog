@@ -1,0 +1,356 @@
+---
+title: "ML Calculus Chapter 3: Gradient Descent and Neural Network Optimization"
+date: "2026-03-06"
+category: "MMD"
+tags: ["미적분", "머신러닝", "경사하강법", "역전파", "뉴럴네트워크", "뉴턴방법"]
+excerpt: "A deep dive into the principles of gradient descent and learning rate, perceptron regression and classification, backpropagation, and Newton's method with the Hessian — the core concepts of neural network optimization."
+readTime: 13
+---
+
+In [Chapter 2](/blog/calculus-2) we covered optimization, partial derivatives, and gradients. This post takes those gradients and puts them to work: we'll look at **Gradient Descent**, which iteratively finds a minimum by following the gradient, then see how it's applied to neural networks through **Backpropagation**, and finally explore an alternative optimization approach called **Newton's Method**.
+
+> This post is based on Week 3 of DeepLearning.AI's *Mathematics for Machine Learning and Data Science — Calculus*.
+
+## What You'll Learn
+
+- **Gradient Descent (1 variable)** — learning rate and the update rule
+- **Gradient Descent (2 variables)** — moving in the direction of the gradient vector
+- **Perceptron Regression** — MSE loss and gradient descent
+- **Perceptron Classification** — the sigmoid function and log loss
+- **Backpropagation** — computing partial derivatives via the chain rule
+- **Newton's Method** — faster optimization using second derivatives
+- **The Hessian** — the matrix of second-order partial derivatives for multivariate functions
+
+---
+
+## Gradient Descent — 1 Variable
+
+### The Core Idea
+
+In Chapter 2, we found minima by solving for where the derivative equals zero. For complex functions, though, solving that equation analytically is often impractical. **Gradient descent** is an iterative algorithm that repeatedly moves a small step in the direction opposite to the current slope (derivative) until it converges on a minimum.
+
+### The Update Rule
+
+$$x_{\text{new}} = x_{\text{old}} - \alpha \cdot f'(x_{\text{old}})$$
+
+| Symbol | Meaning |
+|---|---|
+| $x_{\text{old}}$ | Current position |
+| $\alpha$ (alpha) | Learning rate |
+| $f'(x_{\text{old}})$ | Slope at the current position |
+
+**Intuition**:
+- Slope is **positive** (going uphill to the right) → move left
+- Slope is **negative** (going uphill to the left) → move right
+- **Larger** slope → bigger step; **smaller** slope → smaller step
+
+### The Role of Learning Rate
+
+The **learning rate $\alpha$** controls the step size.
+
+| Learning Rate | Effect |
+|---|---|
+| Too **large** | May overshoot the minimum and diverge |
+| Too **small** | Converges very slowly |
+| Just right | Steadily converges to the minimum |
+
+> There is no universally optimal learning rate — it must be determined through experimentation.
+
+### Limitations of Gradient Descent
+
+Because gradient descent follows the local slope, it can get stuck in a **local minimum** instead of finding the **global minimum**.
+
+---
+
+## Gradient Descent — 2 Variables
+
+For a function $f(x, y)$ with two variables, we move in the direction **opposite** to the gradient vector.
+
+### The Update Rule
+
+$$x_{\text{new}} = x_{\text{old}} - \alpha \cdot \frac{\partial f}{\partial x}$$
+<br />
+$$y_{\text{new}} = y_{\text{old}} - \alpha \cdot \frac{\partial f}{\partial y}$$
+<br />
+In vector form:
+<br />
+$$\begin{bmatrix} x \\ y \end{bmatrix}_{\text{new}} = \begin{bmatrix} x \\ y \end{bmatrix}_{\text{old}} - \alpha \cdot \nabla f$$
+
+### Applying to Linear Regression — Least Squares
+
+When fitting a line $\hat{y} = mx + b$, we minimize the MSE loss $E(m, b)$ using gradient descent.
+<br />
+$$m_{\text{new}} = m_{\text{old}} - \alpha \cdot \frac{\partial E}{\partial m}$$
+<br />
+$$b_{\text{new}} = b_{\text{old}} - \alpha \cdot \frac{\partial E}{\partial b}$$
+<br />
+Starting from an initial $(m, b)$ and iterating, the parameters converge to the values that minimize the loss.
+
+---
+
+## Neural Network Optimization
+
+### Perceptron — Regression
+
+A **perceptron** is a single node that performs linear regression.
+<br />
+$$\hat{y} = w_1 x_1 + w_2 x_2 + b$$
+<br />
+**Loss function (MSE):**
+<br />
+$$\mathcal{L}(w, b) = \frac{1}{2}(\hat{y} - y)^2$$
+
+> **Why the $\frac{1}{2}$?** It cancels the factor of 2 that appears when differentiating, keeping the math clean.
+<br />
+$$\frac{d\mathcal{L}}{d\hat{y}} = \hat{y} - y$$
+<br />
+We iteratively update $w$ and $b$ via gradient descent to minimize the loss.
+
+### Perceptron — Classification and the Sigmoid Function
+
+For classification, we add an **activation function** to map the linear combination to a **probability between 0 and 1**.
+<br />
+$$z = w_1 x_1 + w_2 x_2 + b$$
+<br />
+$$\hat{y} = \sigma(z) = \frac{1}{1 + e^{-z}}$$
+<br />
+**The sigmoid function $\sigma(z)$**:
+- Input: any real number
+- Output: a value in $(0, 1)$ → **interpretable as a probability**
+- $z \to +\infty$ gives $\sigma \to 1$; $z \to -\infty$ gives $\sigma \to 0$
+
+**Derivative of the sigmoid** (derived via the chain rule):
+<br />
+$$\sigma'(z) = \sigma(z)(1 - \sigma(z)) = \hat{y}(1 - \hat{y})$$
+
+> The derivative is expressed in terms of the sigmoid itself — this makes backpropagation computation very efficient.
+
+### Classification Loss — Log Loss
+
+For classification we use **Log Loss (Cross-Entropy)** instead of MSE.
+<br />
+$$\mathcal{L}(y, \hat{y}) = -[y \log \hat{y} + (1-y) \log(1-\hat{y})]$$
+<br />
+**Why log loss?**
+- Since the output is a probability, a **probabilistic interpretation** comes naturally
+- Mathematically equivalent to Maximum Likelihood Estimation (MLE)
+- Numerically stable and yields clean derivative forms
+
+---
+
+## Backpropagation
+
+### Concept
+
+**Backpropagation** is the process of computing partial derivatives of the loss function with respect to each parameter (weights and biases). It applies the **Chain Rule** repeatedly, working backwards from the output layer to the input layer.
+
+> **Why "back"propagation?** Because the error is propagated **backward** from the output layer → hidden layers → input layer.
+
+### Applying the Chain Rule
+
+The partial derivative of the loss with respect to weight $w$ in a perceptron classifier:
+<br />
+$$\frac{\partial \mathcal{L}}{\partial w} = \frac{\partial \mathcal{L}}{\partial \hat{y}} \cdot \frac{\partial \hat{y}}{\partial z} \cdot \frac{\partial z}{\partial w}$$
+<br />
+Computing each term:
+
+| Term | Value |
+|---|---|
+| $\frac{\partial \mathcal{L}}{\partial \hat{y}}$ | $-\frac{y}{\hat{y}} + \frac{1-y}{1-\hat{y}}$ |
+| $\frac{\partial \hat{y}}{\partial z}$ | $\hat{y}(1-\hat{y})$ (sigmoid derivative) |
+| $\frac{\partial z}{\partial w}$ | $x$ |
+
+Putting it together:
+<br />
+$$\frac{\partial \mathcal{L}}{\partial w} = (\hat{y} - y) \cdot x$$
+<br />
+**Takeaway**: It reduces to a remarkably clean form — just the error $(\hat{y} - y)$ multiplied by the input $x$.
+
+### Multi-Layer Neural Networks
+
+For a network with multiple layers, we apply the chain rule repeatedly for the parameters in each layer. The superscript $[l]$ denotes the layer number.
+<br />
+$$\frac{\partial \mathcal{L}}{\partial w^{[1]}} = \frac{\partial \mathcal{L}}{\partial \hat{y}} \cdot \frac{\partial \hat{y}}{\partial z^{[2]}} \cdot \frac{\partial z^{[2]}}{\partial a^{[1]}} \cdot \frac{\partial a^{[1]}}{\partial z^{[1]}} \cdot \frac{\partial z^{[1]}}{\partial w^{[1]}}$$
+
+---
+
+## Newton's Method
+
+### The Basic Principle
+
+Newton's method was originally designed to find **roots of $f(x) = 0$**.
+<br />
+$$x_{\text{new}} = x_{\text{old}} - \frac{f(x_{\text{old}})}{f'(x_{\text{old}})}$$
+
+### Applying to Optimization
+
+For optimization (finding a minimum), we need to find where $f'(x) = 0$. Applying Newton's method to $f'(x)$ gives:
+<br />
+$$x_{\text{new}} = x_{\text{old}} - \frac{f'(x_{\text{old}})}{f''(x_{\text{old}})}$$
+
+| Method | Information Used |
+|---|---|
+| **Gradient Descent** | First derivative $f'$ |
+| **Newton's Method** | First derivative $f'$ + second derivative $f''$ |
+
+> **Advantage of Newton's method**: faster convergence. **Disadvantages**: computing second derivatives is expensive, and the method is sensitive to the initial guess.
+
+### The Role of the Second Derivative
+
+Knowing that the first derivative is zero at a point doesn't tell us whether it's a minimum or a maximum. The **second derivative** resolves this ambiguity.
+
+| Condition | Meaning |
+|---|---|
+| $f''(x) > 0$ | Concave up → **local minimum** |
+| $f''(x) < 0$ | Concave down → **local maximum** |
+| $f''(x) = 0$ | Inflection point or inconclusive |
+
+---
+
+## The Hessian
+
+### Definition
+
+For a multivariate function, the **Hessian** is the matrix of all second-order partial derivatives.
+<br />
+$$H = \begin{bmatrix}
+\frac{\partial^2 f}{\partial x^2} & \frac{\partial^2 f}{\partial x \partial y} \\
+\frac{\partial^2 f}{\partial y \partial x} & \frac{\partial^2 f}{\partial y^2}
+\end{bmatrix}$$
+
+### The Hessian and Concavity
+
+The **eigenvalues** of the Hessian tell us the nature of a critical point.
+
+| Eigenvalues | Meaning |
+|---|---|
+| All **positive** | Concave up → **local minimum** |
+| All **negative** | Concave down → **local maximum** |
+| **Mixed** positive and negative | **Saddle Point** |
+
+> **Saddle point**: a point that looks like a minimum in some directions and a maximum in others. These appear frequently in neural network training.
+
+### Newton's Method in Multiple Variables
+
+For multivariate functions, Newton's method replaces the scalar second derivative with the **inverse of the Hessian matrix**.
+<br />
+$$\mathbf{x}_{\text{new}} = \mathbf{x}_{\text{old}} - H^{-1} \nabla f(\mathbf{x}_{\text{old}})$$
+
+---
+
+## Key Takeaways
+
+| Concept | Description |
+|---|---|
+| **Gradient Descent** | Iteratively moves opposite the gradient to find a minimum |
+| **Learning rate $\alpha$** | Controls step size; too large diverges, too small is slow |
+| **Sigmoid** | Maps reals to $(0,1)$ probabilities; $\sigma' = \sigma(1-\sigma)$ |
+| **Log Loss** | Loss function for classification; equivalent to MLE |
+| **Backpropagation** | Computes partial derivatives output→input via chain rule |
+| **Newton's Method** | Uses second derivatives; converges faster than gradient descent |
+| **Hessian** | Matrix of second-order partial derivatives; eigenvalues classify critical points |
+| **Saddle Point** | Minimum in some directions, maximum in others |
+
+---
+
+<br />
+
+## Quiz
+
+**Q1. What goes wrong when the learning rate in gradient descent is too large?**
+
+<details>
+<summary>Show answer</summary>
+
+The algorithm may **overshoot** the minimum and diverge. Because each step is proportional to the gradient times the learning rate, too large a step size causes the iterates to oscillate around — or fly past — the minimum, potentially growing without bound.
+
+Conversely, a learning rate that is too small will still converge, just very slowly. The right learning rate must be found through experimentation.
+
+</details>
+
+---
+
+**Q2. Derive the derivative of the sigmoid function $\sigma(z) = \frac{1}{1+e^{-z}}$.**
+
+<details>
+<summary>Show answer</summary>
+<br />
+$$\sigma'(z) = \sigma(z)(1 - \sigma(z))$$
+<br />
+Derivation:
+<br />
+$$\sigma'(z) = \frac{e^{-z}}{(1+e^{-z})^2} = \frac{1}{1+e^{-z}} \cdot \frac{e^{-z}}{1+e^{-z}} = \sigma(z)(1 - \sigma(z))$$
+<br />
+Writing $\hat{y} = \sigma(z)$, we get $\sigma'(z) = \hat{y}(1 - \hat{y})$. This is efficient in backpropagation because $\hat{y}$ is already computed during the forward pass.
+
+</details>
+
+---
+
+**Q3. Which of the following statements about backpropagation are correct? (Select all that apply.)**
+
+1. It computes gradients from the input layer toward the output layer
+2. It is the process of computing partial derivatives of the loss with respect to each parameter
+3. It repeatedly applies the chain rule
+4. It is the same concept as gradient descent
+
+<details>
+<summary>Show answer</summary>
+
+**2 and 3**
+
+- 1 ❌: Backpropagation goes **output layer → input layer** (backwards)
+- 2 ✅: It differentiates the loss with respect to each weight and bias
+- 3 ✅: It applies the chain rule for composite functions at each layer
+- 4 ❌: Backpropagation is about **computing derivatives**; gradient descent is about **updating parameters** — they are distinct concepts
+
+</details>
+
+---
+
+**Q4. Use the second derivative test to find the local minima and maxima of $f(x) = x^4 - 8x^2$.**
+
+<details>
+<summary>Show answer</summary>
+
+**Step 1: Set the first derivative to zero**
+<br />
+$$f'(x) = 4x^3 - 16x = 4x(x^2 - 4) = 0$$
+<br />
+$$x = 0, \quad x = 2, \quad x = -2$$
+<br />
+**Step 2: Compute the second derivative**
+<br />
+$$f''(x) = 12x^2 - 16$$
+<br />
+**Step 3: Classify**
+
+| $x$ | $f''(x)$ | Classification |
+|---|---|---|
+| $0$ | $-16 < 0$ | **Local maximum** |
+| $2$ | $32 > 0$ | **Local minimum** |
+| $-2$ | $32 > 0$ | **Local minimum** |
+
+</details>
+
+---
+
+**Q5. If the Hessian matrix has one positive eigenvalue and one negative eigenvalue, the point is a:**
+
+1. Global minimum
+2. Local maximum
+3. Saddle point
+4. Inflection point
+
+<details>
+<summary>Show answer</summary>
+
+**3 — Saddle Point**
+
+When the eigenvalues are mixed positive and negative, the point is a minimum along some directions and a maximum along others — a saddle point. In deep learning, saddle points are far more common than local minima and can cause gradient descent to slow significantly near them.
+
+</details>
+
+---
+
+The next post will **wrap up the entire calculus series** and explore how all these concepts connect in real-world machine learning practice.

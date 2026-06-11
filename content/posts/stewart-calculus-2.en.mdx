@@ -1,0 +1,268 @@
+---
+title: "Calculus Bible Chapter 2: Derivatives"
+date: "2026-03-20"
+category: "미분적분학 바이블"
+tags: ["미적분", "도함수", "미분", "연쇄법칙", "James Stewart", "수학"]
+excerpt: "James Stewart's Calculus, Chapter 2 — a concise summary covering derivatives and rates of change, the definition of the derivative, basic differentiation rules, the chain rule, implicit differentiation, related rates, and linear approximation."
+readTime: 18
+---
+
+> This post summarizes Chapter 2 of James Stewart's *Calculus*.
+
+## 2.1 Derivatives and Rates of Change
+
+### The Tangent Problem (p.80)
+
+> The slope $m$ of a tangent line is expressed as the limit of the slope of a secant line.
+
+The **tangent line** to the curve $y=f(x)$ at the point $P(a, f(a))$ is the line through $P$ with slope (if the limit exists):
+<br />
+$$m=\lim_{x \to a} \frac{f(x) - f(a)}{x-a}$$
+<br />
+If we let $h = x - a$, then $x = a + h$, and the slope of the secant line $PQ$ can be written as:
+<br />
+$$m_{PQ}=\frac{f(a + h)-f(a)}{h}$$
+<br />
+### The Velocity Problem (p.81)
+
+The function $f$ describing the motion of an object is called its **position function**.
+Over the time interval from $t=a$ to $t=a+h$, the change in position is $f(a+h)-f(a)$.
+
+The average velocity over this interval is:
+<br />
+$$\text{Average velocity} = \frac{\text{displacement}}{\text{time}} = \frac{f(a+h) - f(a)}{h}$$
+<br />
+Now suppose we compute the average velocity over shorter and shorter time intervals $[a, a+h]$ — that is, as $h$ approaches $0$.
+
+The **instantaneous velocity** $v(a)$ at time $t=a$ is defined as the limit of average velocities: (p.82)
+<br />
+$$v(a)=\lim_{h \to 0} \frac{f(a+h) - f(a)}{h}$$
+<br />
+### The Derivative at a Point (p.83)
+
+The **derivative**$^{derivative}$ of a function $f$ at a number $a$, denoted $f'(a)$, is defined by the following limit (if it exists):
+<br />
+$$f'(a)=\lim_{h \to 0} \frac{f(a+h) - f(a)}{h}$$
+<br />
+### Rates of Change
+
+Let $y$ be a quantity that depends on another quantity $x$. Then $y$ is a function of $x$, written $y=f(x)$.
+If $x$ changes from $x_1$ to $x_2$, the change in $x$ (the increment of $x$) is:
+<br />
+$$\Delta x = x_2 - x_1$$
+<br />
+The corresponding change in $y$ is:
+<br />
+$$\Delta y = f(x_2) - f(x_1)$$
+<br />
+The following difference quotient is called the **average rate of change** of $y$ with respect to $x$ over the interval $[x_1, x_2]$: (p.84)
+<br />
+$$\text{Average rate of change} = \frac{\Delta y}{\Delta x} = \frac{f(x_2) - f(x_1)}{x_2 - x_1}$$
+<br />
+The limit of this average rate of change is called the **instantaneous rate of change** of $y$ with respect to $x$ at $x = x_1$:
+<br />
+$$\text{Instantaneous rate of change} = \lim_{\Delta x \to 0} \frac{\Delta y}{\Delta x} = \lim_{x_2 \to x_1} \frac{f(x_2) - f(x_1)}{x_2 - x_1}$$
+<br />
+## 2.2 The Derivative as a Function
+
+If we replace the fixed number $a$ with a variable $x$ in the derivative definition, we obtain: (p.88)
+<br />
+$$f'(x)=\lim_{h \to 0} \frac{f(x+h) - f(x)}{h}$$
+<br />
+This function is called the **derivative** of $f$.
+
+**Alternative notations for the derivative** (p.92)
+<br />
+$$f'(x)=y'=\frac{dy}{dx}=\frac{df}{dx}=\frac{d}{dx}f(x)=Df(x)=D_xf(x)$$
+<br />
+The symbols $D$ and $\frac{d}{dx}$ are called **differentiation operators** — they denote the operation of **differentiation**, the process of computing a derivative.
+The notation $\frac{dy}{dx}$ was introduced by Leibniz.
+
+**Differentiable Functions** (p.92)
+
+> A function $f$ is **differentiable at** $a$ if $f'(a)$ exists.
+> $f$ is **differentiable on an open interval** $(a, b)$ [or $(a, \infty),\ (-\infty, a),\ (-\infty, \infty)$] if it is differentiable at every number in the interval.
+
+The relationship between continuity and differentiability is: (p.93)
+
+> If $f$ is differentiable at $a$, then $f$ is continuous at $a$.
+
+**When a function is not differentiable** (p.94)
+
+Three cases where a function fails to be differentiable:
+
+- A corner (sharp bend)
+- A discontinuity
+- A vertical tangent (perfectly vertical slope)
+
+**Higher Derivatives** (p.94)
+
+If $f$ is a differentiable function, then its derivative $f'$ is also a function, so we can compute $(f')'=f''$. This is called the **second derivative**.
+
+In Leibniz notation, the second derivative of $y=f(x)$ is written:
+<br />
+$$\frac{d}{dx}\!\left(\frac{dy}{dx}\right)=\frac{d^2y}{dx^2}$$
+<br />
+c.f. The instantaneous rate of change of velocity with respect to time is called the **acceleration** $a(t)$ of the object.
+The acceleration function is the derivative of the velocity function, and the second derivative of the position function:
+<br />
+$$a(t)=v'(t)=s''(t)$$
+<br />
+**Third Derivative** (p.97)
+
+The third derivative can be interpreted as the slope of the curve $y=f''(x)$, or as the rate of change of $f''(x)$.
+For $y=f(x)$, the notation for the third derivative is:
+<br />
+$$y'''=f'''(x)=\frac{d}{dx}\!\left(\frac{d^2y}{dx^2}\right)=\frac{d^3y}{dx^3}$$
+<br />
+## 2.3 Basic Differentiation Rules
+
+**Derivative of a Constant Function** (p.100)
+<br />
+$$\frac{d}{dx}(c)=0$$
+<br />
+**The Power Rule** — If $n$ is a positive integer, then: (p.100)
+<br />
+$$\frac{d}{dx}(x^n)=nx^{n-1}$$
+<br />
+**The Constant Multiple Rule** — If $c$ is a constant and $f$ is a differentiable function, then: (p.104)
+<br />
+$$\frac{d}{dx}[c \cdot f(x)]=c\frac{d}{dx}f(x)$$
+<br />
+**The Sum Rule** — If $f$ and $g$ are differentiable functions, then: (p.104)
+<br />
+$$\frac{d}{dx}[f(x)+g(x)]=\frac{d}{dx}f(x)+\frac{d}{dx}g(x)$$
+<br />
+**The Difference Rule** — If $f$ and $g$ are differentiable functions, then: (p.104)
+<br />
+$$\frac{d}{dx}[f(x)-g(x)]=\frac{d}{dx}f(x)-\frac{d}{dx}g(x)$$
+<br />
+**Derivatives of Sine and Cosine** (p.106)
+<br />
+$$\frac{d}{dx}(\sin x)=\cos x$$
+<br />
+$$\frac{d}{dx}(\cos x)=-\sin x$$
+<br />
+## 2.4 The Product and Quotient Rules
+
+**The Product Rule** — If $f$ and $g$ are differentiable functions, then: (p.112)
+<br />
+$$\frac{d}{dx}[f(x)g(x)]=f(x)\frac{d}{dx}[g(x)]+g(x)\frac{d}{dx}[f(x)]$$
+<br />
+**The Quotient Rule** — If $f$ and $g$ are differentiable functions, then: (p.112)
+<br />
+$$\frac{d}{dx}\!\left[\frac{f(x)}{g(x)}\right]=\frac{g(x)\dfrac{d}{dx}[f(x)]-f(x)\dfrac{d}{dx}[g(x)]}{[g(x)]^2}$$
+<br />
+**Derivatives of Trigonometric Functions** (p.116)
+<br />
+$$\frac{d}{dx}(\sin x)=\cos x \qquad \frac{d}{dx}(\cos x)=-\sin x \qquad \frac{d}{dx}(\tan x)=\sec^2 x$$
+<br />
+$$\frac{d}{dx}(\csc x)=-\csc x \cot x \qquad \frac{d}{dx}(\sec x)=\sec x \tan x \qquad \frac{d}{dx}(\cot x)=-\csc^2 x$$
+<br />
+## 2.5 The Chain Rule
+
+The differentiation rules covered so far cannot handle **composite functions**. (p.119)
+
+Example: $F(x)=\sqrt{x^2+1}$
+
+If we let $y=f(u)=\sqrt{u}$ and $u=g(x)=x^2+1$, then $y=F(x)=f(g(x))$, i.e., $F=f\circ g$.
+
+> The derivative of the composite function $f\circ g$ is the product of the derivatives of $f$ and $g$. This is the **Chain Rule**.
+
+**Intuition**: If $\frac{du}{dx}$ is the rate of change of $u$ with respect to $x$, $\frac{dy}{du}$ is the rate of change of $y$ with respect to $u$, and $\frac{dy}{dx}$ is the rate of change of $y$ with respect to $x$, then if $u$ changes twice as fast as $x$ and $y$ changes three times as fast as $u$, then $y$ changes six times as fast as $x$.
+
+Leibniz notation:
+<br />
+$$\frac{dy}{dx}=\frac{dy}{du}\cdot\frac{du}{dx}$$
+<br />
+Prime notation:
+<br />
+$$F'(x) = f'(g(x))\cdot g'(x)$$
+<br />
+**The Power Rule Combined with the Chain Rule** (p.123)
+<br />
+$$\frac{d}{dx}(u^n)=nu^{n-1}\frac{du}{dx} \qquad \text{or} \qquad \frac{d}{dx}[g(x)]^n =n[g(x)]^{n-1}\cdot g'(x)$$
+<br />
+## 2.6 Implicit Differentiation
+
+- **Explicit function**$^{explicit\ function}$: a function where one variable is defined directly in terms of another (e.g., $y=\sqrt{x^3+1}$) (p.128)
+- **Implicit function**$^{implicit\ function}$: a function defined by a relation between multiple variables (e.g., $x^2+y^2=25$)
+
+To differentiate an implicit function, we use **implicit differentiation**:
+differentiate both sides with respect to $x$, then solve for $y'$.
+
+Example: Differentiating $x^2+y^2=25$ using implicit differentiation (p.129)
+
+1. Differentiate both sides.
+<br />
+$$\frac{d}{dx}(x^2 + y^2)=\frac{d}{dx}(25)$$
+<br />
+$$\frac{d}{dx}(x^2) + \frac{d}{dx}(y^2)=0$$
+<br />
+2. Since $y^2$ is not directly a function of $x$, apply the chain rule by treating $y$ as a function of $x$.
+<br />
+$$\frac{d}{dx}(y^2)=\frac{d}{dy}(y^2)\frac{dy}{dx}=2y\frac{dy}{dx}$$
+<br />
+$$2x+2y\frac{dy}{dx}=0$$
+<br />
+3. Solving for $\dfrac{dy}{dx}$ gives:
+<br />
+$$\frac{dy}{dx}=-\frac{x}{y}$$
+<br />
+## 2.7 Related Rates
+
+**Related Rates Problems** (p.134): Given two quantities whose rates of change are related, use the rate of change of the more easily measured quantity to find the rate of change of the other.
+
+Example: Air is being pumped into a spherical balloon so that its volume is increasing at a rate of $100\ \text{cm}^3/\text{s}$.
+How fast is the radius increasing when the diameter is $50\ \text{cm}$?
+
+1. **Identify the given and unknown information**
+    - Given: the rate of increase of volume is $100\ \text{cm}^3/\text{s}$
+    - Unknown: the rate of increase of the radius when the diameter is $50\ \text{cm}$
+2. Let $V$ be the volume of the balloon and $r$ the radius. Both are functions of time $t$.
+    - Given: $\dfrac{dV}{dt}=100\ \text{cm}^3/\text{s}$
+    - Unknown: $\dfrac{dr}{dt}$ when $r=25\ \text{cm}$
+3. To relate $\dfrac{dV}{dt}$ and $\dfrac{dr}{dt}$, use the formula for the volume of a sphere to connect $V$ and $r$.
+<br />
+$$V=\frac{4}{3}\pi r^3$$
+<br />
+4. Differentiate both sides with respect to $t$. Use the chain rule on the right side.
+<br />
+$$\frac{dV}{dt}=4\pi r^2\frac{dr}{dt}$$
+<br />
+5. Solve for the unknown quantity.
+<br />
+$$\frac{dr}{dt}=\frac{1}{4\pi r^2}\frac{dV}{dt}$$
+<br />
+6. Substitute $r=25\ \text{cm}$ and $\dfrac{dV}{dt}=100$.
+<br />
+$$\frac{dr}{dt}=\frac{1}{4\pi (25)^2}\cdot 100=\frac{1}{25\pi}$$
+<br />
+## 2.8 Linear Approximations and Differentials
+
+When $x$ is near $a$, we use the tangent line to $f$ at the point $(a, f(a))$ as an approximation to the curve $y=f(x)$. (p.140)
+
+Equation of the tangent line:
+<br />
+$$y=f(a)+f'(a)(x-a)$$
+<br />
+The following approximation is called the **linear approximation**$^{linear\ approximation}$ or **tangent line approximation**$^{tangent\ line\ approximation}$ of $f$ at $a$:
+<br />
+$$f(x)\approx f(a) + f'(a)(x-a)$$
+<br />
+In other words, a single tangent line lets us approximate the value of the function at points near the point of tangency.
+
+This is also widely applied in physics. (p.143)
+
+<br />
+
+## Summary
+
+- **Derivative at a point**: $f'(a)=\lim\limits_{h \to 0} \dfrac{f(a+h)-f(a)}{h}$ — the slope of the tangent line and the instantaneous rate of change
+- **Derivative as a function**: $f'(x)$, obtained by replacing the fixed number $a$ with $x$
+- **Basic differentiation rules**: constant, power, constant multiple, sum, difference, trigonometric functions
+- **Product Rule / Quotient Rule**: differentiating products or quotients of two functions
+- **Chain Rule**: differentiating composite functions — $F'(x)=f'(g(x))\cdot g'(x)$
+- **Implicit differentiation**: differentiate both sides with respect to $x$, then solve for $y'$
+- **Related rates**: use the chain rule to connect rates of change of different quantities
+- **Linear approximation**: approximate function values using the tangent line

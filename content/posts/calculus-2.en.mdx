@@ -1,0 +1,292 @@
+---
+title: "ML Calculus Chapter 2: Optimization, Partial Derivatives, and Gradients"
+date: "2026-03-06"
+category: "MMD"
+tags: ["미적분", "머신러닝", "최적화", "경사하강법", "그래디언트", "편미분"]
+excerpt: "A deep dive into the core of machine learning optimization: minimizing loss functions, differentiating squared and log loss, understanding partial derivatives and gradients, and using the gradient to find minima."
+readTime: 11
+---
+
+In [Chapter 1](/blog/calculus-1), we covered the fundamentals of differentiation and key derivative formulas. In this post, we'll see how those derivatives are applied to **optimization**, and explore **partial derivatives** and **gradients** — the tools for differentiating functions with multiple variables.
+
+> This post is based on Week 2 of DeepLearning.AI's *Mathematics for Machine Learning and Data Science — Calculus*.
+
+## What You'll Learn
+
+- **Optimization** — the difference between local minima, local maxima, and the global minimum
+- **Squared Loss** optimization — why the mean is the optimal solution
+- **Log-Loss** optimization — why we use logarithms
+- **Partial Derivatives** — differentiating multivariable functions
+- **Gradient** — representing partial derivatives as a vector
+- **Finding the minimum** using the gradient
+
+---
+
+## What Is Optimization?
+
+**Optimization** is the process of finding the **maximum or minimum** of a function.
+
+In machine learning, we always want to **minimize a loss function**. Training a model means reducing the loss — the measure of how badly the model is predicting the data.
+
+### Local Minima vs. Global Minimum
+
+| Term | Description |
+|---|---|
+| **Local Minimum** | Lower than its immediate neighbors, but not the lowest point overall (slope = 0) |
+| **Global Minimum** | The absolute lowest point of the entire function (slope = 0) |
+| **Local Maximum** | Higher than its immediate neighbors, but not the highest point overall (slope = 0) |
+
+> **Key insight**: Minima and maxima always occur where the **derivative (slope) equals 0**. However, a zero slope doesn't guarantee a minimum — saddle points also have a zero derivative.
+
+---
+
+## Squared Loss Optimization
+
+### Understanding Through the Power Line Problem
+
+Suppose you're choosing a location $x$ to build a house and want to minimize the connection cost to power lines at positions $a, b, c$.
+
+**Cost Function:**
+<br />
+$$C(x) = (x-a)^2 + (x-b)^2 + (x-c)^2$$
+<br />
+Why we use squared distances:
+- **Easier to differentiate** than absolute values
+- Penalizes deviations in both directions equally
+
+**Finding the minimum** — set the derivative to 0:
+<br />
+$$C'(x) = 2(x-a) + 2(x-b) + 2(x-c) = 0$$
+<br />
+$$3x = a + b + c$$
+<br />
+$$\boxed{x = \frac{a+b+c}{3}}$$
+<br />
+**Conclusion**: The optimal location that minimizes squared loss is the **mean**. This is the same reason why minimizing MSE in linear regression yields the least-squares estimator.
+
+### Generalizing to $n$ Points
+
+$$C(x) = \sum_{i=1}^n (x - x_i)^2 \quad \Rightarrow \quad x^* = \frac{1}{n}\sum_{i=1}^n x_i$$
+<br />
+**Machine learning interpretation**: When MSE (Mean Squared Error) is used as the loss function, the prediction that minimizes it is always the **mean** of the target values.
+
+---
+
+## Log-Loss Optimization
+
+### Why Use Log-Loss?
+
+Suppose you flip a coin 10 times and get 7 heads (H) and 3 tails (T). You want to estimate the probability $p$ of heads.
+
+**Likelihood:**
+<br />
+$$L(p) = p^7 (1-p)^3$$
+<br />
+Finding the $p$ that maximizes $L(p)$ is called **Maximum Likelihood Estimation (MLE)**.
+
+**The problem**: Products of probabilities get extremely small (e.g., $0.7^7 \times 0.3^3 \approx 0.0022$). With more data, the numbers become too small for computers to handle reliably.
+
+**The fix — log transformation:**
+<br />
+$$\log L(p) = 7\log p + 3\log(1-p)$$
+<br />
+Using the logarithm turns **products into sums**, making computation numerically stable.
+
+**Differentiate to find the maximum:**
+<br />
+$$\frac{d}{dp}\log L = \frac{7}{p} - \frac{3}{1-p} = 0$$
+<br />
+$$7(1-p) = 3p \quad \Rightarrow \quad p = \frac{7}{10} = 0.7$$
+<br />
+**Conclusion**: The MLE estimate matches the observed frequency ($\frac{7}{10}$).
+
+### Negative Log-Loss
+
+In classification models, the loss function uses a **negative sign**:
+<br />
+$$\text{Loss} = -\log L(p) = -[y\log p + (1-y)\log(1-p)]$$
+<br />
+Why:
+- When $0 < p < 1$, $\log p < 0$ — the log-likelihood is negative
+- Negating it makes the loss **positive** so we can minimize it
+
+**Minimizing the negative log-loss is equivalent to maximizing the original likelihood.**
+
+---
+
+## Partial Derivatives
+
+### Extending to Tangent Planes
+
+Derivative of a 1-variable function → tangent line
+
+Derivative of a 2-variable function → **tangent plane**
+
+When differentiating a function with multiple variables, we **hold all other variables constant** and differentiate with respect to one variable at a time. This is called a partial derivative.
+
+### Computing Partial Derivatives
+
+$$f(x, y) = 3x^2y^3$$
+<br />
+**Partial derivative with respect to $x$** (treat $y$ as a constant):
+<br />
+$$\frac{\partial f}{\partial x} = 6xy^3$$
+<br />
+**Partial derivative with respect to $y$** (treat $x$ as a constant):
+<br />
+$$\frac{\partial f}{\partial y} = 9x^2y^2$$
+<br />
+**Notation**: $\frac{\partial f}{\partial x}$ or $f_x$ (read as "partial f, partial x")
+
+### Another Example
+
+$$f(x, y) = x^2y + 3x + y^2$$
+<br />
+$$\frac{\partial f}{\partial x} = 2xy + 3$$
+<br />
+$$\frac{\partial f}{\partial y} = x^2 + 2y$$
+
+> **Key insight**: When taking the partial derivative with respect to $x$, treat any term involving only $y$ as a constant. Since $y^2$ has no $x$, its partial derivative with respect to $x$ is 0.
+
+---
+
+## Gradient
+
+The **gradient** $\nabla f$ is a **vector** formed by collecting all partial derivatives.
+<br />
+$$\nabla f = \begin{bmatrix} \frac{\partial f}{\partial x_1} \\ \frac{\partial f}{\partial x_2} \\ \vdots \\ \frac{\partial f}{\partial x_n} \end{bmatrix}$$
+<br />
+For a two-variable function $f(x, y)$:
+<br />
+$$\nabla f = \begin{bmatrix} \frac{\partial f}{\partial x} \\ \frac{\partial f}{\partial y} \end{bmatrix}$$
+
+### Example
+
+$$f(x, y) = x^2 + y^2$$
+<br />
+$$\nabla f = \begin{bmatrix} 2x \\ 2y \end{bmatrix}$$
+<br />
+Gradient at the point $(2, 3)$:
+<br />
+$$\nabla f(2, 3) = \begin{bmatrix} 4 \\ 6 \end{bmatrix}$$
+<br />
+**Geometric meaning**: The gradient points in the direction of **steepest ascent**. The negative gradient ($-\nabla f$) points in the direction of steepest descent.
+
+---
+
+## Finding the Minimum Using the Gradient
+
+### Analytical Method
+
+For a multivariable function, the minimum occurs where **all partial derivatives equal 0**.
+<br />
+$$\nabla f = \vec{0} \quad \Leftrightarrow \quad \frac{\partial f}{\partial x_1} = \frac{\partial f}{\partial x_2} = \cdots = 0$$
+
+### Linear Regression Example
+
+Fitting a line $y = mx + b$ to the data points $(1, 1), (2, 2), (3, 3)$:
+
+**Loss function (MSE):**
+<br />
+$$E(m, b) = (m + b - 1)^2 + (2m + b - 2)^2 + (3m + b - 3)^2$$
+<br />
+**Partial derivatives:**
+<br />
+$$\frac{\partial E}{\partial m} = 28m + 12b - 42 = 0$$
+<br />
+$$\frac{\partial E}{\partial b} = 12m + 6b - 20 = 0$$
+<br />
+**Solving the system of equations:**
+<br />
+$$m = 1, \quad b = \frac{2}{3}$$
+<br />
+This is the **analytical solution** to the Least Squares problem.
+
+> **In practice?** When datasets are large and models have many parameters, solving analytically becomes intractable. That's when **Gradient Descent** comes in.
+
+---
+
+## Summary
+
+| Concept | Description |
+|---|---|
+| **Optimization** | Finding the minimum or maximum of a function |
+| **Global Minimum** | The absolute lowest point of the entire function |
+| **Local Minimum** | Lower than neighbors, but not the global minimum |
+| **Squared Loss** | $(y - \hat{y})^2$, minimized by the mean |
+| **Log-Loss** | $-\log L(p)$, used for probability estimation |
+| **Partial Derivative** | Differentiate with respect to one variable, treat the rest as constants |
+| **Gradient** | Vector of all partial derivatives, points toward steepest ascent |
+| **Minimum condition** | $\nabla f = \vec{0}$ |
+
+---
+
+<br />
+
+## Quiz
+
+**Q1. Find $\frac{\partial f}{\partial x}$ for $f(x, y) = x^2y + 6x$.**
+
+<details>
+<summary>Show answer</summary>
+
+Treat $y$ as a constant:
+<br />
+$$\frac{\partial f}{\partial x} = 2xy + 6$$
+<br />
+</details>
+
+---
+
+**Q2. Find the gradient $\nabla f$ of $f(x, y) = e^{xy} + y^2$.**
+
+<details>
+<summary>Show answer</summary>
+<br />
+$$\frac{\partial f}{\partial x} = ye^{xy}$$
+<br />
+$$\frac{\partial f}{\partial y} = xe^{xy} + 2y$$
+<br />
+$$\nabla f = \begin{bmatrix} ye^{xy} \\ xe^{xy} + 2y \end{bmatrix}$$
+<br />
+</details>
+
+---
+
+**Q3. What value of $w$ minimizes the loss function $L(w) = (w - 3)^2 + (w - 7)^2 + (w - 5)^2$?**
+
+<details>
+<summary>Show answer</summary>
+<br />
+$$L'(w) = 2(w-3) + 2(w-7) + 2(w-5) = 0$$
+<br />
+$$6w = 30 \quad \Rightarrow \quad w = 5$$
+<br />
+This is the **mean** of 3, 7, and 5 — confirming that squared loss is always minimized by the mean.
+
+</details>
+
+---
+
+**Q4. Which of the following statements about the gradient is correct?**
+
+1. The gradient is a scalar value
+2. The gradient points in the direction of steepest descent
+3. A point where the gradient is $\vec{0}$ is a candidate for a local minimum or maximum
+4. The gradient always points in a positive direction
+
+<details>
+<summary>Show answer</summary>
+
+**Answer: 3**
+
+- 1 ❌: The gradient is a **vector** (a collection of partial derivatives)
+- 2 ❌: The gradient points toward **ascent**; the **negative gradient** points toward descent
+- 3 ✅: When $\nabla f = \vec{0}$, the point is a candidate for a local min, local max, or saddle point
+- 4 ❌: The gradient is a directional vector and can have negative components
+
+</details>
+
+---
+
+In the next post, we'll cover the actual mechanics of **Gradient Descent**, optimization in perceptrons and neural networks, and dive into **Backpropagation** and **Newton's Method**.

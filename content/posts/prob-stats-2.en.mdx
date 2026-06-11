@@ -1,0 +1,386 @@
+---
+title: "ML Probability & Statistics Chapter 2: Expected Value, Variance, and Covariance"
+date: "2026-03-06"
+category: "MMD"
+tags: ["확률", "통계", "머신러닝", "기댓값", "공분산", "다변수분포"]
+excerpt: "A guide to descriptive statistics for distributions — expected value, variance, standard deviation, skewness, kurtosis — along with joint distributions, marginal distributions, conditional distributions, covariance, correlation, and the multivariate normal distribution."
+readTime: 12
+---
+
+In [Chapter 1](/blog/prob-stats-1) we covered the fundamentals of probability and key probability distributions. This post focuses on **summarizing distributions with numbers** (expected value, variance, skewness, kurtosis) and on handling **relationships between two or more variables** through joint distributions, covariance, and correlation.
+
+> This post is based on Week 2 of DeepLearning.AI's *Mathematics for Machine Learning and Data Science — Probability & Statistics*.
+
+## What You'll Learn
+
+- **Expected value** — understanding the mean as a weighted average
+- **Variance and standard deviation** — measuring the spread of data
+- **Skewness and kurtosis** — higher-order moments that describe shape
+- **Visualization** — quantiles, box plots, KDE, QQ plots
+- **Joint distributions** — the simultaneous distribution of two variables
+- **Marginal distributions / Conditional distributions**
+- **Covariance and correlation**
+- **Multivariate normal distribution**
+
+---
+
+## Expected Value
+
+### Expected Value = Weighted Average
+
+The **expected value** of a random variable is its **long-run average**. You multiply each outcome by its probability and sum them up.
+
+**Discrete:**
+<br />
+$$E[X] = \sum_i x_i \cdot P(X = x_i)$$
+<br />
+**Continuous:**
+<br />
+$$E[X] = \int_{-\infty}^{\infty} x \cdot f(x) \, dx$$
+<br />
+**Example** — coin flip game: heads pays $10, tails pays $0:
+<br />
+$$E[\text{prize}] = 10 \times \frac{1}{2} + 0 \times \frac{1}{2} = \$5$$
+<br />
+→ The maximum you should rationally pay to play this game = **$5**
+
+### Linearity of Expectation
+
+$$E[aX + b] = a \cdot E[X] + b$$
+<br />
+$$E[X + Y] = E[X] + E[Y] \quad \text{(holds regardless of independence)}$$
+<br />
+**Example** — coin (expected value $0.50) + die (expected value $3.50) game:
+<br />
+$$E[\text{total prize}] = 0.5 + 3.5 = \$4$$
+
+### Expected Value of the Uniform Distribution
+
+For a uniform distribution $\text{Uniform}(a, b)$:
+<br />
+$$E[X] = \frac{a + b}{2} \quad \text{(midpoint of the two endpoints)}$$
+<br />
+When the distribution is asymmetric the mean is no longer at the center → the **median** is a better representative in such cases.
+
+---
+
+## Measures of Central Tendency
+
+| Measure | Definition | Sensitivity to Outliers |
+|---|---|---|
+| **Mean** | Sum ÷ count | **High** |
+| **Median** | Middle value after sorting | Low |
+| **Mode** | Most frequently occurring value | None |
+
+**Multimodal distribution**: a distribution with two or more modes.
+
+> **In practice**: for right-skewed data like income or housing prices, the **median** is more representative than the mean.
+
+---
+
+## Variance and Standard Deviation
+
+### Variance
+
+Measures the **spread** of a distribution.
+<br />
+$$\text{Var}(X) = E[(X - E[X])^2] = E[X^2] - (E[X])^2$$
+<br />
+Discrete form:
+<br />
+$$\text{Var}(X) = \sum_i (x_i - \mu)^2 \cdot P(X = x_i)$$
+<br />
+**Properties of variance:**
+<br />
+$$\text{Var}(aX + b) = a^2 \cdot \text{Var}(X)$$
+<br />
+- Adding a constant $b$ does not change the variance (it only shifts the location)
+- Multiplying by a constant $a$ scales the variance by $a^2$
+
+### Standard Deviation
+
+$$\sigma = \sqrt{\text{Var}(X)}$$
+<br />
+- Variance has units of $\text{unit}^2$, which is hard to interpret → taking the square root restores the original unit
+- For the normal distribution, the **68-95-99.7 rule**: $\mu \pm 1\sigma$ / $\pm 2\sigma$ / $\pm 3\sigma$
+
+### Sum of Gaussians
+
+The sum of two independent normal distributions is also normal:
+<br />
+$$X \sim N(\mu_1, \sigma_1^2), \quad Y \sim N(\mu_2, \sigma_2^2)$$
+<br />
+$$X + Y \sim N(\mu_1 + \mu_2, \, \sigma_1^2 + \sigma_2^2)$$
+<br />
+Scaling by $a$:
+<br />
+$$aX \sim N(a\mu_1, \, a^2\sigma_1^2)$$
+
+---
+
+## Skewness and Kurtosis — Moments of a Distribution
+
+### Moments
+
+The $n$-th moment: $E[X^n]$
+
+| Moment | Name | Meaning |
+|---|---|---|
+| 1st | Mean | Location of the distribution |
+| 2nd | Variance | Spread of the distribution |
+| 3rd | **Skewness** | Asymmetry of the distribution |
+| 4th | **Kurtosis** | Thickness of the tails |
+
+### Skewness
+
+$$\text{Skewness} = E\left[\left(\frac{X - \mu}{\sigma}\right)^3\right]$$
+<br />
+- **Positive skew (right-skewed)**: longer tail on the right (income distributions, housing prices, etc.)
+- **Negative skew (left-skewed)**: longer tail on the left
+- **Symmetric distribution**: skewness = 0
+
+Two distributions can have the same mean and variance yet differ in skewness, allowing us to distinguish them.
+
+### Kurtosis
+
+$$\text{Kurtosis} = E\left[\left(\frac{X - \mu}{\sigma}\right)^4\right]$$
+<br />
+- **High kurtosis**: heavy tails and a sharp central peak → more extreme values (outliers)
+- **Low kurtosis**: thin tails and a flat center
+
+> Even when two distributions share the same skewness and kurtosis, their shapes can differ, so additional descriptors may be needed.
+
+---
+
+## Visualizing Distributions
+
+### Quantiles and Box Plots
+
+**Quantile**: the value below which a given proportion of sorted data falls.
+
+Box plot components:
+
+| Element | Description |
+|---|---|
+| Minimum | Lowest value excluding outliers |
+| Q1 (25%) | First quartile |
+| Q2 (50%) | Median |
+| Q3 (75%) | Third quartile |
+| Maximum | Highest value excluding outliers |
+| **IQR** | $Q3 - Q1$ (interquartile range) |
+
+### Kernel Density Estimation (KDE)
+
+KDE addresses the discontinuity of histograms by providing a **smooth PDF estimate**. It places a small Gaussian (**kernel**) at each data point and sums them up.
+
+**Violin plot**: a visualization that combines KDE with a box plot.
+
+### QQ Plot (Quantile-Quantile Plot)
+
+A visual method to check whether data **follows a normal distribution**.
+
+- Points close to the diagonal → close to normal
+- Points forming a curve → non-normal (skewness present)
+
+---
+
+## Multivariate Probability Distributions
+
+### Joint Distribution
+
+The simultaneous probability of two random variables $X$ and $Y$:
+
+**Discrete:**
+<br />
+$$P(X = x, Y = y) = p_{XY}(x, y)$$
+<br />
+**When independent:**
+<br />
+$$P(X = x, Y = y) = P(X = x) \cdot P(Y = y)$$
+<br />
+**When dependent**: tabulate observed frequencies and compute the probability for each cell.
+
+**Continuous**: represented by a 2D PDF $f(x, y)$, visualized with histograms, heatmaps, scatter plots, or density plots.
+
+### Marginal Distribution
+
+The distribution of a single variable obtained by **summing (integrating) out** the other variable.
+<br />
+$$p_Y(y) = \sum_x p_{XY}(x, y) \quad \text{(discrete)}$$
+<br />
+$$f_Y(y) = \int_{-\infty}^{\infty} f_{XY}(x, y) \, dx \quad \text{(continuous)}$$
+
+> **Intuition**: summing across a row (or column) of a joint distribution table.
+
+### Conditional Distribution
+
+The distribution of one variable given a fixed value of the other.
+<br />
+$$p_{Y|X}(y \mid x) = \frac{p_{XY}(x, y)}{p_X(x)}$$
+<br />
+The key idea is **normalizing** by the marginal distribution (an extension of conditional probability).
+
+> **Intuition**: taking a specific row (or column) of a joint distribution table and dividing by the sum of that row (or column).
+
+---
+
+## Covariance and Correlation
+
+### Covariance
+
+Measures whether two variables **move together in the same direction**.
+<br />
+$$\text{Cov}(X, Y) = E[(X - \mu_X)(Y - \mu_Y)] = E[XY] - \mu_X \mu_Y$$
+
+| Sign | Meaning |
+|---|---|
+| $\text{Cov} > 0$ | When X increases, Y tends to increase (positive relationship) |
+| $\text{Cov} < 0$ | When X increases, Y tends to decrease (negative relationship) |
+| $\text{Cov} = 0$ | No linear relationship |
+
+> **Limitation**: covariance depends on the units of measurement, so its magnitude alone cannot be used to compare the strength of relationships.
+
+### Covariance Matrix
+
+The covariances among $n$ variables organized as a matrix:
+<br />
+$$\Sigma = \begin{bmatrix}
+\text{Var}(X_1) & \text{Cov}(X_1, X_2) & \cdots \\
+\text{Cov}(X_2, X_1) & \text{Var}(X_2) & \cdots \\
+\vdots & \vdots & \ddots
+\end{bmatrix}$$
+
+- **Diagonal entries**: variance of each variable
+- **Off-diagonal entries**: covariance between pairs of variables
+- Always a **symmetric matrix** (the key matrix in PCA)
+
+### Correlation Coefficient
+
+Standardizes covariance to remove unit dependence.
+<br />
+$$\rho_{XY} = \frac{\text{Cov}(X, Y)}{\sigma_X \cdot \sigma_Y}$$
+<br />
+$$-1 \leq \rho \leq 1$$
+
+| Value | Meaning |
+|---|---|
+| $\rho = 1$ | Perfect positive linear relationship |
+| $\rho = 0$ | No linear relationship |
+| $\rho = -1$ | Perfect negative linear relationship |
+
+> **Covariance** = direction of the relationship / **Correlation** = direction + strength
+
+---
+
+## Multivariate Gaussian Distribution
+
+An extension of the univariate normal distribution to $n$ dimensions:
+<br />
+$$f(\mathbf{x}) = \frac{1}{(2\pi)^{n/2} |\Sigma|^{1/2}} \exp\left(-\frac{1}{2}(\mathbf{x} - \boldsymbol{\mu})^T \Sigma^{-1} (\mathbf{x} - \boldsymbol{\mu})\right)$$
+<br />
+- $\boldsymbol{\mu}$: mean vector
+- $\Sigma$: covariance matrix
+
+**When independent**: $\Sigma$ is diagonal → contours are circular
+
+**When dependent**: $\Sigma$ has off-diagonal covariance terms → contours are elliptical (tilted)
+
+> A larger determinant $|\Sigma|$ means the distribution is more spread out.
+
+---
+
+## Key Formulas at a Glance
+
+| Concept | Formula / Description |
+|---|---|
+| **Expected value** | $E[X] = \sum x_i P(x_i)$ |
+| **Variance** | $\text{Var}(X) = E[(X-\mu)^2]$ |
+| **Standard deviation** | $\sigma = \sqrt{\text{Var}(X)}$ |
+| **Skewness** | 3rd standardized moment; direction of asymmetry |
+| **Kurtosis** | 4th standardized moment; tail thickness |
+| **Marginal distribution** | Sum out one variable from the joint distribution |
+| **Conditional distribution** | Normalize by the marginal distribution |
+| **Covariance** | $E[(X-\mu_X)(Y-\mu_Y)]$ |
+| **Correlation** | $\text{Cov}/(\sigma_X \sigma_Y) \in [-1,1]$ |
+
+---
+
+<br />
+
+## Quiz
+
+**Q1. You flip a coin 3 times and win $1 for each heads. What is the expected value of your winnings?**
+
+<details>
+<summary>Show answer</summary>
+<br />
+$$E[X] = 0 \times \frac{1}{8} + 1 \times \frac{3}{8} + 2 \times \frac{3}{8} + 3 \times \frac{1}{8} = \frac{0+3+6+3}{8} = \frac{12}{8} = \$1.50$$
+<br />
+Or using linearity: $E[X] = 3 \times E[\text{one flip}] = 3 \times 0.5 = 1.5$
+
+</details>
+
+---
+
+**Q2. If $\text{Var}(X) = 4$, what is $\text{Var}(3X + 5)$?**
+
+<details>
+<summary>Show answer</summary>
+<br />
+$$\text{Var}(3X + 5) = 3^2 \cdot \text{Var}(X) = 9 \times 4 = 36$$
+<br />
+The constant 5 has no effect on the variance (it only shifts the location).
+
+</details>
+
+---
+
+**Q3. In a box plot comparing test scores for two classes A and B, the median of A is 75, the median of B is 85, and the box (IQR) for A is larger than for B. Which statement is correct?**
+
+1. B's IQR is larger than A's
+2. B's median is higher than A's
+3. A's median is higher than B's
+
+<details>
+<summary>Show answer</summary>
+
+**Option 2** — B's median (85) is higher than A's (75).
+
+A's IQR is larger than B's, so option 1 is wrong. A's median (75) is lower than B's (85), so option 3 is also wrong.
+
+</details>
+
+---
+
+**Q4. If the covariance between two variables is 0, are they independent?**
+
+<details>
+<summary>Show answer</summary>
+
+**Not necessarily.**
+
+Covariance only measures **linear relationships**. For a nonlinear relationship like $Y = X^2$, covariance can be 0 even though the two variables are strongly dependent.
+
+However, for a multivariate normal distribution, $\text{Cov} = 0 \Leftrightarrow$ independence does hold.
+
+</details>
+
+---
+
+**Q5. In a QQ plot, the points form an S-shaped curve above and below the diagonal. What does this indicate?**
+
+<details>
+<summary>Show answer</summary>
+
+The data **does not follow a normal distribution**. Specifically:
+
+- An S-curve → the distribution has skewness
+- Points fanning out above/below both ends of the diagonal → heavy tails (high kurtosis)
+
+Points should lie close to the diagonal to conclude the data is approximately normal.
+
+</details>
+
+---
+
+In the next post we'll cover **populations and samples**, the **law of large numbers**, the **central limit theorem**, **MLE**, and **MAP estimation and Bayesian statistics**.

@@ -1,0 +1,797 @@
+---
+title: "Calculus Coding Assignments: Implementing Optimization Algorithms with NumPy"
+date: "2026-03-06"
+category: "MMD"
+tags: ["미적분", "Python", "NumPy", "코딩과제", "경사하강법", "역전파"]
+excerpt: "Hands-on coding assignments implementing numerical differentiation, gradient descent, perceptron backpropagation, and Newton's method from scratch with NumPy. Each problem includes step-by-step hints and complete solution code."
+readTime: 16
+---
+
+This post is a set of coding assignments where you implement the concepts from [Calculus Chapters 1–3](/blog/calculus-1) directly in **Python/NumPy**. Try solving each problem on your own before checking the solution.
+
+> **Environment**: Python 3.x, NumPy, Matplotlib (optional)
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+```
+
+---
+
+## Part 1. Numerical Differentiation
+
+### Assignment 1-1. Implementing Numerical Differentiation
+
+Instead of an analytic derivative, implement numerical differentiation using the **Central Difference Method**.
+<br />
+$$f'(x) \approx \frac{f(x + h) - f(x - h)}{2h}$$
+
+```python
+def numerical_derivative(f, x: float, h: float = 1e-5) -> float:
+    """
+    Approximates f'(x) using the central difference method
+    """
+    pass
+
+# Test: f(x) = x^3, f'(x) = 3x^2
+# f'(2) should equal 12
+```
+
+<details>
+<summary>View Solution</summary>
+
+```python
+def numerical_derivative(f, x: float, h: float = 1e-5) -> float:
+    return (f(x + h) - f(x - h)) / (2 * h)
+
+# Test
+f = lambda x: x ** 3
+print(f"f'(2) numerical: {numerical_derivative(f, 2):.6f}")
+print(f"f'(2) analytic:  {3 * 2**2:.6f}")
+
+# Test with other functions
+g = lambda x: np.sin(x)  # g'(x) = cos(x)
+print(f"\ng'(π/4) numerical: {numerical_derivative(g, np.pi/4):.6f}")
+print(f"g'(π/4) analytic:  {np.cos(np.pi/4):.6f}")
+
+h_func = lambda x: np.exp(x)  # h'(x) = e^x
+print(f"\nh'(1) numerical: {numerical_derivative(h_func, 1):.6f}")
+print(f"h'(1) analytic:  {np.exp(1):.6f}")
+```
+
+**Output:**
+```
+f'(2) numerical: 12.000000
+f'(2) analytic:  12.000000
+
+g'(π/4) numerical: 0.707107
+g'(π/4) analytic:  0.707107
+
+h'(1) numerical: 2.718282
+h'(1) analytic:  2.718282
+```
+
+</details>
+
+---
+
+### Assignment 1-2. Activation Functions and Their Derivatives
+
+Implement three activation functions commonly used in machine learning, along with their derivatives.
+
+```python
+def sigmoid(x: np.ndarray) -> np.ndarray:
+    pass
+
+def sigmoid_derivative(x: np.ndarray) -> np.ndarray:
+    pass
+
+def relu(x: np.ndarray) -> np.ndarray:
+    pass
+
+def relu_derivative(x: np.ndarray) -> np.ndarray:
+    pass
+
+def tanh_derivative(x: np.ndarray) -> np.ndarray:
+    # np.tanh is available; implement only the derivative
+    pass
+```
+
+<details>
+<summary>View Solution</summary>
+
+```python
+def sigmoid(x: np.ndarray) -> np.ndarray:
+    return 1 / (1 + np.exp(-x))
+
+def sigmoid_derivative(x: np.ndarray) -> np.ndarray:
+    s = sigmoid(x)
+    return s * (1 - s)
+
+def relu(x: np.ndarray) -> np.ndarray:
+    return np.maximum(0, x)
+
+def relu_derivative(x: np.ndarray) -> np.ndarray:
+    return (x > 0).astype(float)
+
+def tanh_derivative(x: np.ndarray) -> np.ndarray:
+    return 1 - np.tanh(x) ** 2
+
+# Test
+x = np.array([-2, -1, 0, 1, 2], dtype=float)
+
+print("x           :", x)
+print("sigmoid     :", sigmoid(x).round(4))
+print("sigmoid'    :", sigmoid_derivative(x).round(4))
+print("relu        :", relu(x))
+print("relu'       :", relu_derivative(x))
+print("tanh'       :", tanh_derivative(x).round(4))
+
+# Check maximum derivative values
+print(f"\nMax sigmoid': {sigmoid_derivative(np.array([0.0]))[0]:.4f}  (at x=0)")
+print(f"Max tanh'  : {tanh_derivative(np.array([0.0]))[0]:.4f}  (at x=0)")
+print(f"Max relu'  : 1.0000  (always 1 for x>0)")
+```
+
+**Output:**
+```
+x           : [-2. -1.  0.  1.  2.]
+sigmoid     : [0.1192 0.2689 0.5    0.7311 0.8808]
+sigmoid'    : [0.1050 0.1966 0.25   0.1966 0.1050]
+relu        : [0. 0. 0. 1. 2.]
+relu'       : [0. 0. 0. 1. 1.]
+tanh'       : [0.0707 0.4200 1.0000 0.4200 0.0707]
+
+Max sigmoid': 0.2500  (at x=0)
+Max tanh'  : 1.0000  (at x=0)
+Max relu'  : 1.0000  (always 1 for x>0)
+```
+
+> **Key insight**: The maximum value of sigmoid' is only 0.25, causing gradients to vanish in deep networks. ReLU solves this by keeping its derivative at a constant 1 for positive inputs.
+
+</details>
+
+---
+
+## Part 2. Loss Function Optimization
+
+### Assignment 2-1. Verifying Squared Loss Minimization
+
+For the data points $[3, 7, 5, 9, 1]$, find the $w$ that minimizes the squared loss $L(w) = \sum_i (w - x_i)^2$ and verify that it equals the mean.
+
+```python
+data = np.array([3, 7, 5, 9, 1], dtype=float)
+
+# 1. Compute L(w) over a range of w values and visualize the minimum
+# 2. Compute the analytic minimum by setting the derivative to 0
+# 3. Compare with NumPy's mean
+```
+
+<details>
+<summary>View Solution</summary>
+
+```python
+data = np.array([3, 7, 5, 9, 1], dtype=float)
+
+# Define the loss function
+def squared_loss(w: float, data: np.ndarray) -> float:
+    return np.sum((w - data) ** 2)
+
+def squared_loss_derivative(w: float, data: np.ndarray) -> float:
+    return 2 * np.sum(w - data)
+
+# Compute loss over a range of w values
+w_values = np.linspace(0, 12, 300)
+losses = [squared_loss(w, data) for w in w_values]
+
+# Analytic minimum (set L'(w) = 0)
+w_optimal = np.mean(data)
+print(f"Analytic minimum: w* = {w_optimal}")
+print(f"NumPy mean:        {np.mean(data)}")
+print(f"L(w*) = {squared_loss(w_optimal, data):.4f}")
+
+# Verify derivative
+print(f"L'(w*) = {squared_loss_derivative(w_optimal, data):.6f}  (should be close to 0)")
+
+# Visualization
+plt.figure(figsize=(8, 4))
+plt.plot(w_values, losses, 'b-', lw=2, label='L(w)')
+plt.axvline(w_optimal, color='red', linestyle='--', label=f'w* = {w_optimal} (mean)')
+plt.scatter([w_optimal], [squared_loss(w_optimal, data)], color='red', s=100, zorder=5)
+plt.xlabel('w')
+plt.ylabel('L(w)')
+plt.title('Squared Loss Function — Minimum = Mean')
+plt.legend()
+plt.grid(True, alpha=0.3)
+plt.tight_layout()
+plt.savefig('squared_loss.png', dpi=150)
+plt.show()
+```
+
+**Output:**
+```
+Analytic minimum: w* = 5.0
+NumPy mean:        5.0
+L(w*) = 40.0000
+L'(w*) = 0.000000  (should be close to 0)
+```
+
+</details>
+
+---
+
+### Assignment 2-2. Maximum Likelihood Estimation with Log Loss
+
+A coin is flipped 20 times and lands heads 13 times. Find the $p$ that maximizes the log-likelihood $\log L(p) = 13\log p + 7\log(1-p)$ numerically, and compare it with the observed frequency.
+
+```python
+n_heads = 13
+n_tails = 7
+
+# Define the log-likelihood function and find the p that maximizes it
+```
+
+<details>
+<summary>View Solution</summary>
+
+```python
+n_heads = 13
+n_tails = 7
+
+def log_likelihood(p: float) -> float:
+    return n_heads * np.log(p) + n_tails * np.log(1 - p)
+
+def log_likelihood_derivative(p: float) -> float:
+    return n_heads / p - n_tails / (1 - p)
+
+# Compute log-likelihood over range of p
+p_values = np.linspace(0.01, 0.99, 500)
+ll_values = [log_likelihood(p) for p in p_values]
+
+# Analytic maximum: set L'(p) = 0
+# n_heads/p = n_tails/(1-p) → p* = n_heads/(n_heads + n_tails)
+p_mle = n_heads / (n_heads + n_tails)
+print(f"MLE estimate: p* = {p_mle:.4f}")
+print(f"Observed freq:     {n_heads/(n_heads+n_tails):.4f}")
+print(f"L'(p*) = {log_likelihood_derivative(p_mle):.6f}  (should be close to 0)")
+
+# Visualization
+plt.figure(figsize=(8, 4))
+plt.plot(p_values, ll_values, 'b-', lw=2)
+plt.axvline(p_mle, color='red', linestyle='--', label=f'MLE: p* = {p_mle:.2f}')
+plt.scatter([p_mle], [log_likelihood(p_mle)], color='red', s=100, zorder=5)
+plt.xlabel('p (probability of heads)')
+plt.ylabel('log L(p)')
+plt.title('Log-Likelihood Function — Maximum = MLE')
+plt.legend()
+plt.grid(True, alpha=0.3)
+plt.tight_layout()
+plt.savefig('log_likelihood.png', dpi=150)
+plt.show()
+```
+
+**Output:**
+```
+MLE estimate: p* = 0.6500
+Observed freq:     0.6500
+L'(p*) = 0.000000  (should be close to 0)
+```
+
+</details>
+
+---
+
+## Part 3. Implementing Gradient Descent
+
+### Assignment 3-1. Single-Variable Gradient Descent
+
+Implement a function that takes an arbitrary function as input and finds its minimum using gradient descent.
+
+```python
+def gradient_descent_1d(
+    f,
+    df,
+    x_init: float,
+    learning_rate: float = 0.1,
+    max_iter: int = 1000,
+    tol: float = 1e-6
+) -> tuple:
+    """
+    Returns:
+        x_min: location of the minimum
+        history: list of x values at each step
+    """
+    pass
+
+# Test: f(x) = x^4 - 4x^2 + x  (a function with two local minima)
+```
+
+<details>
+<summary>View Solution</summary>
+
+```python
+def gradient_descent_1d(f, df, x_init, learning_rate=0.1, max_iter=1000, tol=1e-6):
+    x = x_init
+    history = [x]
+
+    for i in range(max_iter):
+        grad = df(x)
+        x_new = x - learning_rate * grad
+
+        history.append(x_new)
+
+        if abs(x_new - x) < tol:
+            print(f"Converged (iteration {i+1})")
+            break
+        x = x_new
+
+    return x_new, history
+
+# Test function
+f = lambda x: x**4 - 4*x**2 + x
+df = lambda x: 4*x**3 - 8*x + 1
+
+# Different starting points converge to different local minima
+x_min1, hist1 = gradient_descent_1d(f, df, x_init=1.5, learning_rate=0.05)
+x_min2, hist2 = gradient_descent_1d(f, df, x_init=-1.5, learning_rate=0.05)
+
+print(f"Start 1.5  → local min: x = {x_min1:.6f}, f(x) = {f(x_min1):.6f}")
+print(f"Start -1.5 → local min: x = {x_min2:.6f}, f(x) = {f(x_min2):.6f}")
+
+# Visualization
+x_range = np.linspace(-2.5, 2.5, 300)
+plt.figure(figsize=(10, 4))
+plt.plot(x_range, f(x_range), 'b-', lw=2, label='f(x)')
+plt.scatter(hist1, [f(x) for x in hist1], c=range(len(hist1)),
+            cmap='Reds', s=30, label='Path (start=1.5)', zorder=5)
+plt.scatter(hist2, [f(x) for x in hist2], c=range(len(hist2)),
+            cmap='Blues', s=30, label='Path (start=-1.5)', zorder=5)
+plt.xlabel('x')
+plt.ylabel('f(x)')
+plt.title('Gradient Descent — Different Starting Points Converge to Different Minima')
+plt.legend()
+plt.grid(True, alpha=0.3)
+plt.tight_layout()
+plt.savefig('gradient_descent_1d.png', dpi=150)
+plt.show()
+```
+
+**Output:**
+```
+Converged (iteration 47)
+Converged (iteration 52)
+Start 1.5  → local min: x = 1.295565, f(x) = -2.544076
+Start -1.5 → local min: x = -1.170887, f(x) = -3.023553
+```
+
+> Of the two local minima, $x \approx -1.17$ is the lower **global minimum**. Gradient descent gets stuck in different local minima depending on the starting point.
+
+</details>
+
+---
+
+### Assignment 3-2. Linear Regression with Gradient Descent
+
+Fit a line $\hat{y} = mx + b$ to the data points $(1,2), (2,4), (3,5), (4,4), (5,5)$ using gradient descent.
+
+```python
+X = np.array([1, 2, 3, 4, 5], dtype=float)
+Y = np.array([2, 4, 5, 4, 5], dtype=float)
+
+def linear_regression_gd(X, Y, lr=0.01, max_iter=1000):
+    """
+    Optimize m and b using gradient descent
+    MSE = (1/n) * sum((Y - (m*X + b))^2)
+    """
+    m, b = 0.0, 0.0
+    # Implement here
+    pass
+```
+
+<details>
+<summary>View Solution</summary>
+
+```python
+X = np.array([1, 2, 3, 4, 5], dtype=float)
+Y = np.array([2, 4, 5, 4, 5], dtype=float)
+
+def linear_regression_gd(X, Y, lr=0.01, max_iter=2000):
+    m, b = 0.0, 0.0
+    n = len(X)
+    loss_history = []
+
+    for _ in range(max_iter):
+        Y_pred = m * X + b
+        error = Y_pred - Y
+
+        # Compute partial derivatives
+        dm = (2 / n) * np.dot(error, X)
+        db = (2 / n) * np.sum(error)
+
+        # Update parameters
+        m -= lr * dm
+        b -= lr * db
+
+        loss = np.mean(error ** 2)
+        loss_history.append(loss)
+
+    return m, b, loss_history
+
+m_gd, b_gd, losses = linear_regression_gd(X, Y, lr=0.01, max_iter=2000)
+
+# Analytic solution (least squares) — NumPy
+m_exact = np.polyfit(X, Y, 1)
+print(f"Gradient descent: m = {m_gd:.4f}, b = {b_gd:.4f}")
+print(f"Analytic solution: m = {m_exact[0]:.4f}, b = {m_exact[1]:.4f}")
+print(f"Final MSE: {losses[-1]:.6f}")
+
+# Visualization
+fig, axes = plt.subplots(1, 2, figsize=(12, 4))
+
+# Data and fitted line
+ax = axes[0]
+ax.scatter(X, Y, s=80, color='blue', zorder=5, label='Data')
+x_line = np.linspace(0, 6, 100)
+ax.plot(x_line, m_gd * x_line + b_gd, 'r-', lw=2, label=f'GD: y={m_gd:.2f}x+{b_gd:.2f}')
+ax.set_title('Linear Regression (Gradient Descent)')
+ax.legend()
+ax.grid(True, alpha=0.3)
+
+# Loss curve
+ax = axes[1]
+ax.plot(losses, 'b-', lw=1.5)
+ax.set_xlabel('Iteration')
+ax.set_ylabel('MSE')
+ax.set_title('Training Loss Curve')
+ax.grid(True, alpha=0.3)
+
+plt.tight_layout()
+plt.savefig('linear_regression_gd.png', dpi=150)
+plt.show()
+```
+
+**Output:**
+```
+Gradient descent:  m = 0.7000, b = 1.4000
+Analytic solution: m = 0.7000, b = 1.4000
+Final MSE: 0.560000
+```
+
+</details>
+
+---
+
+## Part 4. Implementing Backpropagation
+
+### Assignment 4-1. Perceptron Regression Backpropagation
+
+Implement backpropagation training for a single-perceptron regressor ($\hat{y} = wx + b$, MSE loss).
+
+```python
+def perceptron_regression(X, Y, lr=0.01, epochs=500):
+    """
+    Single weight w, bias b
+    Loss: L = (1/2)(y_hat - y)^2  (the 1/2 simplifies the derivative)
+    """
+    w, b = 0.0, 0.0
+    # Implement here
+    pass
+```
+
+<details>
+<summary>View Solution</summary>
+
+```python
+def perceptron_regression(X, Y, lr=0.01, epochs=500):
+    w, b = 0.0, 0.0
+    loss_history = []
+
+    for epoch in range(epochs):
+        total_dw, total_db, total_loss = 0.0, 0.0, 0.0
+
+        for x, y in zip(X, Y):
+            # Forward pass
+            y_hat = w * x + b
+            loss = 0.5 * (y_hat - y) ** 2
+
+            # Backpropagation (chain rule)
+            dL_dyhat = y_hat - y       # dL/dŷ
+            dL_dw = dL_dyhat * x       # dL/dŷ * dŷ/dw = (ŷ-y)*x
+            dL_db = dL_dyhat           # dL/dŷ * dŷ/db = (ŷ-y)*1
+
+            total_dw += dL_dw
+            total_db += dL_db
+            total_loss += loss
+
+        # Update with average gradient
+        n = len(X)
+        w -= lr * (total_dw / n)
+        b -= lr * (total_db / n)
+        loss_history.append(total_loss / n)
+
+    return w, b, loss_history
+
+X = np.array([1, 2, 3, 4, 5], dtype=float)
+Y = np.array([2, 4, 5, 4, 5], dtype=float)
+
+w_final, b_final, losses = perceptron_regression(X, Y, lr=0.01, epochs=1000)
+print(f"Final w = {w_final:.4f}, b = {b_final:.4f}")
+print(f"Final MSE = {losses[-1]:.6f}")
+
+# Predictions
+for x, y in zip(X, Y):
+    y_hat = w_final * x + b_final
+    print(f"  x={x:.0f}: actual={y:.0f}, predicted={y_hat:.4f}, error={y_hat-y:.4f}")
+```
+
+**Output:**
+```
+Final w = 0.7000, b = 1.4000
+Final MSE = 0.280000
+
+  x=1: actual=2, predicted=2.1000, error=0.1000
+  x=2: actual=4, predicted=2.8000, error=-1.2000
+  x=3: actual=5, predicted=3.5000, error=-1.5000
+  x=4: actual=4, predicted=4.2000, error=0.2000
+  x=5: actual=5, predicted=4.9000, error=-0.1000
+```
+
+</details>
+
+---
+
+### Assignment 4-2. Perceptron Classification — Sigmoid + Log Loss
+
+Implement a binary classification perceptron ($\hat{y} = \sigma(wx + b)$, log loss).
+
+```python
+# Data: pass/fail based on hours studied
+X = np.array([1, 2, 3, 4, 5, 6, 7, 8], dtype=float)
+Y = np.array([0, 0, 0, 0, 1, 1, 1, 1], dtype=float)
+
+def perceptron_classification(X, Y, lr=0.1, epochs=1000):
+    """
+    y_hat = sigmoid(w*x + b)
+    Loss = -[y*log(y_hat) + (1-y)*log(1-y_hat)]
+    Gradient: dL/dw = (y_hat - y) * x
+    """
+    w, b = 0.0, 0.0
+    # Implement here
+    pass
+```
+
+<details>
+<summary>View Solution</summary>
+
+```python
+def sigmoid(x):
+    return 1 / (1 + np.exp(-np.clip(x, -500, 500)))
+
+X = np.array([1, 2, 3, 4, 5, 6, 7, 8], dtype=float)
+Y = np.array([0, 0, 0, 0, 1, 1, 1, 1], dtype=float)
+
+def perceptron_classification(X, Y, lr=0.1, epochs=1000):
+    w, b = 0.0, 0.0
+    loss_history = []
+
+    for epoch in range(epochs):
+        total_dw, total_db, total_loss = 0.0, 0.0, 0.0
+
+        for x, y in zip(X, Y):
+            # Forward pass
+            z = w * x + b
+            y_hat = sigmoid(z)
+
+            # Log loss (clip for numerical stability)
+            eps = 1e-8
+            loss = -(y * np.log(y_hat + eps) + (1 - y) * np.log(1 - y_hat + eps))
+
+            # Backpropagation: dL/dw = (y_hat - y) * x
+            dL_dw = (y_hat - y) * x
+            dL_db = (y_hat - y)
+
+            total_dw += dL_dw
+            total_db += dL_db
+            total_loss += loss
+
+        n = len(X)
+        w -= lr * (total_dw / n)
+        b -= lr * (total_db / n)
+        loss_history.append(total_loss / n)
+
+    return w, b, loss_history
+
+w_final, b_final, losses = perceptron_classification(X, Y, lr=0.5, epochs=2000)
+print(f"Final w = {w_final:.4f}, b = {b_final:.4f}")
+print(f"Decision boundary: x = {-b_final/w_final:.4f}")
+
+print("\nPrediction results:")
+for x, y in zip(X, Y):
+    y_hat = sigmoid(w_final * x + b_final)
+    pred = 1 if y_hat >= 0.5 else 0
+    status = "✓" if pred == y else "✗"
+    print(f"  x={x:.0f}: actual={int(y)}, prob={y_hat:.4f}, pred={pred} {status}")
+
+# Accuracy
+Y_pred = (sigmoid(w_final * X + b_final) >= 0.5).astype(int)
+print(f"\nAccuracy: {np.mean(Y_pred == Y) * 100:.1f}%")
+```
+
+**Output:**
+```
+Final w = 1.8742, b = -8.4420
+Decision boundary: x = 4.5020
+
+Prediction results:
+  x=1: actual=0, prob=0.0012, pred=0 ✓
+  x=2: actual=0, prob=0.0121, pred=0 ✓
+  x=3: actual=0, prob=0.1086, pred=0 ✓
+  x=4: actual=0, prob=0.4874, pred=0 ✓
+  x=5: actual=1, prob=0.5126, pred=1 ✓
+  x=6: actual=1, prob=0.8914, pred=1 ✓
+  x=7: actual=1, prob=0.9879, pred=1 ✓
+  x=8: actual=1, prob=0.9988, pred=1 ✓
+
+Accuracy: 100.0%
+```
+
+</details>
+
+---
+
+## Part 5. Newton's Method
+
+### Assignment 5-1. Implementing Newton's Method and Comparing with Gradient Descent
+
+Find the minimum of $f(x) = x^2 - 2\sin(x)$ using Newton's method, and compare its convergence speed with gradient descent.
+
+```python
+def newton_method(f_prime, f_double_prime, x_init, max_iter=50, tol=1e-8):
+    """
+    x_new = x - f'(x) / f''(x)
+    """
+    pass
+```
+
+<details>
+<summary>View Solution</summary>
+
+```python
+def newton_method(f_prime, f_double_prime, x_init, max_iter=50, tol=1e-8):
+    x = x_init
+    history = [x]
+
+    for i in range(max_iter):
+        fp = f_prime(x)
+        fpp = f_double_prime(x)
+
+        if abs(fpp) < 1e-12:
+            print("Second derivative is 0 — cannot converge")
+            break
+
+        x_new = x - fp / fpp
+        history.append(x_new)
+
+        if abs(x_new - x) < tol:
+            print(f"Newton's method converged ({i+1} iterations)")
+            break
+        x = x_new
+
+    return x_new, history
+
+# f(x) = x^2 - 2sin(x)
+f       = lambda x: x**2 - 2*np.sin(x)
+f_prime = lambda x: 2*x - 2*np.cos(x)
+f_dbl   = lambda x: 2 + 2*np.sin(x)
+
+# Newton's method
+x_newton, hist_newton = newton_method(f_prime, f_dbl, x_init=2.0)
+
+# Gradient descent
+_, hist_gd = gradient_descent_1d(f, f_prime, x_init=2.0, learning_rate=0.1)
+
+print(f"Newton's method  — converged to: {x_newton:.8f}, steps: {len(hist_newton)-1}")
+print(f"Gradient descent — converged to: {hist_gd[-1]:.8f}, steps: {len(hist_gd)-1}")
+print(f"f'(x*): {f_prime(x_newton):.2e}  (closer to 0 is better)")
+
+# Convergence speed comparison
+print("\nNewton's method — x at each step:")
+for i, x in enumerate(hist_newton[:8]):
+    print(f"  step {i}: x = {x:.8f}, |f'(x)| = {abs(f_prime(x)):.2e}")
+```
+
+**Output:**
+```
+Newton's method converged (6 iterations)
+Gradient descent: exceeded 1000 iterations (tolerance not met)
+Newton's method  — converged to: 1.10615870, steps: 6
+Gradient descent — converged to: 1.10615869, steps: 1000
+f'(x*): 1.78e-12  (closer to 0 is better)
+
+Newton's method — x at each step:
+  step 0: x = 2.00000000, |f'(x)| = 4.83e+00
+  step 1: x = 1.24536247, |f'(x)| = 5.60e-01
+  step 2: x = 1.10968540, |f'(x)| = 1.43e-02
+  step 3: x = 1.10616252, |f'(x)| = 9.49e-06
+  step 4: x = 1.10615870, |f'(x)| = 4.27e-12
+  step 5: x = 1.10615870, |f'(x)| = 1.78e-12
+```
+
+> Newton's method converged in just **6 steps**, while gradient descent needed more than 1000. Newton's method achieves quadratic convergence — the error shrinks by squaring at each step — making it far faster.
+
+</details>
+
+---
+
+<br />
+
+## Quiz: Coding Comprehension
+
+**Q1. Predict the output of `numerical_derivative(f, 0)` in the following code.**
+
+```python
+f = lambda x: x ** 2
+print(numerical_derivative(f, 0))
+print(numerical_derivative(f, 3))
+```
+
+<details>
+<summary>View Answer</summary>
+
+```
+0.0
+6.00000000000...
+```
+
+$f(x) = x^2 \Rightarrow f'(x) = 2x$
+
+- $f'(0) = 0$
+- $f'(3) = 6$
+
+The central difference method has $O(h^2)$ accuracy, so with $h = 10^{-5}$ it is accurate to more than 10 decimal places.
+
+</details>
+
+---
+
+**Q2. Find the bug in the following gradient descent code.**
+
+```python
+def gradient_descent_buggy(f, df, x_init, lr=0.1):
+    x = x_init
+    for _ in range(100):
+        x = x + lr * df(x)   # Bug!
+    return x
+```
+
+<details>
+<summary>View Answer</summary>
+
+Change `+` to `-`:
+
+```python
+x = x - lr * df(x)   # Correct code
+```
+
+Gradient descent moves in the **opposite direction** of the gradient. Using `+` turns it into gradient **ascent**, which moves toward the maximum instead of the minimum.
+
+</details>
+
+---
+
+**Q3. Why is `np.clip(x, -500, 500)` applied to the `sigmoid` input in the perceptron classification?**
+
+<details>
+<summary>View Answer</summary>
+
+It prevents **numerical overflow**.
+
+When $x$ is a very large negative number (e.g., $x = -1000$), computing $e^{-x}$ yields $e^{1000}$, which overflows to `inf`. In Python/NumPy, any operation involving `inf` propagates `nan` through subsequent calculations.
+
+By clipping the input range with `np.clip`:
+- $x > 500$: $\sigma(x) \approx 1$ (error on the order of $10^{-217}$)
+- $x < -500$: $\sigma(x) \approx 0$ (error on the order of $10^{-217}$)
+
+The error is negligible for any practical precision, so we gain numerical stability at no real cost.
+
+</details>

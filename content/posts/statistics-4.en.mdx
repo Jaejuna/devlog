@@ -1,0 +1,537 @@
+---
+title: "Statistics Fundamentals Chapter 4: Regression and Prediction"
+date: "2026-03-04"
+category: "데이터사이언스"
+tags: ["통계", "회귀분석", "머신러닝", "Python"]
+excerpt: "A code-driven walkthrough of regression essentials: simple and multiple linear regression, residual diagnostics, categorical variable encoding, and polynomial/spline regression."
+readTime: 13
+---
+
+Where Chapter 3 covered experimental design and significance testing, Chapter 4 asks: "How do we express the relationship between variables as an equation, and how do we predict new values?" Regression is the most fundamental prediction tool in both statistics and machine learning.
+
+> This post is based on Chapter 4 of *Practical Statistics for Data Scientists*.
+
+## 4.1 Simple Linear Regression
+
+The most basic regression model — predicting a response variable from a single predictor.
+
+| Term | Description |
+|------|------|
+| **Response variable ($y$)** | The variable we want to predict or explain — also called the dependent variable |
+| **Independent variable ($x$)** | The variable that influences the response — also called the explanatory or predictor variable |
+| **Record** | A single observation or row of data |
+| **Intercept ($\beta_0$)** | The predicted value when all independent variables are zero |
+| **Regression coefficient ($\beta_i$)** | The average change in the response per one-unit increase in the predictor |
+| **Fitted value ($\hat{y}_i$)** | The predicted response from the regression equation |
+| **Residual ($e_i$)** | The difference between the actual and fitted response |
+
+### Simple Linear Regression Model
+
+$$y = \beta_0 + \beta_1 x + \varepsilon$$
+
+### Ordinary Least Squares (OLS)
+
+Estimates the regression coefficients by minimizing the sum of squared residuals.
+<br />
+$$\min_{\beta} \sum_{i=1}^{n} (y_i - \hat{y}_i)^2 \quad \Rightarrow \quad \hat{\beta}_1 = \frac{\sum(x_i - \bar{x})(y_i - \bar{y})}{\sum(x_i - \bar{x})^2}, \quad \hat{\beta}_0 = \bar{y} - \hat{\beta}_1 \bar{x}$$
+
+```python
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import matplotlib
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_squared_error, r2_score
+import statsmodels.api as sm
+
+matplotlib.rcParams['font.family'] = 'AppleGothic'
+matplotlib.rcParams['axes.unicode_minus'] = False
+np.random.seed(42)
+
+# Example: relationship between ad spend (x) and sales (y)
+n = 50
+ad_spend = np.random.uniform(10, 100, n)  # Ad spend (10K KRW)
+sales = 3.5 * ad_spend + np.random.normal(0, 15, n) + 50  # Sales (10K KRW)
+
+# Fit regression with statsmodels (provides detailed statistics)
+X = sm.add_constant(ad_spend)
+model = sm.OLS(sales, X).fit()
+
+print(model.summary())
+
+# Visualization
+y_pred = model.predict(X)
+residuals = sales - y_pred
+
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 4))
+
+ax1.scatter(ad_spend, sales, alpha=0.6, label='Observed')
+ax1.plot(sorted(ad_spend), model.predict(sm.add_constant(sorted(ad_spend))),
+         'r-', linewidth=2, label=f'Regression line: y={model.params[0]:.1f}+{model.params[1]:.2f}x')
+ax1.set_xlabel('Ad Spend (10K KRW)')
+ax1.set_ylabel('Sales (10K KRW)')
+ax1.set_title('Simple Linear Regression')
+ax1.legend()
+
+ax2.scatter(y_pred, residuals, alpha=0.6)
+ax2.axhline(0, color='red', linestyle='--')
+ax2.set_xlabel('Fitted Values')
+ax2.set_ylabel('Residuals')
+ax2.set_title('Residuals vs Fitted Plot')
+
+plt.tight_layout()
+plt.show()
+```
+
+> **Practical use:** Useful whenever you need to understand the linear relationship between two variables — ad spend vs. sales, years of experience vs. salary, temperature vs. energy consumption. Simple linear regression is especially handy for early exploratory analysis because it's easy to interpret.
+
+## 4.2 Multiple Linear Regression
+
+Predicts a response variable using two or more predictors.
+<br />
+$$y = \beta_0 + \beta_1 x_1 + \beta_2 x_2 + \cdots + \beta_p x_p + \varepsilon$$
+<br />
+Matrix form:
+<br />
+$$y = X\beta + \varepsilon, \quad \hat{\beta} = (X^\top X)^{-1} X^\top y$$
+
+### Model Performance Metrics
+
+| Metric | Formula | Meaning |
+|------|------|------|
+| **RMSE** | $\sqrt{\dfrac{1}{n}\sum(y_i - \hat{y}_i)^2}$ | Average prediction error (same units as $y$) |
+| **RSE** | $\sqrt{\dfrac{1}{n-p-1}\sum(y_i - \hat{y}_i)^2}$ | Residual standard deviation adjusted for degrees of freedom |
+| **$R^2$** | $1 - \dfrac{\sum(y_i - \hat{y}_i)^2}{\sum(y_i - \bar{y})^2}$ | Proportion of variance explained by the model (0–1) |
+
+$$\text{RMSE} = \sqrt{\frac{1}{n} \sum_{i=1}^{n} (y_i - \hat{y}_i)^2}$$
+<br />
+$$R^2 = 1 - \frac{\sum(y_i - \hat{y}_i)^2}{\sum(y_i - \bar{y})^2}$$
+
+### Weighted Least Squares
+
+When variance differs across observations, assign larger weights to more reliable observations.
+<br />
+$$\min_{\beta} \sum_{i=1}^{n} w_i (y_i - x_i^\top \beta)^2$$
+
+```python
+import numpy as np
+import pandas as pd
+import statsmodels.api as sm
+from sklearn.metrics import mean_squared_error, r2_score
+
+np.random.seed(42)
+
+# Example: house price prediction (area, rooms, age)
+n = 100
+area = np.random.uniform(50, 200, n)          # Floor area (m²)
+rooms = np.random.randint(1, 6, n)             # Number of rooms
+age = np.random.uniform(0, 40, n)              # Building age (years)
+
+price = (300 * area + 500 * rooms - 30 * age
+         + np.random.normal(0, 3000, n) + 5000)  # Price (10K KRW)
+
+df = pd.DataFrame({'price': price, 'area': area, 'rooms': rooms, 'age': age})
+
+# Multiple linear regression
+X = sm.add_constant(df[['area', 'rooms', 'age']])
+model = sm.OLS(df['price'], X).fit()
+
+y_pred = model.predict(X)
+rmse = np.sqrt(mean_squared_error(df['price'], y_pred))
+r2 = r2_score(df['price'], y_pred)
+
+print("=== Multiple Linear Regression Coefficients ===")
+for name, coef in zip(['Intercept', 'Area', 'Rooms', 'Age'], model.params):
+    print(f"  {name}: {coef:.2f}")
+
+print(f"\nRMSE: {rmse:.0f} (10K KRW)")
+print(f"R²: {r2:.4f}  ({r2*100:.1f}% of variance explained)")
+print(f"RSE: {model.mse_resid**0.5:.0f} (10K KRW)")
+
+# Coefficient interpretation
+print("\n=== Coefficient Interpretation ===")
+print(f"  Each 1 m² increase in area → price increases by {model.params['area']:.0f} (10K KRW) on average")
+print(f"  Each additional room → price increases by {model.params['rooms']:.0f} (10K KRW) on average")
+print(f"  Each additional year of age → price decreases by {abs(model.params['age']):.0f} (10K KRW) on average")
+```
+
+> **Practical use:** Used for problems where multiple factors interact — real estate pricing, demand forecasting, healthcare cost estimation. While higher $R^2$ is better, blindly adding variables inflates it, so always check Adjusted $R^2$ alongside the regular $R^2$.
+
+## 4.3 Prediction with Regression
+
+| Concept | Formula | Interpretation |
+|------|------|------|
+| **Confidence interval** | $\hat{y}_0 \pm t^* \cdot s\sqrt{x_0^\top (X^\top X)^{-1} x_0}$ | Uncertainty about the population mean response |
+| **Prediction interval** | $\hat{y}_0 \pm t^* \cdot s\sqrt{1 + x_0^\top (X^\top X)^{-1} x_0}$ | Uncertainty about a single new observation |
+| **Extrapolation** | $x_0$ lies outside the training data range | Prediction reliability drops sharply |
+
+> The prediction interval is always wider than the confidence interval — the confidence interval captures uncertainty about the mean, while the prediction interval captures uncertainty about an individual value.
+
+```python
+import numpy as np
+import statsmodels.api as sm
+import matplotlib.pyplot as plt
+import matplotlib
+matplotlib.rcParams['font.family'] = 'AppleGothic'
+matplotlib.rcParams['axes.unicode_minus'] = False
+
+np.random.seed(42)
+
+x = np.linspace(10, 80, 50)
+y = 2.5 * x + np.random.normal(0, 10, 50) + 20
+
+X = sm.add_constant(x)
+model = sm.OLS(y, X).fit()
+
+# Prediction range (training range + extrapolation)
+x_new = np.linspace(0, 100, 200)
+X_new = sm.add_constant(x_new)
+
+pred = model.get_prediction(X_new)
+pred_df = pred.summary_frame(alpha=0.05)
+
+plt.figure(figsize=(10, 5))
+plt.scatter(x, y, alpha=0.6, label='Observed', zorder=5)
+plt.plot(x_new, pred_df['mean'], 'r-', linewidth=2, label='Regression line')
+plt.fill_between(x_new, pred_df['mean_ci_lower'], pred_df['mean_ci_upper'],
+                 alpha=0.3, color='blue', label='Confidence interval (95%)')
+plt.fill_between(x_new, pred_df['obs_ci_lower'], pred_df['obs_ci_upper'],
+                 alpha=0.1, color='green', label='Prediction interval (95%)')
+
+# Mark training range
+plt.axvline(x=10, color='gray', linestyle=':', linewidth=1.5)
+plt.axvline(x=80, color='gray', linestyle=':', linewidth=1.5)
+plt.text(5, y.min(), 'Extrap.\nrange', ha='center', fontsize=9, color='gray')
+plt.text(85, y.min(), 'Extrap.\nrange', ha='center', fontsize=9, color='gray')
+
+plt.xlabel('x')
+plt.ylabel('y')
+plt.title('Confidence Interval vs Prediction Interval — intervals widen outside training range (extrapolation)')
+plt.legend()
+plt.tight_layout()
+plt.show()
+```
+
+> **Practical use:** Extrapolation is unavoidable when forecasting the future — stock prices, climate projections — but prediction reliability falls sharply the further you go beyond the training data range. Always report prediction intervals alongside extrapolated estimates.
+
+## 4.4 Factor Variables in Regression
+
+Categorical variables must be converted to numeric form before they can be used in regression.
+
+| Term | Description |
+|------|------|
+| **Factor variable** | A variable that takes categorical values — cannot be used directly in regression |
+| **Indicator / dummy variable** | A variable that represents a categorical level as 0 or 1 |
+| **Reference coding** | One reference level is excluded; dummy variables are created for the remaining levels — the intercept absorbs the reference level |
+| **One-hot encoding** | A dummy variable is created for every category level ($k$ categories → $k$ variables) |
+| **Deviation coding** | Expresses how much each category deviates from the overall mean ($-1, 0, 1$) |
+
+### Encoding Method Comparison
+
+| Method | # Variables | Baseline | Notes |
+|------|---------|--------|------|
+| **Reference coding** | $k - 1$ | Reference category | Most common; prevents multicollinearity |
+| **One-hot encoding** | $k$ | None | Often used in ML; one column must be dropped for regression |
+| **Deviation coding** | $k - 1$ | Grand mean | Intercept equals grand mean; intuitive interpretation |
+
+```python
+import pandas as pd
+import numpy as np
+import statsmodels.api as sm
+import matplotlib
+matplotlib.rcParams['font.family'] = 'AppleGothic'
+matplotlib.rcParams['axes.unicode_minus'] = False
+
+np.random.seed(42)
+
+# Example: conversion rate by ad channel (categorical)
+n = 120
+channels = np.random.choice(['SNS', 'Search', 'Email'], n)
+base_rates = {'SNS': 5.0, 'Search': 7.0, 'Email': 4.0}
+conversion = np.array([base_rates[c] + np.random.normal(0, 1.5) for c in channels])
+
+df = pd.DataFrame({'channel': channels, 'conversion_rate': conversion})
+
+# Reference coding (drop_first=True → 'Email' becomes the reference)
+df_encoded = pd.get_dummies(df, columns=['channel'], drop_first=True)
+print("=== Reference Coding (drop_first=True, reference: Email) ===")
+print(df_encoded.head())
+
+X = sm.add_constant(df_encoded.drop('conversion_rate', axis=1))
+model = sm.OLS(df_encoded['conversion_rate'], X).fit()
+
+print("\n=== Regression Coefficients ===")
+print(model.params.round(3))
+print("\nNote: coefficients represent differences relative to 'Email'")
+
+# One-hot encoding (pandas)
+df_onehot = pd.get_dummies(df, columns=['channel'])
+print("\n=== One-Hot Encoding ===")
+print(df_onehot.head())
+
+# Compare mean conversion rate by channel
+print("\n=== Mean Conversion Rate by Channel ===")
+print(df.groupby('channel')['conversion_rate'].mean().round(3))
+```
+
+> **Practical use:** Encoding is essential when including categorical variables like gender, region, day of week, or product category in regression or machine learning models. Tree-based models (Random Forest, XGBoost) can handle categorical variables natively without one-hot encoding.
+
+## 4.5 Interpreting the Regression Equation
+
+Correctly interpreting regression coefficients is central to meaningful analysis.
+
+| Term | Description |
+|------|------|
+| **Multicollinearity** | When independent variables are strongly correlated with each other, making coefficient estimates unstable |
+| **Confounding variable** | A third variable that influences both the independent and dependent variables, distorting the apparent causal relationship |
+| **Main effect** | The independent effect of one predictor on the response |
+| **Interaction** | The combined effect of two predictors on the response |
+
+### Interpreting Each Component of the Regression Equation
+
+$$\hat{y} = \underbrace{\beta_0}_{\text{intercept}} + \underbrace{\beta_1}_{\text{slope}} x_1 + \underbrace{\beta_2}_{\text{slope}} x_2 + \cdots$$
+
+| Component | Meaning |
+|------|------|
+| $\beta_0$ (intercept) | Predicted value when all $x_i = 0$ |
+| $\beta_i$ (regression coefficient) | Average change in $y$ per one-unit increase in $x_i$, **holding all other variables constant** |
+| $\hat{y}$ (fitted value) | Predicted response from the regression model |
+| $e_i = y_i - \hat{y}_i$ (residual) | Difference between the actual and predicted value |
+
+```python
+import numpy as np
+import pandas as pd
+import statsmodels.api as sm
+import matplotlib.pyplot as plt
+import matplotlib
+matplotlib.rcParams['font.family'] = 'AppleGothic'
+matplotlib.rcParams['axes.unicode_minus'] = False
+
+np.random.seed(42)
+
+# Multicollinearity example
+n = 100
+x1 = np.random.normal(0, 1, n)
+x2 = x1 + np.random.normal(0, 0.1, n)  # Nearly identical to x1 (multicollinearity)
+x3 = np.random.normal(0, 1, n)          # Independent variable
+y = 2 * x1 + 3 * x3 + np.random.normal(0, 1, n)
+
+df = pd.DataFrame({'y': y, 'x1': x1, 'x2': x2, 'x3': x3})
+
+# Correlation matrix
+print("=== Correlation Matrix ===")
+print(df.corr().round(3))
+
+# Using only x1 and x3 (no multicollinearity)
+X_good = sm.add_constant(df[['x1', 'x3']])
+m_good = sm.OLS(y, X_good).fit()
+
+# Using x1, x2, and x3 (multicollinearity present)
+X_bad = sm.add_constant(df[['x1', 'x2', 'x3']])
+m_bad = sm.OLS(y, X_bad).fit()
+
+print("\n=== No Multicollinearity (x1, x3) ===")
+print(m_good.params.round(3))
+print(f"VIF: x1={1/(1-np.corrcoef(x1, x3)[0,1]**2):.2f}")
+
+print("\n=== Multicollinearity Present (x1, x2, x3) — unstable coefficients ===")
+print(m_bad.params.round(3))
+
+# Interaction term
+df['x1_x3'] = df['x1'] * df['x3']  # Interaction term
+X_int = sm.add_constant(df[['x1', 'x3', 'x1_x3']])
+m_int = sm.OLS(y, X_int).fit()
+
+print("\n=== Model with Interaction Term ===")
+print(m_int.params.round(3))
+print("Interpretation: the effect of x1 depends on the value of x3")
+```
+
+> **Practical use:** A VIF (Variance Inflation Factor) above 10 is a warning sign for multicollinearity. Failing to control for confounding variables can lead to spurious causal conclusions — the classic example: ice cream sales and drowning incidents are correlated, but the real cause of both is hot weather.
+
+## 4.6 Regression Diagnostics (Assumption Checking)
+
+Regression analysis relies on several assumptions. Residual analysis is used to verify them.
+
+| Diagnostic tool | Assumption | If violated |
+|-----------|------|---------|
+| **Residuals vs Fitted plot** | Homoscedasticity (constant variance) | Fan-shaped pattern → suspect heteroscedasticity |
+| **QQ plot** | Normality (residuals are normally distributed) | Deviation from the diagonal → non-normal residuals |
+| **Leverage-residual plot** | No influential points | Point in upper-right → influential observation |
+| **Partial residual plot** | Linearity | Curved pattern → non-linear relationship |
+
+### Key Diagnostic Statistics
+
+$$\text{Standardized residual}: \quad r_i = \frac{e_i}{\hat{\sigma}\sqrt{1 - h_{ii}}}$$
+<br />
+$$\text{Leverage}: \quad h_{ii} = x_i^\top (X^\top X)^{-1} x_i$$
+<br />
+If $|r_i| > 2$, suspect an outlier; if both $h_{ii}$ is high and $r_i$ is large, treat the observation as influential.
+
+```python
+import numpy as np
+import pandas as pd
+import statsmodels.api as sm
+import matplotlib.pyplot as plt
+import matplotlib
+from statsmodels.graphics.regressionplots import plot_leverage_resid2, plot_partregress_grid
+
+matplotlib.rcParams['font.family'] = 'AppleGothic'
+matplotlib.rcParams['axes.unicode_minus'] = False
+np.random.seed(42)
+
+n = 80
+x = np.random.uniform(1, 10, n)
+y = 2 * x + np.random.normal(0, 2, n)
+
+# Intentionally add outliers
+x = np.append(x, [15, 15.5])
+y = np.append(y, [5, 35])  # High leverage + large residual → influential points
+
+X = sm.add_constant(x)
+model = sm.OLS(y, X).fit()
+
+influence = model.get_influence()
+standardized_resid = influence.resid_studentized_internal
+leverage = influence.hat_matrix_diag
+
+fig, axes = plt.subplots(2, 2, figsize=(12, 10))
+
+# 1. Residuals vs Fitted (homoscedasticity)
+axes[0, 0].scatter(model.fittedvalues, model.resid, alpha=0.6)
+axes[0, 0].axhline(0, color='red', linestyle='--')
+axes[0, 0].set_xlabel('Fitted Values')
+axes[0, 0].set_ylabel('Residuals')
+axes[0, 0].set_title('Residuals vs Fitted (homoscedasticity check)')
+
+# 2. QQ Plot (normality)
+sm.qqplot(model.resid, line='s', ax=axes[0, 1], alpha=0.6)
+axes[0, 1].set_title('QQ Plot (residual normality check)')
+
+# 3. Standardized residuals (outliers)
+axes[1, 0].scatter(range(len(standardized_resid)), standardized_resid, alpha=0.6)
+axes[1, 0].axhline(2, color='red', linestyle='--', label='|r|=2 threshold')
+axes[1, 0].axhline(-2, color='red', linestyle='--')
+axes[1, 0].set_xlabel('Observation index')
+axes[1, 0].set_ylabel('Standardized Residuals')
+axes[1, 0].set_title('Standardized Residuals (outlier detection)')
+axes[1, 0].legend()
+
+# 4. Leverage vs Standardized Residuals (influential points)
+axes[1, 1].scatter(leverage, standardized_resid, alpha=0.6)
+axes[1, 1].axhline(2, color='red', linestyle='--')
+axes[1, 1].axhline(-2, color='red', linestyle='--')
+axes[1, 1].axvline(2 * X.shape[1] / len(x), color='blue', linestyle='--', label='2x mean leverage')
+axes[1, 1].set_xlabel('Leverage')
+axes[1, 1].set_ylabel('Standardized Residuals')
+axes[1, 1].set_title('Leverage vs Standardized Residuals (influential point detection)')
+axes[1, 1].legend()
+
+plt.tight_layout()
+plt.show()
+
+# Identify influential points
+print("=== Influential point candidates (|std. residual| > 2 AND high leverage) ===")
+df_diag = pd.DataFrame({'leverage': leverage, 'std_resid': standardized_resid})
+print(df_diag[np.abs(df_diag['std_resid']) > 2].tail())
+```
+
+> **Practical use:** Address heteroscedasticity with log transformation or weighted regression. When you find influential points, always investigate whether they are data errors or genuine extreme values before deciding to remove them.
+
+## 4.7 Polynomial and Spline Regression
+
+When a linear relationship doesn't fit, these methods model non-linear relationships.
+
+| Method | Description | Pros & Cons |
+|------|------|--------|
+| **Polynomial regression** | Adds $x^2, x^3$, etc. as terms | Simple, but unstable at high degrees |
+| **Spline regression** | Piecewise polynomials joined smoothly | Flexible and stable |
+| **GAM** | Applies non-linear functions to each variable, then combines them additively | Interpretable non-linear model |
+
+### Polynomial Regression Model
+
+$$y = \beta_0 + \beta_1 x + \beta_2 x^2 + \cdots + \beta_k x^k + \varepsilon$$
+
+### Generalized Additive Model (GAM)
+
+$$y = \beta_0 + f_1(x_1) + f_2(x_2) + \cdots + f_p(x_p) + \varepsilon$$
+<br />
+Each $f_j$ is a non-linear function such as a spline — the effect of each variable can be visualized independently.
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib
+from sklearn.preprocessing import PolynomialFeatures
+from sklearn.linear_model import LinearRegression
+from sklearn.pipeline import Pipeline
+
+matplotlib.rcParams['font.family'] = 'AppleGothic'
+matplotlib.rcParams['axes.unicode_minus'] = False
+np.random.seed(42)
+
+# Generate non-linear data
+x = np.linspace(-3, 3, 100)
+y_true = np.sin(x) * x + np.random.normal(0, 0.3, 100)
+
+x_test = np.linspace(-3, 3, 300).reshape(-1, 1)
+
+fig, axes = plt.subplots(1, 3, figsize=(15, 4))
+
+# Linear regression (underfitting)
+lin_model = LinearRegression().fit(x.reshape(-1, 1), y_true)
+axes[0].scatter(x, y_true, alpha=0.4, s=20)
+axes[0].plot(x_test, lin_model.predict(x_test), 'r-', linewidth=2)
+axes[0].set_title(f'Linear Regression (degree=1)\nR²={lin_model.score(x.reshape(-1, 1), y_true):.3f}')
+
+# Polynomial regression degree=4 (good fit)
+poly4 = Pipeline([('poly', PolynomialFeatures(degree=4)), ('reg', LinearRegression())])
+poly4.fit(x.reshape(-1, 1), y_true)
+axes[1].scatter(x, y_true, alpha=0.4, s=20)
+axes[1].plot(x_test, poly4.predict(x_test), 'r-', linewidth=2)
+axes[1].set_title(f'Polynomial Regression (degree=4)\nR²={poly4.score(x.reshape(-1, 1), y_true):.3f}')
+
+# Polynomial regression degree=15 (overfitting)
+poly15 = Pipeline([('poly', PolynomialFeatures(degree=15)), ('reg', LinearRegression())])
+poly15.fit(x.reshape(-1, 1), y_true)
+axes[2].scatter(x, y_true, alpha=0.4, s=20)
+axes[2].plot(x_test, poly15.predict(x_test), 'r-', linewidth=2)
+axes[2].set_ylim(-5, 5)
+axes[2].set_title(f'Polynomial Regression (degree=15) — overfitting\nR²={poly15.score(x.reshape(-1, 1), y_true):.3f}')
+
+for ax in axes:
+    ax.set_xlabel('x')
+    ax.set_ylabel('y')
+
+plt.tight_layout()
+plt.show()
+
+# Spline regression (scipy)
+from scipy.interpolate import UnivariateSpline
+
+spline = UnivariateSpline(x, y_true, s=5)  # s: smoothing parameter
+
+plt.figure(figsize=(8, 4))
+plt.scatter(x, y_true, alpha=0.4, s=20, label='Observed')
+plt.plot(x_test, spline(x_test), 'r-', linewidth=2, label='Spline regression')
+plt.xlabel('x')
+plt.ylabel('y')
+plt.title('Spline Regression — knots placed automatically')
+plt.legend()
+print(f"Spline knot positions: {spline.get_knots().round(2)}")
+plt.show()
+```
+
+> **Practical use:** Use polynomial or spline regression when the relationship is inherently non-linear — for example, age vs. income or time vs. temperature. Too high a polynomial degree leads to overfitting, so always use cross-validation to select the optimal degree.
+
+---
+
+Chapter 4 Key Takeaways:
+
+- **Ordinary Least Squares**: estimates regression coefficients by minimizing the sum of squared residuals — $\hat{\beta} = (X^\top X)^{-1} X^\top y$
+- **RMSE / $R^2$**: RMSE measures absolute prediction error; $R^2$ measures the proportion of variance explained (0–1)
+- **Confidence interval vs Prediction interval**: the prediction interval is always wider — individual-value uncertainty is greater than mean uncertainty
+- **Categorical variable encoding**: reference coding (drop_first) is the standard approach — prevents multicollinearity
+- **Multicollinearity**: high correlation among predictors → check with VIF; address by removing variables or applying regularization
+- **Residual diagnostics**: homoscedasticity (residuals vs fitted), normality (QQ plot), influential points (leverage-residual plot)
+- **Polynomial & spline regression**: for modeling non-linear relationships — use cross-validation to choose the degree

@@ -1,0 +1,194 @@
+---
+title: "Calculus Bible Chapter 1: Functions and Limits"
+date: "2026-03-20"
+category: "미분적분학 바이블"
+tags: ["미적분", "함수", "극한", "연속성", "James Stewart", "수학"]
+excerpt: "James Stewart's Calculus Chapter 1 — a concise summary covering the definition and types of functions, the concept of limits and their computation laws, continuity, and limits involving infinity."
+readTime: 15
+---
+
+> This post summarizes Chapter 1 of James Stewart's *Calculus*.
+
+## 1.1 Definition and Representations of a Function
+
+> **Function**: A function $f$ is a rule that assigns to each element $x$ in a set $D$ exactly one element, called $f(x)$, in a set $E$. (p.3)
+
+We consider functions where both $D$ and $E$ are sets of real numbers.
+
+- **Domain**: the set $D$
+- **Range**: the set of all possible values of $f(x)$ as $x$ varies throughout the domain (p.3)
+
+Functions are classified into two types based on symmetry. (p.8)
+
+- **Even function**: satisfies $f(-x) = f(x)$ for every $x$ in its domain (symmetric about the y-axis)
+- **Odd function**: satisfies $f(-x) = -f(x)$ for every $x$ in its domain (symmetric about the origin)
+
+## 1.2 Essential Functions
+
+> **Mathematical model**: A mathematical representation of a real-world phenomenon — such as the size of a population, the demand for a product, the speed of a falling object, the concentration of a product in a chemical reaction, a person's life expectancy at birth, or the cost of reducing exhaust emissions. The purpose of a mathematical model is to understand the phenomenon and to make predictions about future behavior. (p.12)
+
+Major types of functions (p.12)
+
+- **Linear function**: a function whose graph is a straight line
+- **Polynomial function**: a function with multiple terms
+- **Reciprocal function**: a hyperbolic function with equation $y = 1/x$ or $xy = 1$, having the coordinate axes as asymptotes ($f(x) = x^{-1} = 1/x$)
+- **Rational function**: a function expressed as the ratio of two polynomials
+<br />
+$$f(x) = \frac{P(x)}{Q(x)}$$
+<br />
+**Transformations of Functions** (p.19)
+
+Transformations include vertical/horizontal shifts, vertical/horizontal stretches, and reflections.
+
+**Combinations of Functions** (p.21)
+
+Given functions $f$ and $g$, the **composite function** $f \circ g$ is defined as follows.
+<br />
+$$(f \circ g)(x) = f(g(x))$$
+<br />
+## 1.3 The Limit of a Function
+
+### Definition of a Limit (p.27)
+
+Suppose $f(x)$ is defined when $x$ is near the number $a$.
+(This means $f$ is defined on some open interval that contains $a$, except possibly at $a$ itself.)
+
+If we can make the values of $f(x)$ arbitrarily close to $L$ by taking $x$ to be sufficiently close to $a$ (on either side of $a$) but not equal to $a$, then we write:
+<br />
+$$\lim_{x \to a} f(x) = L$$
+<br />
+This is read as "the limit of $f(x)$ as $x$ approaches $a$ equals $L$."
+
+### Definition of One-Sided Limits (p.32)
+
+If we can make the values of $f(x)$ arbitrarily close to $L$ by taking $x$ to be sufficiently close to $a$ with $x$ less than $a$, then we write:
+<br />
+$$\lim_{x \to a^-} f(x) = L$$
+<br />
+"The **left-hand limit** of $f(x)$ as $x$ approaches $a$ is $L$." (The opposite is the **right-hand limit**.)
+
+**Necessary and Sufficient Condition for a Limit**
+
+> $\lim\limits_{x \to a} f(x) = L$ if and only if $\lim\limits_{x \to a^-} f(x) = L$ and $\lim\limits_{x \to a^+} f(x) = L$.
+
+## 1.4 Calculating Limits
+
+The following laws are used for computing limits. (p.37)
+<br />
+$$\begin{aligned}
+\lim_{x \to a} c &= c \quad \text{(Constant Law)} \\[0.3em]
+\lim_{x \to a} x &= a \quad \text{(Identity Law)} \\[0.3em]
+\lim_{x \to a} [c \cdot f(x)] &= c \cdot \lim_{x \to a} f(x) \quad \text{(Constant Multiple Law)} \\[0.3em]
+\lim_{x \to a} [f(x) \pm g(x)] &= \lim_{x \to a} f(x) \pm \lim_{x \to a} g(x) \quad \text{(Sum/Difference Law)} \\[0.3em]
+\lim_{x \to a} [f(x) \cdot g(x)] &= \lim_{x \to a} f(x) \cdot \lim_{x \to a} g(x) \quad \text{(Product Law)} \\[0.3em]
+\lim_{x \to a} \frac{f(x)}{g(x)} &= \frac{\lim_{x \to a} f(x)}{\lim_{x \to a} g(x)} \quad \text{(Quotient Law, } \lim_{x \to a} g(x) \neq 0) \\[0.3em]
+\lim_{x \to a} [f(x)]^n &= \left[\lim_{x \to a} f(x)\right]^n \quad \text{(Power Law)} \\[0.3em]
+\lim_{x \to a} \sqrt[n]{f(x)} &= \sqrt[n]{\lim_{x \to a} f(x)} \quad \text{(Root Law)} \\[0.3em]
+\lim_{x \to a} f(g(x)) &= f\!\left(\lim_{x \to a} g(x)\right) \quad \text{(Composite Function Law, } f \text{ continuous)}
+\end{aligned}$$
+<br />
+## 1.5 Continuity
+
+### Definition of Continuity (p.48)
+
+A function $f$ is called **continuous at** $a$ if the following holds.
+<br />
+$$\lim_{x \to a} f(x) = f(a)$$
+<br />
+This definition implicitly requires three conditions.
+
+1. $f(a)$ is defined (i.e., $a$ is in the domain of $f$).
+2. $\lim\limits_{x \to a} f(x)$ exists.
+3. $\lim\limits_{x \to a} f(x) = f(a)$
+
+Types of discontinuity (p.50)
+
+- Removable discontinuity
+- Infinite discontinuity
+- Jump discontinuity
+
+**One-Sided Continuity** (p.51)
+
+A function $f$ is **continuous from the right at** $a$ if the following holds.
+<br />
+$$\lim_{x \to a^+} f(x) = f(a)$$
+<br />
+A function $f$ is **continuous from the left at** $a$ if the following holds.
+<br />
+$$\lim_{x \to a^-} f(x) = f(a)$$
+<br />
+## 1.6 Limits Involving Infinity
+
+### Infinite Limits (p.60)
+
+> In general, the following notation means that the values of $f(x)$ tend to grow larger and larger as $x$ approaches $a$. It means we can make $f(x)$ as large as we like by taking $x$ sufficiently close to $a$ (on either side of $a$) but not equal to $a$.
+<br />
+$$\lim_{x \to a} f(x) = \infty$$
+<br />
+**Vertical Asymptotes** (p.61)
+
+The line $x = a$ is called a **vertical asymptote** of the curve $y = f(x)$ if at least one of the following statements is true.
+
+- $\lim\limits_{x \to a} f(x) = \infty$
+- $\lim\limits_{x \to a^-} f(x) = \infty$
+- $\lim\limits_{x \to a^+} f(x) = \infty$
+- $\lim\limits_{x \to a} f(x) = -\infty$
+- $\lim\limits_{x \to a^-} f(x) = -\infty$
+- $\lim\limits_{x \to a^+} f(x) = -\infty$
+
+### Limits at Infinity (p.63)
+
+> Suppose $f$ is defined on some interval $(a, \infty)$.
+> The following notation means that we can make $f(x)$ as close to $L$ as we like by taking $x$ sufficiently large.
+<br />
+$$\lim_{x \to \infty} f(x) = L$$
+<br />
+**Horizontal Asymptotes** (p.64)
+
+The line $y = L$ is called a **horizontal asymptote** of the curve $y = f(x)$ if either of the following holds.
+<br />
+$$\lim_{x \to \infty} f(x) = L \quad \text{or} \quad \lim_{x \to -\infty} f(x) = L$$
+<br />
+If $n$ is a positive integer, then the following hold. (p.66)
+<br />
+$$\lim_{x \to \infty} \frac{1}{x^n} = 0, \quad \lim_{x \to -\infty} \frac{1}{x^n} = 0$$
+<br />
+### Infinite Limits at Infinity (p.68)
+
+The following notation is used to indicate that $f(x)$ becomes large as $x$ becomes large.
+<br />
+$$\lim_{x \to \infty} f(x) = \infty$$
+<br />
+Similarly, the following notation is used.
+<br />
+$$\lim_{x \to -\infty} f(x) = \infty, \quad \lim_{x \to \infty} f(x) = -\infty, \quad \lim_{x \to -\infty} f(x) = -\infty$$
+<br />
+### Precise Definitions
+
+**Precise Definition of an Infinite Limit** (p.69)
+
+Suppose $f$ is defined on some open interval containing $a$ (except possibly at $a$ itself).
+Then $\lim\limits_{x \to a} f(x) = \infty$ means that for every positive number $M$, there exists a $\delta$ such that:
+<br />
+$$0 < |x - a| < \delta \implies f(x) > M$$
+<br />
+**Precise Definition of a Limit at Infinity** (p.70)
+
+Suppose $f$ is defined on some interval $(a, \infty)$.
+Then $\lim\limits_{x \to \infty} f(x) = L$ means that for every $\epsilon > 0$ there is a number $N$ such that if $x > N$ then $|f(x) - L| < \epsilon$.
+
+**Precise Definition of an Infinite Limit at Infinity** (p.71)
+
+Suppose $f$ is defined on some interval $(a, \infty)$.
+Then $\lim\limits_{x \to \infty} f(x) = \infty$ means that for every positive number $M$ there is a positive number $N$ such that if $x > N$ then $f(x) > M$.
+
+<br />
+
+## Summary
+
+The topics covered in Chapter 1 form the conceptual foundation for all of calculus.
+
+- **Functions**: domain and range, symmetry of even and odd functions
+- **Limits**: a limit exists when both the left-hand and right-hand limits are equal
+- **Continuity**: a function is continuous when the limit value equals the function value
+- **Limits involving infinity**: vertical and horizontal asymptotes reveal the overall behavior of a function

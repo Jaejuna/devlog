@@ -1,0 +1,313 @@
+---
+title: "Linear Algebra Basics Chapter 2: Elimination, Row Echelon Form, and Gaussian Elimination"
+date: "2026-03-06"
+category: "MMD"
+tags: ["선형대수", "머신러닝", "행렬", "수학", "가우스소거법"]
+excerpt: "A clear walkthrough of solving linear systems via elimination, computing Row Echelon Form (REF) and Reduced Row Echelon Form (RREF) through Gaussian elimination, and using Rank to determine the number of solutions."
+readTime: 12
+---
+
+In [Chapter 1](/blog/linear-algebra-1) we covered the concept of linear equation systems, matrix singularity, and determinants. This post focuses on actually **solving** those systems — starting from elimination, moving through row echelon forms, Gaussian elimination, and Rank.
+
+> This post is based on Week 1 of DeepLearning.AI's *Mathematics for Machine Learning and Data Science*.
+
+## What You'll Learn
+
+- Solving linear systems with **Elimination**
+- Using **Matrix Row Reduction** to express the same process in matrix form
+- Computing **Row Echelon Form (REF)** and **Reduced Row Echelon Form (RREF)**
+- Finding **Rank** and using it to determine how many solutions a system has
+
+---
+
+## Solving a Non-Singular System — Elimination
+
+Elimination works by combining equations to cancel out variables one at a time.
+
+**Example:**
+<br />
+$$\begin{cases} a + b = 11 \\ a - b = -5 \end{cases}$$
+<br />
+If both equations are true, then any sum or difference of them is also true.
+
+**Step 1 — Add the two equations:**
+<br />
+$$(a + b) + (a - b) = 11 + (-5)$$
+<br />
+$$2a = 6 \quad \Rightarrow \quad a = 3$$
+<br />
+**Step 2 — Substitute $a = 3$:**
+<br />
+$$3 + b = 11 \quad \Rightarrow \quad b = 8$$
+<br />
+**Verify:** $3 + 8 = 11$ ✓, $3 - 8 = -5$ ✓
+
+> **Core principle**: If an equation is true, then any linear combination of it — sums, differences, or scalar multiples — is also true. This is the mathematical foundation of elimination.
+
+---
+
+## Solving Singular Systems
+
+### 1 Degree of Freedom — Infinitely Many Solutions
+
+$$\begin{cases} a + b = 5 \\ 2a + 2b = 10 \end{cases}$$
+<br />
+Subtracting twice equation 1 from equation 2:
+<br />
+$$(2a + 2b) - 2(a + b) = 10 - 10$$
+<br />
+$$0 = 0$$
+<br />
+This is an identity — always true. Both equations carry **the same information**, so $a$ can be any value and $b = 5 - a$ follows along.
+
+This is called **1 degree of freedom** — there is one variable we can freely choose.
+
+### No Solution — Inconsistent System
+
+$$\begin{cases} a + b = 5 \\ 2a + 2b = 12 \end{cases}$$
+<br />
+Subtracting twice equation 1 from equation 2:
+<br />
+$$0 = 2$$
+<br />
+This is a contradiction. The system has **no solution**.
+
+---
+
+## Systems with More Variables
+
+The same principle applies to three-variable systems.
+<br />
+$$\begin{cases} x + y + z = 6 \\ 2x + y + z = 8 \\ x + 2y + z = 9 \end{cases}$$
+<br />
+**Step 1** — Eliminate $x$ from rows 2 and 3 using row 1:
+
+- $R_2 \leftarrow R_2 - 2R_1$: $\quad -y - z = -4$
+- $R_3 \leftarrow R_3 - R_1$: $\quad y + 0z = 3$
+
+**Step 2** — Substitute $y = 3$:
+
+$-3 - z = -4 \Rightarrow z = 1$
+
+**Step 3** — Back substitution:
+
+$x + 3 + 1 = 6 \Rightarrow x = 2$
+
+**Solution:** $x = 2,\ y = 3,\ z = 1$
+
+---
+
+## Matrix Row Reduction
+
+The same process can be expressed using matrices instead of equations.
+<br />
+$$\begin{cases} a + b = 11 \\ 2a - b = 2 \end{cases} \quad \Rightarrow \quad \begin{bmatrix} 1 & 1 \\ 2 & -1 \end{bmatrix}$$
+<br />
+**Apply row operation** ($R_2 \leftarrow R_2 - 2R_1$):
+<br />
+$$\begin{bmatrix} 1 & 1 \\ 0 & -3 \end{bmatrix}$$
+<br />
+This form is **Row Echelon Form (REF)**. From here, $-3b = -24 \Rightarrow b = 8$, then $a = 3$.
+
+**Reduced Row Echelon Form (RREF)** goes one step further — each variable is fully isolated:
+<br />
+$$\begin{bmatrix} 1 & 0 \\ 0 & 1 \end{bmatrix} \quad \Rightarrow \quad a = 3,\ b = 8$$
+
+### Row Echelon Form of a Singular System
+
+For a singular system, elimination produces an all-zero row.
+<br />
+$$\begin{bmatrix} 1 & 1 \\ 2 & 2 \end{bmatrix} \xrightarrow{R_2 - 2R_1} \begin{bmatrix} 1 & 1 \\ 0 & 0 \end{bmatrix}$$
+<br />
+The second row is entirely zero, indicating infinitely many solutions (1 degree of freedom).
+
+---
+
+## The 3 Rules of Row Echelon Form
+
+A matrix is in Row Echelon Form (REF) if:
+
+1. Each **pivot** (diagonal element) is 0 or 1
+2. Everything **below the diagonal** is 0
+3. Everything **above the diagonal**:
+   - Can be any value if the pivot is 1
+   - Must be 0 if the pivot is 0
+
+| | REF | RREF |
+|---|---|---|
+| Below diagonal | 0 | 0 |
+| Above diagonal | free | **0** |
+| Diagonal (pivot) | 0 or 1 | 0 or **1** |
+
+---
+
+## Row Operations That Preserve Singularity
+
+The operations applied to equations can be applied equally to matrix rows. Crucially, these operations **do not change the singularity** of the matrix.
+
+| Operation | Example | Preserves singularity? |
+|---|---|---|
+| Swap two rows | $R_1 \leftrightarrow R_2$ | ✅ Yes |
+| Add one row to another | $R_2 \leftarrow R_2 + R_1$ | ✅ Yes |
+| Multiply a row by a scalar | $R_1 \leftarrow 3R_1$ | ✅ Yes |
+| Add a constant to all elements of a row | $R_1 \leftarrow R_1 + 5$ | ❌ No |
+
+> **Note**: Adding a fixed constant to every element of a row is not a valid row operation — it can change the singularity of the matrix.
+
+---
+
+## Matrix Rank
+
+**Rank** represents the **amount of independent information** a matrix contains.
+
+- After converting to REF, the **number of non-zero rows** equals the rank
+- Equivalently: the maximum number of linearly independent rows
+<br />
+$$\begin{bmatrix} 1 & 2 \\ 3 & 4 \end{bmatrix} \xrightarrow{\text{REF}} \begin{bmatrix} 1 & 2 \\ 0 & -2 \end{bmatrix} \quad \Rightarrow \quad \text{rank} = 2 \quad \text{(non-singular)}$$
+<br />
+$$\begin{bmatrix} 1 & 2 \\ 2 & 4 \end{bmatrix} \xrightarrow{\text{REF}} \begin{bmatrix} 1 & 2 \\ 0 & 0 \end{bmatrix} \quad \Rightarrow \quad \text{rank} = 1 \quad \text{(singular)}$$
+
+### Rank and the Number of Solutions
+
+For an $n \times n$ matrix ($n$ variables, $n$ equations):
+
+| Rank | Number of solutions | System type |
+|---|---|---|
+| $\text{rank} = n$ | Exactly 1 | Non-singular |
+| $\text{rank} < n$ | 0 or infinitely many | Singular |
+
+---
+
+## Gaussian Elimination
+
+Gaussian elimination is a systematic algorithm that applies row operations to an **augmented matrix** — the coefficient matrix combined with the constants column — to solve a system.
+
+### Step-by-Step Example
+
+$$\begin{cases} x + 2y + z = 7 \\ 2x + y + z = 8 \\ x + y + 2z = 8 \end{cases}$$
+<br />
+**Augmented matrix:**
+<br />
+$$\left[\begin{array}{ccc|c} 1 & 2 & 1 & 7 \\ 2 & 1 & 1 & 8 \\ 1 & 1 & 2 & 8 \end{array}\right]$$
+<br />
+**Step 1** — $R_2 \leftarrow R_2 - 2R_1$, $R_3 \leftarrow R_3 - R_1$:
+<br />
+$$\left[\begin{array}{ccc|c} 1 & 2 & 1 & 7 \\ 0 & -3 & -1 & -6 \\ 0 & -1 & 1 & 1 \end{array}\right]$$
+<br />
+**Step 2** — $R_3 \leftarrow R_3 - \frac{1}{3}R_2$:
+<br />
+$$\left[\begin{array}{ccc|c} 1 & 2 & 1 & 7 \\ 0 & -3 & -1 & -6 \\ 0 & 0 & \frac{4}{3} & 3 \end{array}\right]$$
+<br />
+**Row Echelon Form (REF)** is now complete.
+
+**Step 3 — Back Substitution:**
+<br />
+$$\frac{4}{3}z = 3 \Rightarrow z = \frac{9}{4}$$
+<br />
+$$-3y - \frac{9}{4} = -6 \Rightarrow y = \frac{5}{4}$$
+<br />
+$$x + 2 \cdot \frac{5}{4} + \frac{9}{4} = 7 \Rightarrow x = \frac{9}{4}$$
+
+> **Algorithm summary**: Forward elimination builds the REF → Back substitution yields the solution.
+
+---
+
+## Key Concepts Summary
+
+| Concept | Description |
+|---|---|
+| **Elimination** | Add or subtract equations to cancel out variables |
+| **Row Echelon Form (REF)** | Intermediate matrix form with zeros below the diagonal |
+| **Reduced Row Echelon Form (RREF)** | Fully solved form with zeros both above and below the diagonal |
+| **Rank** | Number of non-zero rows = amount of independent information |
+| **Gaussian Elimination** | Systematic method applying row operations to an augmented matrix |
+| **Degrees of Freedom** | Number of freely choosable variables (in a singular system) |
+
+---
+
+<br />
+
+## Quiz
+
+**Q1. Solve the following system using elimination.**
+<br />
+$$\begin{cases} 3x + 2y = 1 \\ x - y = 3 \end{cases}$$
+<br />
+<details>
+<summary>Show answer</summary>
+
+$R_1 \leftarrow R_1 - 3R_2$: $(3x + 2y) - 3(x - y) = 1 - 9$
+
+$5y = -8 \Rightarrow y = -\frac{8}{5}$
+
+$x = 3 + y = 3 - \frac{8}{5} = \frac{7}{5}$
+
+**Solution:** $x = \dfrac{7}{5},\ y = -\dfrac{8}{5}$
+
+</details>
+
+---
+
+**Q2. Convert the following matrix to Row Echelon Form (REF) and find its rank.**
+<br />
+$$\begin{bmatrix} 1 & 2 & 3 \\ 2 & 4 & 6 \\ 0 & 1 & 1 \end{bmatrix}$$
+<br />
+<details>
+<summary>Show answer</summary>
+
+$R_2 \leftarrow R_2 - 2R_1$:
+<br />
+$$\begin{bmatrix} 1 & 2 & 3 \\ 0 & 0 & 0 \\ 0 & 1 & 1 \end{bmatrix}$$
+<br />
+$R_2 \leftrightarrow R_3$ (swap rows):
+<br />
+$$\begin{bmatrix} 1 & 2 & 3 \\ 0 & 1 & 1 \\ 0 & 0 & 0 \end{bmatrix}$$
+<br />
+There are 2 non-zero rows, so **rank = 2** (singular matrix).
+
+</details>
+
+---
+
+**Q3. Which of the following operations does NOT preserve the singularity of a matrix?**
+
+1. Swap two rows
+2. Add one row to another
+3. Add 5 to every element in a row
+4. Multiply a row by 3
+
+<details>
+<summary>Show answer</summary>
+
+**Option 3** — Adding a fixed constant to all elements of a row is not a valid equation operation and can change the singularity of the matrix.
+
+Options 1, 2, and 4 are all valid row operations that preserve singularity.
+
+</details>
+
+---
+
+**Q4. Determine the rank and solution type for the following system.**
+<br />
+$$\begin{cases} x + y = 3 \\ 2x + 2y = 6 \\ 3x + 3y = 9 \end{cases}$$
+<br />
+<details>
+<summary>Show answer</summary>
+
+Augmented matrix:
+<br />
+$$\left[\begin{array}{cc|c} 1 & 1 & 3 \\ 2 & 2 & 6 \\ 3 & 3 & 9 \end{array}\right]$$
+<br />
+After applying $R_2 \leftarrow R_2 - 2R_1$ and $R_3 \leftarrow R_3 - 3R_1$:
+<br />
+$$\left[\begin{array}{cc|c} 1 & 1 & 3 \\ 0 & 0 & 0 \\ 0 & 0 & 0 \end{array}\right]$$
+<br />
+**rank = 1**, degrees of freedom = 1 → **Infinitely many solutions** (singular system)
+
+All three equations carry the same information.
+
+</details>
+
+---
+
+In the next post, we'll cover **vector operations (addition, subtraction, dot product, norm)**, **linear transformations**, **matrix multiplication**, **matrix inverses**, and how all of this connects to **neural networks (perceptrons)**.

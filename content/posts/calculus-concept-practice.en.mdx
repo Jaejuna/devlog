@@ -1,0 +1,405 @@
+---
+title: "Calculus Concept Practice: Problems You Encounter in ML Optimization"
+date: "2026-03-06"
+category: "MMD"
+tags: ["미적분", "머신러닝", "과제", "최적화", "역전파", "면접준비"]
+excerpt: "A collection of concept exercises applying differentiation, loss function optimization, gradient descent, and backpropagation to real-world machine learning scenarios. Each problem is grounded in situations you commonly encounter when training models in practice."
+readTime: 10
+---
+
+This post is a set of practice problems applying the concepts covered in [Calculus Chapters 1–3](/blog/calculus-1) to **real-world machine learning scenarios**. The focus is on **applying and interpreting** concepts rather than on symbolic computation.
+
+---
+
+## Part 1. Differentiation and Activation Functions
+
+### Problem 1-1. Chain Rule and Activation Function Derivatives
+
+ReLU, a commonly used activation function in deep learning, is defined as follows.
+<br />
+$$\text{ReLU}(x) = \max(0, x)$$
+<br />
+What is $\frac{d \text{ReLU}}{dx}$ during backpropagation, and what does it mean for training?
+
+<details>
+<summary>Show Answer</summary>
+<br />
+$$\frac{d \text{ReLU}}{dx} = \begin{cases} 1 & x > 0 \\ 0 & x \leq 0 \end{cases}$$
+<br />
+**Training implications**:
+
+- When $x > 0$, the gradient **passes through unchanged** → error signals propagate to deeper layers
+- When $x \leq 0$, the gradient is **0** → that neuron receives no update
+
+This is known as the **Dead ReLU** problem. Once a neuron's output becomes permanently 0, it will never activate again.
+
+**Solutions**: Use Leaky ReLU (outputs $0.01x$ instead of $0$ when $x \leq 0$), ELU, GELU, etc.
+
+**Comparison with Sigmoid**: The derivative of sigmoid is $\sigma(1-\sigma) \leq 0.25$, which is always less than 1. In deep networks, this causes gradients to shrink with each layer — the **vanishing gradient** problem. ReLU avoids this.
+
+</details>
+
+---
+
+### Problem 1-2. Interpreting Loss Function Derivatives
+
+Compare the derivatives of these two loss functions.
+
+- **MSE**: $\mathcal{L} = \frac{1}{2}(\hat{y} - y)^2$
+- **MAE**: $\mathcal{L} = |\hat{y} - y|$
+
+What does each look like when differentiated with respect to $\hat{y}$? What practical differences does this create?
+
+<details>
+<summary>Show Answer</summary>
+
+**MSE derivative:**
+<br />
+$$\frac{d\mathcal{L}}{d\hat{y}} = \hat{y} - y$$
+<br />
+**MAE derivative:**
+<br />
+$$\frac{d\mathcal{L}}{d\hat{y}} = \text{sign}(\hat{y} - y) = \begin{cases} +1 & \hat{y} > y \\ -1 & \hat{y} < y \end{cases}$$
+
+| Property | MSE | MAE |
+|---|---|---|
+| Gradient magnitude | Proportional to error (large error → large update) | Always ±1 (constant update) |
+| Outlier sensitivity | High (squared error → outliers over-penalized) | Low (linear error) |
+| Near the minimum | Gradient → 0 (smooth convergence) | Gradient changes sign abruptly |
+| Differentiability | Everywhere | Discontinuous at $\hat{y} = y$ |
+
+**Practical selection criteria**:
+- Data with many outliers → MAE (minimizes outlier influence)
+- Want to penalize outliers → MSE
+- Robust to outliers but still differentiable → Huber Loss (combines MSE and MAE)
+
+</details>
+
+---
+
+### Problem 1-3. Tracing the Chain Rule
+
+Differentiate $f(x) = \log(\sigma(wx + b))$ with respect to $w$. ($\sigma$ = sigmoid)
+
+<details>
+<summary>Show Answer</summary>
+
+Applying the chain rule step by step:
+<br />
+$$f = \log(u), \quad u = \sigma(v), \quad v = wx + b$$
+<br />
+$$\frac{df}{dw} = \frac{df}{du} \cdot \frac{du}{dv} \cdot \frac{dv}{dw}$$
+<br />
+Each term:
+- $\frac{df}{du} = \frac{1}{u} = \frac{1}{\sigma(v)}$
+- $\frac{du}{dv} = \sigma(v)(1 - \sigma(v))$
+- $\frac{dv}{dw} = x$
+
+Combining:
+<br />
+$$\frac{df}{dw} = \frac{1}{\sigma(v)} \cdot \sigma(v)(1 - \sigma(v)) \cdot x = (1 - \sigma(wx+b)) \cdot x$$
+<br />
+**Intuition**: In a classification model, the gradient of the loss takes the form $(1 - \hat{y}) \cdot x$ — the further off the prediction (the lower the probability), the larger the update.
+
+</details>
+
+---
+
+## Part 2. Loss Function Optimization
+
+### Problem 2-1. Why Log Loss Instead of MSE?
+
+Explain why **log loss** is preferred over MSE for classification problems from two perspectives: (1) probabilistic, and (2) optimization.
+
+<details>
+<summary>Show Answer</summary>
+
+**(1) Probabilistic perspective — MLE**
+
+The sigmoid output $\hat{y}$ is a probability. The likelihood over $n$ data points:
+<br />
+$$L = \prod_{i=1}^{n} \hat{y}_i^{y_i} (1 - \hat{y}_i)^{1-y_i}$$
+<br />
+Maximizing this = maximizing log-likelihood = **minimizing negative log loss**:
+<br />
+$$-\log L = -\sum_i [y_i \log \hat{y}_i + (1-y_i)\log(1-\hat{y}_i)]$$
+<br />
+MSE is equivalent to MLE under a Gaussian distribution assumption, so it is not a natural fit for probability outputs in the range (0, 1).
+
+**(2) Optimization perspective — gradient shape**
+
+Using MSE for classification gives:
+<br />
+$$\frac{\partial \text{MSE}}{\partial w} = (\hat{y} - y) \cdot \sigma'(z) \cdot x = (\hat{y} - y) \cdot \hat{y}(1 - \hat{y}) \cdot x$$
+<br />
+When $\hat{y}$ is close to 0 or 1, $\sigma'(z) \approx 0$ → **vanishing gradient**.
+
+Using log loss instead:
+<br />
+$$\frac{\partial \text{LogLoss}}{\partial w} = (\hat{y} - y) \cdot x$$
+<br />
+The $\sigma'(z)$ term cancels out cleanly, enabling learning **without gradient vanishing**.
+
+</details>
+
+---
+
+### Problem 2-2. Analyzing the Optimal Learning Rate with Partial Derivatives
+
+Given a loss function of the form $L(\alpha) = \alpha^2 - 4\alpha + 5$, find the optimal learning rate $\alpha^*$. (Here $\alpha$ is the search variable for finding the learning rate.)
+
+<details>
+<summary>Show Answer</summary>
+<br />
+$$L'(\alpha) = 2\alpha - 4 = 0$$
+<br />
+$$\alpha^* = 2$$
+<br />
+$$L''(\alpha) = 2 > 0 \Rightarrow \text{confirmed minimum}$$
+<br />
+$$L(2) = 4 - 8 + 5 = 1$$
+<br />
+**Interpretation**: This example illustrates the principle behind **Line Search**. In gradient descent, the direction of each step is determined by the gradient, but the step size (learning rate) is chosen to minimize the loss along that direction. This is called **Optimal Line Search**, and it converges faster than a fixed learning rate.
+
+</details>
+
+---
+
+### Problem 2-3. Minimizing a Multivariate Loss Function
+
+Find the $(m, b)$ that minimizes the loss function $E(m, b) = (m + b - 3)^2 + (2m + b - 5)^2$.
+
+<details>
+<summary>Show Answer</summary>
+
+**Setting partial derivatives to 0:**
+<br />
+$$\frac{\partial E}{\partial m} = 2(m+b-3) + 4(2m+b-5) = 10m + 6b - 26 = 0$$
+<br />
+$$\frac{\partial E}{\partial b} = 2(m+b-3) + 2(2m+b-5) = 6m + 4b - 16 = 0$$
+<br />
+**Solving the system of equations:**
+<br />
+$$10m + 6b = 26 \quad \cdots (1)$$
+$$6m + 4b = 16 \quad \cdots (2)$$
+<br />
+$(1) \times 2 - (2) \times 3$:
+<br />
+$$20m - 18m = 52 - 48 \Rightarrow 2m = 4 \Rightarrow m = 2$$
+<br />
+$$b = \frac{16 - 12}{4} = 1$$
+<br />
+**Verification**: Plugging the line $y = 2x + 1$ into the points $(1, 3)$ and $(2, 5)$ gives exact matches — for this dataset, the analytical minimum yields zero error.
+
+</details>
+
+---
+
+## Part 3. Gradient Descent and Backpropagation
+
+### Problem 3-1. Diagnosing Learning Rate Issues
+
+During model training, you observe the following. What is the problem in each case, and how would you fix it?
+
+**(a)** The loss drops sharply at first, then suddenly becomes `NaN`.
+
+**(b)** The loss decreases very slowly and hasn't converged even after thousands of epochs.
+
+**(c)** The loss oscillates and hovers around a fixed value without descending further.
+
+<details>
+<summary>Show Answer</summary>
+
+**(a) NaN — Learning rate too large**
+
+Gradients are exploding, or the learning rate is so large that the loss diverges to $\infty$, resulting in `NaN`.
+
+Fix: Reduce the learning rate by 10×, or apply **Gradient Clipping**.
+
+**(b) Slow convergence — Learning rate too small**
+
+The step size is so tiny that it takes an enormous number of steps to reach the minimum.
+
+Fix: Increase the learning rate by 10×, or use a **learning rate scheduler** (large at the start, small toward the end).
+
+**(c) Oscillation — Learning rate slightly too large, or near a minimum**
+
+The optimizer keeps overshooting and bouncing back and forth around the minimum.
+
+Fix: Reduce the learning rate by 2–5×, or use **Momentum** or the **Adam optimizer**.
+
+</details>
+
+---
+
+### Problem 3-2. Computing Backpropagation Gradients
+
+For a perceptron classifier with $\hat{y} = \sigma(wx + b)$ and log loss $\mathcal{L} = -[y \log \hat{y} + (1-y)\log(1-\hat{y})]$:
+
+Given $w = 0.5$, $b = 0.1$, $x = 2$, $y = 1$, what is $\frac{\partial \mathcal{L}}{\partial w}$?
+
+<details>
+<summary>Show Answer</summary>
+
+**Step 1: Forward pass**
+<br />
+$$z = wx + b = 0.5 \times 2 + 0.1 = 1.1$$
+<br />
+$$\hat{y} = \sigma(1.1) = \frac{1}{1 + e^{-1.1}} \approx 0.7503$$
+<br />
+**Step 2: Backpropagation**
+
+Gradient of log loss with respect to $w$:
+<br />
+$$\frac{\partial \mathcal{L}}{\partial w} = (\hat{y} - y) \cdot x = (0.7503 - 1) \times 2 = -0.4994$$
+<br />
+**Interpretation**: The gradient is negative, so **increasing** $w$ will reduce the loss.
+<br />
+$$w_{\text{new}} = w - \alpha \cdot (-0.4994) = 0.5 + 0.4994\alpha$$
+<br />
+With learning rate $\alpha = 0.1$, $w_{\text{new}} \approx 0.5499$.
+
+</details>
+
+---
+
+### Problem 3-3. Gradient Descent at a Saddle Point
+
+The point $(0, 0)$ of the function $f(x, y) = x^2 - y^2$ is a saddle point. What happens when you apply gradient descent starting from $(0.01, 0)$?
+
+<details>
+<summary>Show Answer</summary>
+
+**Computing the gradient:**
+<br />
+$$\nabla f = \begin{bmatrix} 2x \\ -2y \end{bmatrix}$$
+<br />
+At the initial point $(0.01, 0)$:
+<br />
+$$\nabla f(0.01, 0) = \begin{bmatrix} 0.02 \\ 0 \end{bmatrix}$$
+<br />
+**Update direction:**
+<br />
+$$x_{\text{new}} = 0.01 - \alpha \times 0.02 \quad \text{(x direction: toward origin)}$$
+$$y_{\text{new}} = 0 - \alpha \times 0 = 0 \quad \text{(y direction: no change)}$$
+<br />
+In the $x$ direction, the optimizer moves toward the local minimum (origin), but $y$ stays fixed at 0 and the process converges to the origin — which is actually a **local maximum** in the $y$ direction.
+
+**Conclusion**: Gradient descent can converge to saddle points depending on the initialization. In deep learning, the noise from **SGD (stochastic gradient descent)** and the use of **momentum** help escape saddle points.
+
+</details>
+
+---
+
+### Problem 3-4. Classifying Critical Points with the Hessian
+
+Find the stationary points (where gradient = 0) of $f(x, y) = x^2 + 4xy + y^2$, and use the Hessian to classify each point.
+
+<details>
+<summary>Show Answer</summary>
+
+**Setting gradient to 0:**
+<br />
+$$\frac{\partial f}{\partial x} = 2x + 4y = 0$$
+$$\frac{\partial f}{\partial y} = 4x + 2y = 0$$
+<br />
+$$x = 0, \quad y = 0$$
+<br />
+**Computing the Hessian:**
+<br />
+$$H = \begin{bmatrix} \frac{\partial^2 f}{\partial x^2} & \frac{\partial^2 f}{\partial x \partial y} \\ \frac{\partial^2 f}{\partial y \partial x} & \frac{\partial^2 f}{\partial y^2} \end{bmatrix} = \begin{bmatrix} 2 & 4 \\ 4 & 2 \end{bmatrix}$$
+<br />
+**Computing eigenvalues:**
+<br />
+$$\det(H - \lambda I) = (2-\lambda)^2 - 16 = 0$$
+$$\lambda^2 - 4\lambda - 12 = 0$$
+$$\lambda = 6 \quad \text{or} \quad \lambda = -2$$
+<br />
+Eigenvalues of mixed sign ($6$ and $-2$) → **saddle point**.
+
+</details>
+
+---
+
+<br />
+
+## Quiz: Integrating the Concepts
+
+**Q1. Which differentiation rule does Backpropagation use?**
+
+1. Integration by substitution
+2. Chain Rule
+3. Product Rule only
+4. L'Hôpital's Rule
+
+<details>
+<summary>Show Answer</summary>
+
+**Answer: 2 — Chain Rule**
+
+Backpropagation repeatedly applies the chain rule to differentiate composite functions step by step, propagating gradients from the output layer back toward the input layer.
+
+</details>
+
+---
+
+**Q2. What happens if you set the learning rate to 0?**
+
+<details>
+<summary>Show Answer</summary>
+<br />
+$$w_{\text{new}} = w_{\text{old}} - 0 \cdot \nabla L = w_{\text{old}}$$
+<br />
+The parameters are never updated. The model stays in its initial state and **no learning occurs**.
+
+Conversely, a learning rate that is too large causes divergence, while one that is too small results in extremely slow convergence. In practice, a starting range of $10^{-4}$ to $10^{-2}$ is typical.
+
+</details>
+
+---
+
+**Q3. Why does the sigmoid function cause the "vanishing gradient" problem?**
+
+<details>
+<summary>Show Answer</summary>
+
+Sigmoid derivative: $\sigma'(z) = \sigma(z)(1-\sigma(z))$
+
+- When $z$ is very large or very small, $\sigma(z) \to 1$ or $\sigma(z) \to 0$
+- Therefore $\sigma'(z) \to 0$
+
+During backpropagation, each layer's gradient is multiplied by $\sigma'$. As the network gets deeper:
+<br />
+$$\text{gradient} \propto \sigma'_1 \cdot \sigma'_2 \cdots \sigma'_n \to 0$$
+<br />
+Gradients decrease exponentially, leaving earlier layers nearly untrained. **ReLU** avoids this because $\sigma' = 1$ in the positive region.
+
+</details>
+
+---
+
+**Q4. Explain why Newton's method converges faster than gradient descent, and why it is rarely used in deep learning.**
+
+<details>
+<summary>Show Answer</summary>
+
+**Why it's faster**:
+
+Newton's method uses $x_{\text{new}} = x - \frac{f'}{f''}$, incorporating **second-order derivative (curvature) information**. Knowing the curvature at the current position allows the method to estimate how far to jump toward the minimum in a single step, resulting in much faster convergence (quadratic convergence).
+
+Gradient descent uses only first-order derivatives, so it simply moves a little in the direction of the gradient (linear convergence).
+
+**Why it's not used in deep learning**:
+
+The multivariate Newton's method requires computing the inverse of the **Hessian matrix** $H$:
+<br />
+$$\mathbf{x}_{\text{new}} = \mathbf{x} - H^{-1} \nabla f$$
+<br />
+With $n$ parameters, the Hessian is $n \times n$ — for a model like GPT, that's billions × billions.
+
+- Computational complexity: $O(n^3)$ (matrix inversion)
+- Memory: $O(n^2)$
+
+For a model with 1 billion parameters, this is completely infeasible. In practice, methods that approximate the Hessian — such as **L-BFGS** and **Adam** — are used instead.
+
+</details>

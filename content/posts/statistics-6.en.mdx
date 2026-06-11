@@ -1,0 +1,479 @@
+---
+title: "Statistics Fundamentals Chapter 6: Statistical Machine Learning"
+date: "2026-03-04"
+category: "데이터사이언스"
+tags: ["통계", "머신러닝", "랜덤포레스트", "부스팅", "Python"]
+excerpt: "A hands-on walkthrough of KNN, decision trees, random forests, AdaBoost, and gradient boosting — the core concepts behind tree-based ensemble models, complete with code examples."
+readTime: 13
+---
+
+Chapter 5 covered the fundamentals of classification algorithms. Chapter 6 moves on to distance-based models (KNN) and tree-based ensemble models (random forests, boosting). These are among the most widely used algorithms in modern machine learning competitions and production systems.
+
+> This post is based on Chapter 6 of *Practical Statistics for Data Scientists*.
+
+## 6.1 K-Nearest Neighbors (KNN)
+
+When a new data point arrives, KNN looks up the $k$ closest neighbors in the training set and uses them to make a prediction.
+
+| Term | Description |
+|------|------|
+| **Neighbor** | A training data point that is close in distance to the query point |
+| **KNN (classification)** | Predicts the majority class among the $k$ nearest neighbors |
+| **KNN (regression)** | Predicts the mean value of the $k$ nearest neighbors |
+| **Standardization** | Rescaling features before computing distances — mandatory preprocessing |
+
+### Distance Metric Comparison
+
+| Metric | Formula | Characteristics |
+|------|------|------|
+| **Euclidean distance** | $\sqrt{\sum(x_i - y_i)^2}$ | Straight-line distance; most common |
+| **Manhattan distance** | $\sum \lvert x_i - y_i \rvert$ | Grid-path distance; more robust to outliers |
+| **Cosine distance** | $1 - \dfrac{\sum x_i y_i}{\sqrt{\sum x_i^2}\sqrt{\sum y_i^2}}$ | Directional similarity; well-suited for text analysis |
+
+$$d_{\text{Euclid}}(x, y) = \sqrt{\sum_{i=1}^{n}(x_i - y_i)^2}$$
+<br />
+$$d_{\text{Manhattan}}(x, y) = \sum_{i=1}^{n} |x_i - y_i|$$
+
+### Z-Score Standardization
+
+$$z = \frac{x - \mu}{\sigma}$$
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib
+from sklearn.neighbors import KNeighborsClassifier, KNeighborsRegressor
+from sklearn.datasets import make_classification, make_regression
+from sklearn.model_selection import train_test_split, cross_val_score
+from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import accuracy_score
+
+matplotlib.rcParams['font.family'] = 'AppleGothic'
+matplotlib.rcParams['axes.unicode_minus'] = False
+np.random.seed(42)
+
+# KNN classification
+X, y = make_classification(n_samples=500, n_features=2, n_informative=2,
+                            n_redundant=0, random_state=42)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+
+scaler = StandardScaler()
+X_train_sc = scaler.fit_transform(X_train)
+X_test_sc  = scaler.transform(X_test)
+
+# Performance vs. k value
+k_range = range(1, 31)
+cv_scores = []
+for k in k_range:
+    knn = KNeighborsClassifier(n_neighbors=k)
+    scores = cross_val_score(knn, X_train_sc, y_train, cv=5, scoring='accuracy')
+    cv_scores.append(scores.mean())
+
+best_k = k_range[np.argmax(cv_scores)]
+print(f"Best k: {best_k}, CV accuracy: {max(cv_scores):.4f}")
+
+knn_best = KNeighborsClassifier(n_neighbors=best_k)
+knn_best.fit(X_train_sc, y_train)
+print(f"Test accuracy: {accuracy_score(y_test, knn_best.predict(X_test_sc)):.4f}")
+
+# Visualize performance vs. k
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 4))
+
+ax1.plot(k_range, cv_scores, 'b-o', markersize=4)
+ax1.axvline(best_k, color='red', linestyle='--', label=f'Best k={best_k}')
+ax1.set_xlabel('k (number of neighbors)')
+ax1.set_ylabel('CV accuracy')
+ax1.set_title('Classification performance vs. k')
+ax1.legend()
+ax1.grid(alpha=0.3)
+
+# Decision boundary visualization (k=1 vs. best k)
+xx, yy = np.meshgrid(np.linspace(-3, 3, 200), np.linspace(-3, 3, 200))
+grid = np.c_[xx.ravel(), yy.ravel()]
+
+for i, (k, title) in enumerate([(1, 'k=1 (overfitting)'), (best_k, f'k={best_k} (optimal)')]):
+    knn_tmp = KNeighborsClassifier(n_neighbors=k)
+    knn_tmp.fit(X_train_sc, y_train)
+    Z = knn_tmp.predict(grid).reshape(xx.shape)
+
+    ax = ax1 if i == 0 else ax2
+    if i == 1:
+        ax2.contourf(xx, yy, Z, alpha=0.3, cmap='RdBu')
+        ax2.scatter(X_test_sc[:, 0], X_test_sc[:, 1], c=y_test,
+                    cmap='RdBu', edgecolors='k', s=30, alpha=0.7)
+        ax2.set_title(title)
+        ax2.set_xlabel('Feature 1')
+        ax2.set_ylabel('Feature 2')
+
+plt.tight_layout()
+plt.show()
+
+# Distance metric comparison
+print("\n=== Performance by distance metric ===")
+for metric in ['euclidean', 'manhattan', 'cosine']:
+    knn_m = KNeighborsClassifier(n_neighbors=best_k, metric=metric)
+    score = cross_val_score(knn_m, X_train_sc, y_train, cv=5).mean()
+    print(f"  {metric}: {score:.4f}")
+```
+
+> **Real-world use:** KNN is used in recommendation systems (finding similar users), anomaly detection, and image search. Without standardization, features with large scales will dominate the distance calculation, so preprocessing is essential. A key drawback is that prediction slows down as the dataset grows larger ($n$ increases).
+
+## 6.2 Tree Models
+
+Decision trees make rule-based predictions by repeatedly partitioning the data — an intuitive approach that is easy to interpret.
+
+| Term | Description |
+|------|------|
+| **Recursive partitioning** | Repeatedly splitting data into binary subsets to grow the tree |
+| **Split value** | The threshold condition at each branch (e.g., $x_j \leq c$) |
+| **Internal node** | A branch point that divides data based on a condition |
+| **Leaf** | A terminal node that outputs the final prediction (class label or mean value) |
+| **Pruning** | Removing unimportant nodes to prevent overfitting |
+
+### Node Split Criterion: Impurity Measures
+
+$$\text{Gini impurity} = 1 - \sum_{k=1}^{K} p_k^2$$
+<br />
+$$\text{Entropy} = -\sum_{k=1}^{K} p_k \log_2 p_k$$
+<br />
+$p_k$: proportion of class $k$ within the node. As the node becomes purer (single class), impurity approaches 0.
+
+### Loss Function Comparison
+
+| Loss function | Formula | Used for |
+|-----------|------|------|
+| **MSE** | $\frac{1}{n}\sum(y_i - \hat{y}_i)^2$ | Regression |
+| **MAE** | $\frac{1}{n}\sum\lvert y_i - \hat{y}_i \rvert$ | Regression (robust to outliers) |
+| **Log Loss** | $-\frac{1}{n}\sum[y_i \log\hat{p}_i + (1-y_i)\log(1-\hat{p}_i)]$ | Binary classification |
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib
+from sklearn.tree import DecisionTreeClassifier, plot_tree, export_text
+from sklearn.datasets import load_iris
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score
+
+matplotlib.rcParams['font.family'] = 'AppleGothic'
+matplotlib.rcParams['axes.unicode_minus'] = False
+np.random.seed(42)
+
+iris = load_iris()
+X, y = iris.data, iris.target
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+
+# Performance vs. tree depth (observing overfitting)
+train_scores, test_scores = [], []
+depths = range(1, 15)
+
+for d in depths:
+    dt = DecisionTreeClassifier(max_depth=d, random_state=42)
+    dt.fit(X_train, y_train)
+    train_scores.append(accuracy_score(y_train, dt.predict(X_train)))
+    test_scores.append(accuracy_score(y_test,  dt.predict(X_test)))
+
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 5))
+
+ax1.plot(depths, train_scores, 'b-o', markersize=5, label='Train accuracy')
+ax1.plot(depths, test_scores, 'r-o', markersize=5, label='Test accuracy')
+ax1.axvline(np.argmax(test_scores) + 1, color='gray', linestyle='--',
+            label=f'Optimal depth={np.argmax(test_scores)+1}')
+ax1.set_xlabel('Max tree depth')
+ax1.set_ylabel('Accuracy')
+ax1.set_title('Tree depth vs. overfitting')
+ax1.legend()
+ax1.grid(alpha=0.3)
+
+# Visualize the optimal tree
+best_depth = np.argmax(test_scores) + 1
+dt_best = DecisionTreeClassifier(max_depth=best_depth, random_state=42)
+dt_best.fit(X_train, y_train)
+
+plot_tree(dt_best, feature_names=iris.feature_names, class_names=iris.target_names,
+          filled=True, rounded=True, ax=ax2, fontsize=9)
+ax2.set_title(f'Decision tree (max_depth={best_depth})')
+
+plt.tight_layout()
+plt.show()
+
+# Manually verify impurity calculations
+print("=== Impurity calculations ===")
+p = np.array([0.5, 0.5])  # Perfectly mixed node (maximum impurity)
+gini = 1 - np.sum(p**2)
+entropy = -np.sum(p * np.log2(p + 1e-10))
+print(f"p=[0.5, 0.5]: Gini={gini:.3f}, Entropy={entropy:.3f}")
+
+p = np.array([1.0, 0.0])  # Pure node (minimum impurity)
+gini = 1 - np.sum(p**2)
+entropy = -np.sum(p * np.log2(p + 1e-10))
+print(f"p=[1.0, 0.0]: Gini={gini:.3f}, Entropy={entropy:.3f}")
+
+print("\n=== Decision rules summary ===")
+print(export_text(dt_best, feature_names=list(iris.feature_names)))
+```
+
+> **Real-world use:** Decision trees produce human-readable rules, making them useful in medical diagnosis, credit scoring, and customer segmentation where interpretability matters. That said, a single tree is sensitive to changes in data and prone to overfitting, so in practice they are almost always extended to ensembles (random forests, boosting).
+
+## 6.3 Bagging and Random Forests
+
+Averaging many trees addresses the high variance problem of a single decision tree.
+
+| Term | Description |
+|------|------|
+| **Ensemble** | Combining multiple models to produce predictions that are more stable and accurate than any single model |
+| **Bagging** | Draw multiple bootstrap samples, train a model on each, then aggregate their predictions |
+| **Random forest** | Bagging + random feature subset at each split → reduces correlation between trees |
+| **Feature importance** | Each feature's contribution to prediction, measured by total impurity reduction |
+| **OOB error** | Out-of-bag error — an internal validation estimate using samples excluded from each bootstrap |
+
+### Feature Importance
+
+$$\text{Importance}(x_j) = \sum_{\text{node } t,\ x_j \text{ used}} \Delta\text{Impurity}(t)$$
+<br />
+This is the sum of impurity reductions across all splits in the forest that used feature $x_j$.
+
+```python
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import matplotlib
+from sklearn.ensemble import RandomForestClassifier, BaggingClassifier
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.datasets import make_classification
+from sklearn.model_selection import train_test_split, cross_val_score
+from sklearn.metrics import accuracy_score
+
+matplotlib.rcParams['font.family'] = 'AppleGothic'
+matplotlib.rcParams['axes.unicode_minus'] = False
+np.random.seed(42)
+
+X, y = make_classification(n_samples=1000, n_features=15, n_informative=8,
+                            n_redundant=3, random_state=42)
+feature_names = [f'Feature{i+1}' for i in range(X.shape[1])]
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+
+# Single tree vs. bagging vs. random forest
+dt   = DecisionTreeClassifier(random_state=42)
+bag  = BaggingClassifier(estimator=DecisionTreeClassifier(), n_estimators=100,
+                         random_state=42, n_jobs=-1)
+rf   = RandomForestClassifier(n_estimators=100, random_state=42, n_jobs=-1,
+                              oob_score=True)
+
+for model, name in [(dt, 'Single tree'), (bag, 'Bagging'), (rf, 'Random forest')]:
+    model.fit(X_train, y_train)
+    train_acc = accuracy_score(y_train, model.predict(X_train))
+    test_acc  = accuracy_score(y_test,  model.predict(X_test))
+    print(f"{name}: train={train_acc:.4f}, test={test_acc:.4f}", end='')
+    if hasattr(model, 'oob_score_'):
+        print(f", OOB={model.oob_score_:.4f}", end='')
+    print()
+
+# Feature importance visualization
+importances = rf.feature_importances_
+idx = np.argsort(importances)[::-1]
+
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 5))
+
+# Feature importance bar chart
+ax1.bar(range(len(importances)), importances[idx], color='steelblue', alpha=0.8)
+ax1.set_xticks(range(len(importances)))
+ax1.set_xticklabels([feature_names[i] for i in idx], rotation=45, ha='right')
+ax1.set_ylabel('Importance (impurity reduction)')
+ax1.set_title('Random forest feature importance')
+ax1.grid(axis='y', alpha=0.3)
+
+# OOB error convergence as number of trees increases
+oob_errors = []
+for n_trees in range(1, 201, 5):
+    rf_tmp = RandomForestClassifier(n_estimators=n_trees, oob_score=True,
+                                    random_state=42, warm_start=True)
+    rf_tmp.set_params(n_estimators=n_trees)
+    rf_tmp.fit(X_train, y_train)
+    oob_errors.append(1 - rf_tmp.oob_score_)
+
+ax2.plot(range(1, 201, 5), oob_errors, 'b-', linewidth=2)
+ax2.set_xlabel('Number of trees (n_estimators)')
+ax2.set_ylabel('OOB error rate')
+ax2.set_title('OOB error convergence as trees increase')
+ax2.grid(alpha=0.3)
+
+plt.tight_layout()
+plt.show()
+
+# Confirm variance reduction from bagging (repeated experiments)
+print("\n=== Prediction variance comparison (10 runs) ===")
+for model, name in [(DecisionTreeClassifier(random_state=None),  'Single tree'),
+                    (RandomForestClassifier(n_estimators=100, random_state=None), 'Random forest')]:
+    accs = []
+    for _ in range(10):
+        model.fit(X_train, y_train)
+        accs.append(accuracy_score(y_test, model.predict(X_test)))
+    print(f"  {name}: mean={np.mean(accs):.4f}, std={np.std(accs):.4f}")
+```
+
+> **Real-world use:** Random forests deliver strong results in financial risk assessment, medical diagnosis, and marketing prediction. The OOB error provides a convenient generalization estimate without the need for a separate cross-validation step. Feature importance scores also help with feature selection by revealing which inputs drive predictions.
+
+## 6.4 Boosting
+
+While bagging trains models in parallel, boosting trains them **sequentially** — each new model corrects the errors of its predecessor.
+
+| Algorithm | Core idea | Characteristics |
+|---------|------------|------|
+| **AdaBoost** | Increase weights on misclassified samples | Sensitive to outliers |
+| **Gradient Boosting** | Fit a new tree to the residuals (negative gradient) | Flexible loss functions |
+| **Stochastic GB** | Subsample data at each iteration | Reduces overfitting, speeds up training |
+| **XGBoost / LightGBM** | Add regularization and optimization | State-of-the-art performance |
+
+### Gradient Boosting Update Rule
+
+$$F_m(x) = F_{m-1}(x) + \gamma_m h_m(x)$$
+<br />
+$h_m(x)$: the weak learner at step $m$ (fitted to the residuals of the previous step)
+$\gamma_m$: learning rate — a smaller value produces more stable updates but requires more iterations
+
+```python
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import matplotlib
+from sklearn.ensemble import (AdaBoostClassifier, GradientBoostingClassifier,
+                              RandomForestClassifier)
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.datasets import make_classification
+from sklearn.model_selection import train_test_split, cross_val_score
+from sklearn.metrics import accuracy_score
+
+matplotlib.rcParams['font.family'] = 'AppleGothic'
+matplotlib.rcParams['axes.unicode_minus'] = False
+np.random.seed(42)
+
+X, y = make_classification(n_samples=1000, n_features=15, n_informative=8,
+                            n_redundant=3, random_state=42)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+
+# Model comparison
+models = {
+    'Single tree':      DecisionTreeClassifier(max_depth=3, random_state=42),
+    'Random forest':    RandomForestClassifier(n_estimators=100, random_state=42, n_jobs=-1),
+    'AdaBoost':        AdaBoostClassifier(n_estimators=100, learning_rate=0.1, random_state=42),
+    'Gradient Boost':  GradientBoostingClassifier(n_estimators=100, learning_rate=0.1,
+                                                   max_depth=3, random_state=42),
+}
+
+print("=== Model performance comparison ===")
+results = {}
+for name, model in models.items():
+    model.fit(X_train, y_train)
+    train_acc = accuracy_score(y_train, model.predict(X_train))
+    test_acc  = accuracy_score(y_test,  model.predict(X_test))
+    cv_acc    = cross_val_score(model, X_train, y_train, cv=5).mean()
+    results[name] = {'train': train_acc, 'test': test_acc, 'CV': cv_acc}
+    print(f"  {name:<18}: train={train_acc:.4f}, test={test_acc:.4f}, CV={cv_acc:.4f}")
+
+# Learning curves vs. number of boosting rounds
+fig, axes = plt.subplots(1, 2, figsize=(14, 5))
+
+n_estimators_range = range(1, 201, 5)
+gb_train, gb_test = [], []
+ada_train, ada_test = [], []
+
+for n in n_estimators_range:
+    gb = GradientBoostingClassifier(n_estimators=n, learning_rate=0.1,
+                                    max_depth=3, random_state=42)
+    gb.fit(X_train, y_train)
+    gb_train.append(accuracy_score(y_train, gb.predict(X_train)))
+    gb_test.append(accuracy_score(y_test,  gb.predict(X_test)))
+
+    ada = AdaBoostClassifier(n_estimators=n, learning_rate=0.1, random_state=42)
+    ada.fit(X_train, y_train)
+    ada_train.append(accuracy_score(y_train, ada.predict(X_train)))
+    ada_test.append(accuracy_score(y_test,  ada.predict(X_test)))
+
+axes[0].plot(n_estimators_range, gb_train, 'b-', linewidth=1.5, label='GB train')
+axes[0].plot(n_estimators_range, gb_test,  'b--', linewidth=1.5, label='GB test')
+axes[0].plot(n_estimators_range, ada_train, 'r-', linewidth=1.5, label='Ada train')
+axes[0].plot(n_estimators_range, ada_test,  'r--', linewidth=1.5, label='Ada test')
+axes[0].set_xlabel('Iterations (n_estimators)')
+axes[0].set_ylabel('Accuracy')
+axes[0].set_title('Learning curves vs. boosting iterations')
+axes[0].legend()
+axes[0].grid(alpha=0.3)
+
+# Effect of learning rate
+lr_values = [0.001, 0.01, 0.05, 0.1, 0.3, 1.0]
+lr_test_scores = []
+for lr in lr_values:
+    gb = GradientBoostingClassifier(n_estimators=100, learning_rate=lr,
+                                    max_depth=3, random_state=42)
+    gb.fit(X_train, y_train)
+    lr_test_scores.append(accuracy_score(y_test, gb.predict(X_test)))
+
+axes[1].semilogx(lr_values, lr_test_scores, 'go-', markersize=8, linewidth=2)
+axes[1].set_xlabel('Learning rate (log scale)')
+axes[1].set_ylabel('Test accuracy')
+axes[1].set_title('Performance vs. learning rate (n_estimators=100)')
+axes[1].grid(alpha=0.3)
+for lr, score in zip(lr_values, lr_test_scores):
+    axes[1].annotate(f'{score:.3f}', (lr, score), textcoords='offset points',
+                     xytext=(0, 8), ha='center', fontsize=9)
+
+plt.tight_layout()
+plt.show()
+
+# XGBoost example (if installed)
+try:
+    from xgboost import XGBClassifier
+    xgb = XGBClassifier(n_estimators=100, learning_rate=0.1, max_depth=3,
+                        random_state=42, eval_metric='logloss', verbosity=0)
+    xgb.fit(X_train, y_train)
+    print(f"\nXGBoost test accuracy: {accuracy_score(y_test, xgb.predict(X_test)):.4f}")
+except ImportError:
+    print("\nXGBoost not installed: pip install xgboost")
+```
+
+### Hyperparameter Tuning Guide
+
+| Hyperparameter | Role | Recommended range |
+|------------|------|----------|
+| `n_estimators` | Number of trees (rounds) | 100–1000 (more is better, but gains plateau after convergence) |
+| `learning_rate` | Contribution of each tree | 0.01–0.3 (lower is more stable but requires more rounds) |
+| `max_depth` | Maximum depth of each tree | 3–8 (shallower trees reduce overfitting) |
+| `subsample` | Fraction of samples used per round | 0.6–0.9 (stochastic GB) |
+| `min_samples_leaf` | Minimum samples per leaf | 1–20 (higher values reduce overfitting) |
+
+```python
+from sklearn.model_selection import GridSearchCV
+
+# Hyperparameter search example
+param_grid = {
+    'n_estimators':  [50, 100, 200],
+    'learning_rate': [0.05, 0.1, 0.2],
+    'max_depth':     [2, 3, 5],
+}
+
+gb = GradientBoostingClassifier(random_state=42)
+grid_search = GridSearchCV(gb, param_grid, cv=5, scoring='accuracy',
+                           n_jobs=-1, verbose=0)
+grid_search.fit(X_train, y_train)
+
+print("=== Gradient Boosting hyperparameter tuning ===")
+print(f"Best params: {grid_search.best_params_}")
+print(f"Best CV accuracy: {grid_search.best_score_:.4f}")
+print(f"Test accuracy: {accuracy_score(y_test, grid_search.predict(X_test)):.4f}")
+```
+
+> **Real-world use:** XGBoost, LightGBM, and CatBoost are well known as the top performers in Kaggle competitions and production ML pipelines. Lowering the learning rate while increasing the number of trees generally improves performance at the cost of longer training time. Using early stopping with cross-validation to find the optimal number of rounds is an important best practice.
+
+---
+
+Chapter 6 key takeaways:
+
+- **KNN**: Predict by majority vote / average of the $k$ nearest neighbors — standardization is required, choose $k$ with cross-validation
+- **Decision tree**: Repeatedly split to minimize Gini impurity / entropy — intuitive but prone to overfitting
+- **Bagging**: Train multiple trees on bootstrap samples and average — reduces variance
+- **Random forest**: Bagging + random feature selection → reduces correlation between trees, validate internally with OOB error
+- **Boosting**: Each model sequentially corrects the previous model's errors → reduces bias
+- **Gradient boosting**: Fit a new tree to the residuals — learning rate vs. number of trees trade-off
+- **Hyperparameters**: `learning_rate` and `n_estimators` are inversely related — optimize with cross-validation

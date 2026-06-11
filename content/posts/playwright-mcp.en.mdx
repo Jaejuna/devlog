@@ -1,0 +1,180 @@
+---
+title: "Playwright MCP — Giving an LLM a Real Browser"
+date: "2026-04-25"
+category: "LLM 실무"
+tags: ["LLM", "MCP", "Playwright", "Claude Code", "브라우저자동화", "AI"]
+excerpt: "A practical guide to using Playwright MCP so an LLM can directly control a real browser. Covers how the accessibility-tree approach works, when to switch to vision mode, real-world use cases, and the pitfalls you're most likely to hit."
+readTime: 13
+---
+
+The biggest limitation of text-based LLMs is that they **cannot actually see a rendered screen**.<br/>
+
+No matter how good the code it writes, the LLM has no idea what the rendered UI actually looks like. Playwright MCP breaks that limitation.
+
+---
+
+## What It Means for an LLM to Control a Browser
+
+Normally, an LLM takes text as input and produces text as output. When helping with UI development, it can only reason about code — never about what ends up on screen.<br/>
+
+Connect a Playwright MCP server and the LLM can open a real browser, navigate pages, parse the structure of the rendered result, and make decisions based on what it finds there.<br/>
+
+One important detail: what Playwright MCP hands to the LLM is **not a screenshot image — it's an accessibility tree**. The LLM reads a semantically structured **text** representation of the page's DOM and reasons from that — "this button is here, this input field is empty." Passing actual screenshots (vision mode) is available but opt-in — the difference is covered below.<br/>
+
+> **In practice:** The phrase "the AI can see the screen" makes people picture screenshots, but the default behavior is accessibility-tree based.<br/>It works without a vision-capable model, uses far fewer tokens, and produces **deterministic** output for the same input — which makes it reliable for automation.
+
+---
+
+## Installation
+
+Run the following command in a regular terminal where Claude Code is not already running.
+
+```bash
+claude mcp add playwright npx @playwright/mcp@latest
+```
+
+This single command registers the MCP server name (`playwright`) and the command used to launch it.
+
+---
+
+## Permissions
+
+If you're tired of approving Playwright tool calls one by one, you can pre-allow them in `.claude/settings.local.json`.
+
+```json
+{
+  "permissions": {
+    "allow": ["mcp__playwright"],
+    "deny": []
+  }
+}
+```
+
+Note that `mcp__playwright` uses **two** underscores.
+
+---
+
+## What the LLM Can Do with a Browser
+
+Here are the actions the LLM can perform directly through Playwright MCP.<br/>
+
+| Action | Tool | Description |
+|---|---|---|
+| Navigation | `browser_navigate` | Go to a URL such as `localhost:3000` |
+| Snapshot | `browser_snapshot` | Fetch the accessibility tree as text to understand page structure |
+| Click | `browser_click` | Click a button or link identified by its snapshot `ref` |
+| Type | `browser_type` | Enter text into a form field |
+| Screenshot | `browser_take_screenshot` | Capture the screen as an image (used selectively when needed) |
+| Wait | `browser_wait_for` | Wait until a specific piece of text or element appears |
+
+> **In practice:** Clicks and input are targeted by the `ref` ID assigned in the snapshot, not by screen coordinates.<br/>This means element targeting doesn't break when the layout changes slightly, and you never have to write selectors by hand.
+
+---
+
+## Real-World Use — Automatically Improving a UI Prompt
+
+Where Playwright MCP really shines is the **visual feedback loop**.<br/>
+
+Say you want to improve the prompt used to generate a component. You can ask:
+
+```
+Navigate to localhost:3000, generate a test component,
+review the visual output, and improve the generation prompt
+at @src/lib/prompts/generation.tsx to produce better results.
+```
+
+Claude works through the following steps:
+
+1. Open the browser and navigate to the app
+2. Generate the component
+3. Take a screenshot to inspect the visual result
+4. Revise the prompt based on **what it sees** — not just the code
+5. Re-generate with the updated prompt to validate the improvement
+
+Since this requires **design judgment** — "the spacing feels off," "the color contrast is too low" — the LLM uses `browser_take_screenshot` to get an actual image rather than relying on the structural accessibility tree alone. Because it's judging from the real rendered output rather than source code, style improvements are far more precise.
+
+---
+
+## Accessibility Tree vs. Vision Mode
+
+Playwright MCP offers two ways to perceive a page. The default is the accessibility tree; vision mode is enabled with the `--vision` flag.<br/>
+
+| | Accessibility Tree (default) | Vision Mode (`--vision`) |
+|---|---|---|
+| What the LLM sees | Structured text (DOM semantics) | Screenshot image |
+| How elements are targeted | Snapshot `ref` ID | Screen coordinates |
+| Vision model required | No | Yes |
+| Token usage | Low | High |
+| Stability | High (deterministic) | Sensitive to layout and resolution |
+| Best for | Form interactions, E2E flows, data extraction | Visual/design judgment, canvas or image-heavy UIs |
+
+Accessibility tree mode is sufficient for the vast majority of automation tasks. Use screenshots (or vision mode) only when **visual design judgment** is truly necessary — it's better for both token efficiency and reliability.
+
+---
+
+## Using Playwright MCP in GitHub Actions
+
+Playwright MCP can also be enabled in CI. Add the following to your `.github/workflows` file.
+
+```yaml
+mcp_config: |
+  {
+    "mcpServers": {
+      "playwright": {
+        "command": "npx",
+        "args": [
+          "@playwright/mcp@latest",
+          "--allowed-origins",
+          "localhost:3000;cdn.tailwindcss.com"
+        ]
+      }
+    }
+  }
+```
+
+In a GitHub Actions environment you also need to explicitly list the tools you intend to use in `allowed_tools`.
+
+```yaml
+allowed_tools: "mcp__playwright__browser_snapshot,mcp__playwright__browser_click,mcp__playwright__browser_navigate"
+```
+
+---
+
+## Common Pitfalls
+
+A few things that tend to trip people up the first time.<br/>
+
+- **Browser binary not installed** — Playwright does nothing on first run if Chromium isn't present. Run `npx playwright install chromium` ahead of time to be safe.
+- **Headed vs. headless** — Headed mode is convenient for local debugging where you want to watch the browser; headless is what you want in CI. If the server has no display, headless is the default.
+- **Missing `--allowed-origins`** — In CI, if an external CDN (e.g. `cdn.tailwindcss.com`) can't be loaded, the page will render broken. List all accessible origins separated by semicolons (`;`).
+- **Shared session state** — Once a browser is opened, tabs, cookies, and login state persist across tool calls. If you need isolation between tests, explicitly open a new context or tear down the existing one.
+
+> **In practice:** The most common first failure is a missing browser binary or an origin restriction.<br/>If you're seeing blank screenshots and wondering why, check these two things first — that covers most cases.
+
+---
+
+## What LLM + Browser Makes Possible
+
+Playwright MCP is more than a test automation tool.<br/>
+
+- **Web agents** — Agents that navigate the web to gather information or complete tasks
+- **Visual regression testing** — The LLM detects visual differences after code changes directly
+- **Accessibility auditing** — Identify accessibility issues from the actual rendered output
+- **E2E test generation** — Observe browser interaction flows and generate test code from them
+
+When an LLM that used to be limited to text and code gains a browser as a tool, the scope of what it can do changes fundamentally.
+
+<br />
+
+## Summary
+
+| Concept | Description |
+|---|---|
+| Playwright MCP | An MCP server that lets an LLM directly control a real browser |
+| Installation | `claude mcp add playwright npx @playwright/mcp@latest` |
+| Permissions | Pre-allow `mcp__playwright` in `settings.local.json` |
+| Default perception | **Accessibility tree (text)** — no vision model needed, token-efficient, deterministic |
+| Vision mode | `--vision` enables screenshot + coordinate-based operation (for visual judgment) |
+| Key capabilities | Snapshot, click, type, navigate, screenshot |
+| Core value | Visual feedback loop — decisions based on rendered output, not source code |
+| CI setup | Requires explicit `mcp_config` and `allowed_tools` configuration |

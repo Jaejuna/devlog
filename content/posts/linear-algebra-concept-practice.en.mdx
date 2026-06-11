@@ -1,0 +1,335 @@
+---
+title: "Linear Algebra in Practice: Problems You'll Actually Face in ML"
+date: "2026-03-06"
+category: "MMD"
+tags: ["선형대수", "머신러닝", "과제", "실무", "면접준비"]
+excerpt: "A collection of concept problems applying linear algebra — matrix singularity, rank, eigenvalues, PCA, and more — to real machine learning scenarios. Each problem is grounded in situations you'll commonly encounter in actual ML pipelines."
+readTime: 10
+---
+
+This post is a collection of practice problems that apply the concepts from [Linear Algebra Chapters 1–4](/blog/linear-algebra-1) to **real-world machine learning scenarios**. The focus is on **applying and interpreting concepts** rather than mechanical calculation.
+
+---
+
+## Part 1. Data and Matrices
+
+### Problem 1-1. Interpreting the Rank of a Data Matrix
+
+A dataset has 1,000 samples and 50 features. When represented as a matrix $X$, its rank turns out to be 30. What does this mean?
+
+<details>
+<summary>Show answer</summary>
+
+A rank of 30 means there are effectively **30 linearly independent features**.
+
+- Of the 50 features, 20 can be expressed as linear combinations of the others → **redundant information**
+- The true dimensionality of the information in this dataset is 30, not 50
+
+**Practical implication**: Applying PCA can reduce the data from 50 to 30 dimensions with zero information loss. In practice, the top few principal components typically explain most of the variance, so you can often reduce even further below 30.
+
+</details>
+
+---
+
+### Problem 1-2. The Multicollinearity Problem
+
+When training a linear regression model, suppose the features satisfy $x_3 = 2x_1 + x_2$. What property does the matrix $X^T X$ have, and how does this affect model training?
+
+<details>
+<summary>Show answer</summary>
+
+Since $x_3 = 2x_1 + x_2$, the columns of the data matrix are **linearly dependent**.
+
+This makes $X^T X$ a **singular matrix**, so:
+<br />
+$$\det(X^T X) = 0 \Rightarrow (X^T X)^{-1} \text{ does not exist}$$
+<br />
+The closed-form solution for linear regression, $\hat{w} = (X^T X)^{-1} X^T y$, cannot be computed.
+
+**Solutions**:
+- Remove the redundant feature
+- L2 regularization (Ridge): $(X^T X + \lambda I)^{-1}$ — the inverse always exists
+- Use PCA to extract only independent components
+
+</details>
+
+---
+
+### Problem 1-3. Batch Normalization as a Matrix Operation
+
+In deep learning, Batch Normalization transforms each batch to have mean 0 and variance 1. How can this process be expressed as matrix operations?
+
+<details>
+<summary>Show answer</summary>
+
+For a batch matrix $X$ (rows = samples, columns = features):
+
+**Step 1 — Mean centering:**
+<br />
+$$X_{\text{centered}} = X - \mathbf{1}\mu^T$$
+<br />
+where $\mu$ is the mean vector of each feature and $\mathbf{1}$ is a ones vector
+
+**Step 2 — Divide by standard deviation:**
+<br />
+$$X_{\text{norm}} = X_{\text{centered}} \oslash \sigma$$
+<br />
+This is the same operation as the **data centering** step in PCA. From a linear algebra perspective, it is a preparatory step for aligning the data along the **eigenvector directions of the covariance matrix**.
+
+</details>
+
+---
+
+## Part 2. Model Training and Optimization
+
+### Problem 2-1. Determinant and Model Convergence
+
+During neural network training, if the determinant of a weight matrix keeps approaching 0, what problems arise?
+
+<details>
+<summary>Show answer</summary>
+
+$\det(W) \to 0$ for a weight matrix $W$ means the matrix is **approaching singularity**.
+
+Problems that follow:
+
+1. **Vanishing Gradient**: During backpropagation, gradients are propagated via matrix multiplication — multiplying by a near-singular matrix drives the gradient toward 0
+2. **Loss of representational capacity**: As the rank drops, the space the neural network can represent shrinks
+3. **Numerically unstable inverse**: Computing $W^{-1}$ becomes numerically unreliable
+
+**Solutions**: Batch normalization, residual connections (ResNet), proper weight initialization (Xavier, He initialization)
+
+</details>
+
+---
+
+### Problem 2-2. A Layer as a Linear Transformation
+
+In a neural network layer $y = Wx + b$, if the weight matrix $W$ is $4 \times 3$, what transformation does this layer perform? Is the inverse transformation possible?
+
+<details>
+<summary>Show answer</summary>
+
+If $W$ is $4 \times 3$ (4 rows, 3 columns):
+
+- **Input dimension**: 3 (a 3-dimensional vector $x$)
+- **Output dimension**: 4 (a 4-dimensional vector $y$)
+
+This layer performs a linear transformation from **3-dimensional space → 4-dimensional space**.
+
+**No inverse**: Since $W$ is not square, its inverse does not exist. However, the **pseudoinverse** $W^+ = (W^T W)^{-1} W^T$ can be used for an approximate inverse transformation.
+
+**Intuition**: Lifting 3-dimensional data into 4 dimensions is analogous to embedding. The encoder/decoder in an autoencoder uses this kind of non-square transformation.
+
+</details>
+
+---
+
+### Problem 2-3. SVD and Model Compression
+
+A matrix $W$ can be decomposed via SVD as $W = U\Sigma V^T$. How does using a truncated $\hat{W}$ that retains only the top $k$ singular values help with model compression?
+
+<details>
+<summary>Show answer</summary>
+
+SVD decomposes a matrix in **order of information importance**. Larger singular values = directions carrying more information.
+
+Original matrix: $W = \sum_{i=1}^{r} \sigma_i \vec{u}_i \vec{v}_i^T$
+
+Keeping only $k$ terms: $\hat{W} = \sum_{i=1}^{k} \sigma_i \vec{u}_i \vec{v}_i^T$
+
+**Compression gain**:
+- Original storage: $m \times n$ parameters
+- Compressed storage: $k(m + n + 1)$ parameters
+- When $k \ll \min(m, n)$, the compression ratio is significant
+
+**Real-world application**: LoRA (Low-Rank Adaptation) uses this principle to fine-tune LLMs efficiently, approximating large weight matrices with two low-rank matrices.
+
+</details>
+
+---
+
+## Part 3. Dimensionality Reduction and Embeddings
+
+### Problem 3-1. PCA vs Feature Selection
+
+You need to reduce 100 features down to 10. What is the difference between using PCA and simply selecting the top 10 features?
+
+<details>
+<summary>Show answer</summary>
+
+| | Feature Selection | PCA |
+|---|---|---|
+| Output | Keeps 10 original features | Creates 10 new principal components |
+| Interpretability | High (original feature meaning preserved) | Low (principal components are linear combinations) |
+| Information retention | Loses information from the 90 dropped features | Maximally preserves variance |
+| Multicollinearity | Can still be present | Principal components are perfectly orthogonal (independent) |
+
+**When to choose which**:
+- Interpretability matters → Feature selection
+- Information retention matters → PCA
+- Multicollinearity is a problem → PCA is the solution
+
+</details>
+
+---
+
+### Problem 3-2. Computing Explained Variance from Eigenvalues
+
+Given covariance matrix eigenvalues of $[8.5, 5.2, 3.1, 1.8, 0.9, \ldots]$ and a total sum of 25, what percentage of total variance do the first 2 principal components explain?
+
+<details>
+<summary>Show answer</summary>
+<br />
+$$\text{Explained variance ratio} = \frac{\lambda_1 + \lambda_2}{\sum_i \lambda_i} = \frac{8.5 + 5.2}{25} = \frac{13.7}{25} = 54.8\%$$
+<br />
+**Interpretation**: The first two principal components alone explain roughly 55% of the total variance in the data.
+
+**Practical decision guidelines**:
+- Typically, choose enough principal components to retain 80–95%+ of explained variance
+- On a Scree Plot (eigenvalues plotted in descending order), select the point where the slope sharply flattens (the "elbow")
+
+</details>
+
+---
+
+### Problem 3-3. Vector Similarity and Recommendation Systems
+
+User $A$'s movie preference vector is $\vec{a} = (3, 1, 4, 1, 5)$ and user $B$'s is $\vec{b} = (1, 5, 2, 6, 1)$. Do they have similar taste? What metric do you use?
+
+<details>
+<summary>Show answer</summary>
+
+Use **cosine similarity** (dot product divided by the product of L2-norms):
+<br />
+$$\cos\theta = \frac{\vec{a} \cdot \vec{b}}{\|\vec{a}\|_2 \|\vec{b}\|_2}$$
+<br />
+$$\vec{a} \cdot \vec{b} = 3 + 5 + 8 + 6 + 5 = 27$$
+<br />
+$$\|\vec{a}\|_2 = \sqrt{9+1+16+1+25} = \sqrt{52} \approx 7.21$$
+<br />
+$$\|\vec{b}\|_2 = \sqrt{1+25+4+36+1} = \sqrt{67} \approx 8.19$$
+<br />
+$$\cos\theta = \frac{27}{7.21 \times 8.19} \approx 0.457$$
+<br />
+A cosine similarity of 0.46 is **low**. The two users have quite different tastes (A prefers action/sci-fi, B prefers romance/drama).
+
+**In practice**: Collaborative Filtering recommendation systems are built on this principle.
+
+</details>
+
+---
+
+## Part 4. Neural Networks and Matrices
+
+### Problem 4-1. The Forward Pass as Matrix Multiplication
+
+Express the forward pass of a 2-layer neural network as matrix operations:
+- Input: $x \in \mathbb{R}^3$
+- Layer 1 weights: $W_1 \in \mathbb{R}^{4 \times 3}$, bias: $b_1 \in \mathbb{R}^4$
+- Layer 2 weights: $W_2 \in \mathbb{R}^{2 \times 4}$, bias: $b_2 \in \mathbb{R}^2$
+- Activation function: $\sigma$ (ReLU)
+
+<details>
+<summary>Show answer</summary>
+<br />
+$$h_1 = \sigma(W_1 x + b_1) \quad (4 \times 3)(3 \times 1) + (4 \times 1) = (4 \times 1)$$
+<br />
+$$y = W_2 h_1 + b_2 \quad (2 \times 4)(4 \times 1) + (2 \times 1) = (2 \times 1)$$
+<br />
+When processing a **full batch** ($n$ samples):
+<br />
+$$H_1 = \sigma(X W_1^T + \mathbf{1}b_1^T) \quad (n \times 3)(3 \times 4) = (n \times 4)$$
+<br />
+$$Y = H_1 W_2^T + \mathbf{1}b_2^T \quad (n \times 4)(4 \times 2) = (n \times 2)$$
+<br />
+As this shows, the entire neural network forward pass is a **sequence of matrix multiplications**. GPUs are optimized to parallelize exactly these large-scale matrix multiplications.
+
+</details>
+
+---
+
+### Problem 4-2. Backpropagation and the Chain Rule
+
+Explain the process of computing the gradient $\frac{\partial L}{\partial W_1}$ of loss $L$ with respect to $W_1$ from a linear algebra perspective.
+
+<details>
+<summary>Show answer</summary>
+
+Backpropagation is the matrix version of the chain rule.
+<br />
+$$\frac{\partial L}{\partial W_1} = \frac{\partial L}{\partial h_1} \cdot \frac{\partial h_1}{\partial W_1}$$
+<br />
+Step by step:
+
+1. Compute gradient at the output layer: $\delta_2 = \frac{\partial L}{\partial y}$
+
+2. Backpropagate to layer 1: $\delta_1 = (W_2^T \delta_2) \odot \sigma'(z_1)$
+
+   - $W_2^T$: multiply by the **transpose matrix** to match dimensions
+   - $\odot$: element-wise multiplication (Hadamard product)
+
+3. Gradient for $W_1$: $\frac{\partial L}{\partial W_1} = \delta_1 x^T$
+
+**Key insight**: The reason **transpose matrices** appear in backpropagation is that we are tracing the forward-pass linear transformations in **reverse**. The reverse of a linear transformation = multiplication by its transpose.
+
+</details>
+
+---
+
+<br />
+
+## Quiz: Putting It All Together
+
+**Q1. Which of the following matrices has an inverse?**
+<br />
+$$A = \begin{bmatrix} 2 & 4 \\ 1 & 2 \end{bmatrix}, \quad B = \begin{bmatrix} 3 & 1 \\ 1 & 2 \end{bmatrix}, \quad C = \begin{bmatrix} 0 & 0 \\ 0 & 0 \end{bmatrix}$$
+<br />
+<details>
+<summary>Show answer</summary>
+
+- $\det(A) = 4 - 4 = 0$ → **Singular, no inverse**
+- $\det(B) = 6 - 1 = 5 \neq 0$ → **Non-singular, inverse exists** ✓
+- $\det(C) = 0$ → **Singular, no inverse**
+
+Answer: **B**
+
+</details>
+
+---
+
+**Q2. What is the linear algebra reason that L2 regularization (Ridge) solves the multicollinearity problem in machine learning?**
+
+<details>
+<summary>Show answer</summary>
+
+With multicollinearity, $X^T X$ becomes singular and its inverse does not exist.
+
+L2 regularization adds $\lambda$ to the diagonal entries:
+<br />
+$$(X^T X + \lambda I)^{-1}$$
+<br />
+Adding the identity matrix $I$ shifts every eigenvalue by $\lambda$:
+<br />
+$$\lambda_i(X^T X + \lambda I) = \lambda_i(X^T X) + \lambda \geq \lambda > 0$$
+<br />
+This guarantees the determinant is always positive and the inverse **always exists**.
+
+</details>
+
+---
+
+**Q3. Why are eigenvectors in PCA mutually orthogonal?**
+
+<details>
+<summary>Show answer</summary>
+
+The covariance matrix $\Sigma$ is a **symmetric matrix** ($\Sigma = \Sigma^T$).
+
+Properties of symmetric matrices:
+- Eigenvectors corresponding to distinct eigenvalues are always orthogonal
+- This is known as the **Spectral Theorem**
+
+Because the principal components point in mutually orthogonal directions, each one captures independent, non-overlapping information. This is exactly why PCA automatically eliminates multicollinearity.
+
+</details>

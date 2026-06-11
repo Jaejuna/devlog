@@ -1,0 +1,296 @@
+---
+title: "Probability & Statistics in Practice: Inference Problems from the ML Trenches"
+date: "2026-03-06"
+category: "MMD"
+tags: ["확률", "통계", "머신러닝", "과제", "베이즈", "가설검정", "면접준비"]
+excerpt: "From probability fundamentals and Bayes' theorem to distributions, MLE/MAP, confidence intervals, and hypothesis testing — a collection of practice problems grounded in real ML and data analysis scenarios."
+readTime: 12
+---
+
+This post is a collection of applied practice problems based on the concepts covered in [Probability & Statistics Chapters 1–4](/blog/prob-stats-1). The focus is on **applying and interpreting concepts** in machine learning and data analysis scenarios — not on memorizing formulas.
+
+---
+
+## Part 1. Probability Fundamentals and Bayes' Theorem
+
+### Problem 1-1. Bayes' Theorem for Spam Filtering
+
+You are designing an email spam filter.
+
+- Proportion of spam among all emails: 20%
+- Probability that a spam email contains the word "free": 60%
+- Probability that a legitimate email contains the word "free": 5%
+
+Calculate the probability that an email containing the word "free" is actually spam.
+
+<details>
+<summary>Show Answer</summary>
+
+Applying Bayes' theorem:
+<br />
+$$P(\text{Spam} \mid \text{"free"}) = \frac{P(\text{"free"} \mid \text{Spam}) \cdot P(\text{Spam})}{P(\text{"free"})}$$
+<br />
+Computing the denominator (law of total probability):
+<br />
+$$P(\text{"free"}) = 0.6 \times 0.2 + 0.05 \times 0.8 = 0.12 + 0.04 = 0.16$$
+<br />
+$$P(\text{Spam} \mid \text{"free"}) = \frac{0.6 \times 0.2}{0.16} = \frac{0.12}{0.16} = 0.75$$
+<br />
+**Conclusion**: An email containing "free" is spam with 75% probability. The prior (20%) has been significantly updated to a posterior of 75%.
+
+**ML connection**: The Naive Bayes classifier applies this exact principle independently to each word to classify text.
+
+</details>
+
+---
+
+### Problem 1-2. Conditional Independence and the Correlation–Causation Fallacy
+
+Ice cream sales and drowning incidents show a strong positive correlation. Answer the following questions.
+
+1. Does this correlation imply causation?
+2. How do you explain this phenomenon probabilistically? (Include the concept of a confounding variable.)
+3. What problems arise when an ML model learns this kind of spurious correlation?
+
+<details>
+<summary>Show Answer</summary>
+
+**1. No**: Correlation ≠ causation. Ice cream does not cause drowning.
+
+**2. Confounding Variable**: "Summer temperature" is the common cause.
+<br />
+$$\text{Temperature} \rightarrow \text{Ice cream sales}$$
+$$\text{Temperature} \rightarrow \text{More swimmers} \rightarrow \text{Drowning incidents}$$
+<br />
+Once we condition on temperature, the two variables become independent: $P(\text{Drowning} \mid \text{Ice cream}, \text{Temperature}) = P(\text{Drowning} \mid \text{Temperature})$
+
+**3. ML Problems**: A model that learns spurious correlations will fail on test data from a different distribution (Distribution Shift). It can still make predictions, but its reasoning about **causal interventions** will be wrong.
+
+</details>
+
+---
+
+## Part 2. Distributions and Summary Statistics
+
+### Problem 2-1. Skewness, Kurtosis, and Model Selection
+
+Analyze the distributional characteristics of the following datasets and suggest appropriate models.
+
+| Dataset | Mean | Median | Skewness | Excess Kurtosis |
+|---------|------|--------|----------|-----------------|
+| A (House prices) | 500M | 350M | 2.1 | 5.3 |
+| B (Exam scores) | 72 | 71 | 0.1 | -0.3 |
+| C (Click counts) | 8 | 2 | 3.8 | 18.2 |
+
+For each dataset, provide: (1) a description of the distribution shape, (2) whether to use the mean or median as a representative value, and (3) a suitable probability distribution.
+
+<details>
+<summary>Show Answer</summary>
+
+**A (House prices)**: Positive skewness → right-skewed (heavy right tail). The mean is much higher than the median, so the **median** is the better representative value. Recommend log-transforming and fitting a normal distribution, or modeling directly with a **log-normal distribution**.
+
+**B (Exam scores)**: Skewness ≈ 0, kurtosis ≈ 0 → approximately **normal distribution**. Mean and median are similar, so either can be used. A normal distribution fits directly.
+
+**C (Click counts)**: Both skewness and kurtosis are very large → extreme right skew with many outliers (viral content, etc.). Use the **median**. Since values are discrete, consider a **Negative Binomial distribution** or a power-law distribution.
+
+</details>
+
+---
+
+### Problem 2-2. Limitations of Covariance and Correlation
+
+Analyze the following scenarios for two variables X and Y.
+
+- Scenario A: $\text{Cov}(X, Y) = 500$, $\text{Var}(X) = 10000$, $\text{Var}(Y) = 40000$
+- Scenario B: $\text{Cov}(X, Y) = 100$, $\text{Var}(X) = 100$, $\text{Var}(Y) = 200$
+
+1. Calculate the Pearson correlation coefficient for each scenario.
+2. Which scenario has the stronger linear relationship?
+3. Give an example where the correlation coefficient is 0 yet the two variables are clearly related.
+
+<details>
+<summary>Show Answer</summary>
+
+**1. Correlation coefficients**:
+<br />
+$$r_A = \frac{500}{\sqrt{10000 \times 40000}} = \frac{500}{20000} = 0.025$$
+<br />
+$$r_B = \frac{100}{\sqrt{100 \times 200}} = \frac{100}{141.4} \approx 0.707$$
+<br />
+**2. Scenario B has a much stronger linear relationship**: The raw covariance looks larger in A, but the variables are on very different scales, making direct comparison meaningless. The correlation coefficient normalizes for this.
+
+**3. Zero correlation but clearly related**: $Y = X^2$, $X \sim U(-1, 1)$. X and Y are obviously related, yet their linear correlation coefficient is 0. → Correlation only captures **linear** relationships. Non-linear relationships require measures like Mutual Information (MI).
+
+</details>
+
+---
+
+## Part 3. Estimation and MLE/MAP
+
+### Problem 3-1. Distinguishing the Law of Large Numbers from the CLT
+
+Explain the difference between these two concepts and give a machine learning application for each.
+
+- **Law of Large Numbers (LLN)**: As sample size grows, the sample mean converges to the population mean.
+- **Central Limit Theorem (CLT)**: When sample size is large enough, the distribution of the sample mean approximates a normal distribution.
+
+In particular — can the LLN hold without the CLT holding? Why?
+
+<details>
+<summary>Show Answer</summary>
+
+**Key differences**:
+
+| | LLN | CLT |
+|--|-----|-----|
+| What it states | Convergence of a value | Convergence to a shape |
+| Condition | Finite expectation | Finite variance |
+| Result | $\bar{X}_n \to \mu$ | $\bar{X}_n \sim N(\mu, \sigma^2/n)$ |
+
+**LLN holds but CLT does not — example**: The Cauchy distribution has undefined expectation, so the LLN doesn't even hold there. More generally, distributions with infinite variance (e.g., Pareto with certain parameter values) satisfy the LLN but violate the CLT.
+
+**ML applications**:
+- LLN → theoretical justification for mini-batch SGD: a sufficiently large batch approximates the full gradient
+- CLT → uncertainty estimation for ensemble predictions; distributional assumptions for test statistics in hypothesis testing
+
+</details>
+
+---
+
+### Problem 3-2. MLE vs MAP — an Overfitting Perspective
+
+You flip a coin 10 times and get 8 heads. Estimate $\theta$ = the probability of heads.
+
+1. Find $\hat{\theta}$ using MLE.
+2. Find the MAP estimate using a $\text{Beta}(3, 3)$ prior.
+3. Compare the two results and explain why MAP tends to be a better estimate when data is scarce.
+
+<details>
+<summary>Show Answer</summary>
+
+**1. MLE**: Maximizing the log-likelihood of the binomial distribution gives:
+<br />
+$$\hat{\theta}_\text{MLE} = \frac{8}{10} = 0.8$$
+<br />
+**2. MAP with Beta(3,3)**: The posterior is $\text{Beta}(3+8, 3+2) = \text{Beta}(11, 5)$
+<br />
+$$\hat{\theta}_\text{MAP} = \frac{\alpha - 1}{\alpha + \beta - 2} = \frac{10}{14} \approx 0.714$$
+<br />
+**3. Comparison**:
+
+| | MLE | MAP |
+|--|-----|-----|
+| Estimate | 0.8 | 0.714 |
+| Prior knowledge | Ignored | Incorporated (pulls toward 0.5) |
+| With little data | Risk of overfitting | Regularization effect |
+| With lots of data | MLE ≈ MAP | Prior influence diluted |
+
+With little data, MLE over-trusts the accidental outcome (8/10). The MAP prior encodes the reasonable belief that the coin is "probably near fair," stabilizing the estimate. This is mathematically equivalent to L2 regularization.
+
+</details>
+
+---
+
+## Part 4. Confidence Intervals and Hypothesis Testing
+
+### Problem 4-1. Common Misconceptions About Confidence Intervals
+
+After 100 experiments on model accuracy, a 95% CI is computed as $[0.82, 0.88]$. Select the **correct** interpretation below and explain why each of the others is wrong.
+
+a) "There is a 95% probability that the model's true accuracy lies in this interval."
+b) "If we repeatedly construct CIs with this procedure, about 95 out of 100 will contain the true accuracy."
+c) "95% of the sample observations fall within this interval."
+d) "The accuracy in the next experiment will fall in this interval with 95% probability."
+
+<details>
+<summary>Show Answer</summary>
+
+**Answer: b**
+
+**Why a is wrong**: The true parameter (accuracy) is a fixed value — it is not a random variable. The interval is what varies across repeated experiments.
+
+**Why c is wrong**: A CI describes the range of a **parameter**, not the spread of individual data points (that would be a prediction interval).
+
+**Why d is wrong**: This confuses a CI with a Prediction Interval. A CI estimates the range of a parameter; a prediction interval gives the range for a new observation. (Prediction intervals are always wider than CIs.)
+
+</details>
+
+---
+
+### Problem 4-2. Designing a Hypothesis Test and the Error Trade-off
+
+Clinical trial for a new drug: testing whether there is a difference in recovery rates between the drug and placebo groups.
+
+1. Define $H_0$ and $H_1$ and decide whether to use a one-tailed or two-tailed test.
+2. In a medical context, which is more serious — a Type I or Type II error?
+3. Name at least three ways to increase statistical power.
+
+<details>
+<summary>Show Answer</summary>
+
+**1. Hypothesis formulation**:
+- $H_0$: $p_\text{drug} \leq p_\text{placebo}$ (no effect or harmful)
+- $H_1$: $p_\text{drug} > p_\text{placebo}$ (effective)
+- The direction is clear (we expect the drug to be better), so use a **right-sided one-tailed test**.
+
+**2. Type II error (False Negative) is more serious**: Concluding that an effective drug "has no effect" means patients lose access to treatment. Type I errors can be caught with additional trials. (However, if side effects are severe, Type I errors become critical too.)
+
+**3. Ways to increase power**:
+- **Increase sample size**: The most direct approach. $n$↑ → SE↓ → greater sensitivity to detect a difference.
+- **Relax the significance level $\alpha$**: Larger $\alpha$ expands the rejection region → power↑ (but Type I error↑).
+- **Use a one-tailed test**: Switching from two-tailed to one-tailed increases power.
+- **Target a subgroup with a larger effect size**: Focus on subpopulations where the treatment effect is expected to be larger.
+- **Reduce measurement error**: More precise measurement → lower variance → lower SE.
+
+</details>
+
+---
+
+### Problem 4-3. Choosing the Right Test
+
+For each scenario below, choose the appropriate statistical test and explain your reasoning.
+
+1. Comparing session time for the same 50 users before and after deploying a recommendation model
+2. A/B test on button color — 1,000 users per group, outcome is click (binary)
+3. Testing whether a new regularization method beats a benchmark accuracy of 89.3% from a published paper
+4. Comparing mean purchase amounts across three regions: Korea, the US, and Japan
+
+<details>
+<summary>Show Answer</summary>
+
+**1. Paired t-test**: Before/after measurements on the same users → paired data. Removes individual differences, increasing power.
+
+**2. Two-sample proportion test (z-test)**: Binary outcome (click / no click) → comparing proportions, not continuous means.
+
+**3. One-sample t-test**: Comparing our model's sample accuracy against a single known value (89.3%).
+
+**4. One-Way ANOVA**: Comparing means across three or more groups with repeated t-tests inflates the Type I error rate (multiple comparisons problem) → use ANOVA. Follow up with a post-hoc test (e.g., Tukey HSD) to identify which pairs differ.
+
+</details>
+
+---
+
+## Part 5. Comprehensive Scenario
+
+### Problem 5-1. Statistical Decision-Making in an ML Pipeline
+
+Design a process for deciding whether to deploy a new deep learning model to production. Answer all of the following.
+
+1. Offline evaluation: The test set accuracy is 92.1% with a 95% CI of [91.3%, 92.9%]. Can we say the new model is better than the existing one (91.5%)?
+2. Online A/B test: We decide to collect exactly the sample size determined by $\alpha=0.05$, power $1-\beta=0.80$, and minimum detectable effect of 1 percentage point. Why must this number be fixed in advance?
+3. The A/B test yields a p-value of 0.03. Why is saying "the new model has a 97% chance of winning" incorrect?
+
+<details>
+<summary>Show Answer</summary>
+
+**1. CI interpretation**: The existing model's 91.5% falls within the new model's CI of [91.3%, 92.9%]. This means the difference between the two models may not be statistically significant. We cannot conclusively say the new model is better. → A formal hypothesis test or a CI for the difference should be computed separately.
+
+**2. Why the sample size must be fixed in advance**: Peeking at results mid-experiment and stopping early inflates the Type I error rate well above the nominal 5% due to the multiple comparisons problem. Committing to a predetermined sample size ensures a single test is performed.
+
+**3. p-value misconception**: A p-value of 0.03 means "if the null hypothesis were true, there would be a 3% chance of observing results this extreme." It is not the probability that the null hypothesis is true. Saying "97% chance the new model wins" is a posterior probability — a Bayesian statement that requires defining a prior distribution. It cannot be derived from a frequentist p-value.
+
+</details>
+
+---
+
+The next post covers **coding these concepts directly in Python/scipy**. → [Go to coding exercises](/blog/prob-stats-coding-practice)

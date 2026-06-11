@@ -1,0 +1,653 @@
+---
+title: "Statistics Fundamentals Chapter 3: Statistical Experiments and Significance Testing"
+date: "2026-03-04"
+category: "데이터사이언스"
+tags: ["통계", "가설검정", "A/B테스트", "Python"]
+excerpt: "A comprehensive guide to statistical experiments — covering A/B testing, hypothesis testing, p-values, t-tests, ANOVA, chi-square, and multi-armed bandits, with code examples throughout."
+readTime: 12
+---
+
+While Chapter 2 focused on how well a sample represents a population, Chapter 3 tackles a different question: "How do you design an experiment, and how do you tell whether a result reflects a real effect or just noise?" Statistical significance testing is at the heart of data-driven decision making.
+
+> This post is based on Chapter 3 of *Practical Statistics for Data Scientists*.
+
+## 3.1 A/B Testing
+
+An A/B test is an experimental method that statistically determines which of two versions — A and B — is more effective.
+
+| Term | Description |
+|------|------|
+| **Treatment** | A manipulation or intervention applied to subjects in an experiment (e.g., a drug, a UI change) |
+| **Treatment group** | The experimental group that actually receives the treatment |
+| **Control group** | The comparison group that receives no treatment or only the standard treatment |
+| **Randomization** | The procedure of randomly assigning subjects — eliminates bias and enables causal inference |
+| **Subject** | The unit of observation in an experiment (e.g., a person, product, or cell) |
+| **Test statistic** | A value computed from the data whose distribution under the null hypothesis is known, used to calculate a p-value |
+
+### Null and Alternative Hypotheses
+
+$$H_0: \mu_A = \mu_B \quad \text{(no difference between the two groups)}$$
+<br />
+$$H_1: \mu_A \neq \mu_B \quad \text{or} \quad \mu_A > \mu_B \text{ (one-tailed)}$$
+
+### Independent Samples t-Test Statistic
+
+$$t = \frac{\bar{x}_A - \bar{x}_B}{\sqrt{\dfrac{s_A^2}{n_A} + \dfrac{s_B^2}{n_B}}}$$
+
+```python
+import numpy as np
+from scipy import stats
+
+np.random.seed(42)
+
+# A/B test example: click-through rate by button color
+# A: existing blue button, B: new red button
+# Click (1) / No click (0) data
+n_A, n_B = 1000, 1000
+click_rate_A = 0.10  # 10% click rate
+click_rate_B = 0.12  # 12% click rate (real difference exists)
+
+clicks_A = np.random.binomial(1, click_rate_A, n_A)
+clicks_B = np.random.binomial(1, click_rate_B, n_B)
+
+# Independent samples t-test
+t_stat, p_value = stats.ttest_ind(clicks_A, clicks_B)
+
+print(f"Group A click rate: {clicks_A.mean():.4f}")
+print(f"Group B click rate: {clicks_B.mean():.4f}")
+print(f"t statistic: {t_stat:.4f}")
+print(f"p value: {p_value:.4f}")
+print(f"Conclusion: {'Reject null hypothesis (significant difference)' if p_value < 0.05 else 'Fail to reject null hypothesis (no difference)'}")
+```
+
+> **Real-world application:** In e-commerce, A/B testing is used to validate changes to button colors, copy, and layouts. Splitting users by time of day or device type — without proper randomization — introduces bias, so true random assignment is essential.
+
+## 3.2 Hypothesis Testing
+
+| Term | Description |
+|------|------|
+| **Null hypothesis ($H_0$)** | The baseline assumption that there is no difference or effect. E.g., "The means of the two groups are equal." |
+| **Alternative hypothesis ($H_1$ or $H_a$)** | The claim that contradicts the null — the hypothesis you're trying to support |
+| **One-tailed test** | Tests for a difference in one direction only. E.g., $H_1: \mu > 5$ |
+| **Two-tailed test** | Tests for a difference in either direction. E.g., $H_1: \mu \neq 5$ |
+
+### One-Tailed vs. Two-Tailed Tests
+
+$$\text{One-tailed: } H_0: \mu \leq 5 \quad \text{vs.} \quad H_1: \mu > 5$$
+<br />
+$$\text{Two-tailed: } H_0: \mu = 5 \quad \text{vs.} \quad H_1: \mu \neq 5$$
+
+```python
+import numpy as np
+from scipy import stats
+import matplotlib.pyplot as plt
+import matplotlib
+matplotlib.rcParams['font.family'] = 'AppleGothic'
+matplotlib.rcParams['axes.unicode_minus'] = False
+
+# Visualizing one-tailed vs. two-tailed tests
+x = np.linspace(-4, 4, 300)
+pdf = stats.norm.pdf(x)
+
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 4))
+
+# One-tailed test (right)
+ax1.plot(x, pdf, 'b-', linewidth=2)
+ax1.fill_between(x, pdf, where=(x >= 1.645), alpha=0.4, color='red', label='Rejection region (α=0.05)')
+ax1.axvline(x=1.645, color='red', linestyle='--', label='Critical value = 1.645')
+ax1.set_title('One-tailed test (H₁: μ > 0)')
+ax1.legend()
+
+# Two-tailed test
+ax2.plot(x, pdf, 'b-', linewidth=2)
+ax2.fill_between(x, pdf, where=(x >= 1.96), alpha=0.4, color='red', label='Rejection region (each α/2=0.025)')
+ax2.fill_between(x, pdf, where=(x <= -1.96), alpha=0.4, color='red')
+ax2.axvline(x=1.96, color='red', linestyle='--', label='Critical value = ±1.96')
+ax2.axvline(x=-1.96, color='red', linestyle='--')
+ax2.set_title('Two-tailed test (H₁: μ ≠ 0)')
+ax2.legend()
+
+plt.tight_layout()
+plt.show()
+```
+
+> **Real-world application:** Use a one-tailed test when the direction is clear (e.g., is a new drug more effective than the existing one?). Use a two-tailed test when direction is unknown (e.g., which of two algorithms performs better?).
+
+## 3.3 Resampling
+
+Resampling is a non-parametric approach that builds the distribution of a test statistic directly from the data, without assuming any underlying distribution.
+
+| Term | Description |
+|------|------|
+| **Permutation test** | A non-parametric test that generates the null distribution by randomly reshuffling labels |
+| **With replacement** | A sampling method where each drawn item is returned to the pool before the next draw |
+| **Without replacement** | A sampling method where drawn items cannot be reselected — used in permutation tests |
+
+```python
+import numpy as np
+
+np.random.seed(42)
+
+# Permutation test: is the difference in conversion rates between A and B due to chance?
+group_A = np.array([1, 0, 1, 0, 0, 1, 1, 0, 0, 1])  # treatment group
+group_B = np.array([0, 0, 1, 0, 0, 0, 1, 0, 0, 0])  # control group
+
+observed_diff = group_A.mean() - group_B.mean()
+print(f"Observed difference: {observed_diff:.4f}")
+
+# Permutation test: shuffle labels 1000 times to generate null distribution
+combined = np.concatenate([group_A, group_B])
+n_A = len(group_A)
+n_perm = 1000
+perm_diffs = []
+
+for _ in range(n_perm):
+    shuffled = np.random.permutation(combined)
+    perm_diff = shuffled[:n_A].mean() - shuffled[n_A:].mean()
+    perm_diffs.append(perm_diff)
+
+perm_diffs = np.array(perm_diffs)
+
+# p-value: proportion of permutations as extreme as the observed difference
+p_value = np.mean(np.abs(perm_diffs) >= np.abs(observed_diff))
+print(f"Permutation test p-value: {p_value:.4f}")
+print(f"Conclusion: {'Significant difference' if p_value < 0.05 else 'Difference may be due to chance'}")
+```
+
+> **Real-world application:** Permutation tests are powerful when sample sizes are small or normality is in doubt. They're frequently used in clinical trials and manufacturing process quality comparisons.
+
+## 3.4 Statistical Significance and p-Values
+
+| Term | Description |
+|------|------|
+| **p-value** | The probability of observing a result as extreme as the current one, assuming the null hypothesis is true |
+| **Significance level ($\alpha$)** | The threshold for rejecting the null hypothesis — typically 0.05 or 0.01 |
+| **Type I error** | Incorrectly rejecting a true null hypothesis — probability = $\alpha$ |
+| **Type II error** | Failing to reject a false null hypothesis — probability = $\beta$ |
+
+### Decision Error Matrix
+
+| Actual State \ Test Result | Fail to Reject $H_0$ | Reject $H_0$ |
+|----------------------|-------------|-------------|
+| **$H_0$ is true** | Correct | Type I error ($\alpha$) |
+| **$H_0$ is false** | Type II error ($\beta$) | Correct (Power $1 - \beta$) |
+
+```python
+import numpy as np
+from scipy import stats
+import matplotlib.pyplot as plt
+import matplotlib
+matplotlib.rcParams['font.family'] = 'AppleGothic'
+matplotlib.rcParams['axes.unicode_minus'] = False
+
+# Visualizing the meaning of a p-value
+np.random.seed(42)
+sample = np.random.normal(loc=5.3, scale=2, size=30)  # true mean = 5.3
+
+# Null hypothesis: population mean = 5
+t_stat, p_value = stats.ttest_1samp(sample, popmean=5)
+
+print(f"Sample mean: {sample.mean():.4f}")
+print(f"t statistic: {t_stat:.4f}")
+print(f"p-value: {p_value:.4f}")
+print(f"At α=0.05: {'Reject null hypothesis' if p_value < 0.05 else 'Fail to reject null hypothesis'}")
+
+# Common p-value misconceptions
+print("\n⚠️ p-value misconception warning:")
+print("  p=0.03 ≠ 'probability that the null hypothesis is true is 3%'")
+print("  p=0.03 = 'if the null hypothesis were true, there would be a 3% chance of seeing a difference this large'")
+```
+
+> **Real-world application:** A p-value measures statistical significance, not practical importance. With very large sample sizes, even a tiny difference can yield p < 0.05. Always interpret p-values alongside effect size.
+
+## 3.5 t-Tests
+
+| Term | Description |
+|------|------|
+| **t-statistic** | The difference between the sample mean and the hypothesized mean, divided by the sample standard error — used when the population standard deviation is unknown |
+| **t-distribution** | The distribution followed by the t-statistic — has heavier tails for smaller samples |
+| **Degrees of freedom $df = n - 1$** | The parameter that determines the shape of the t-distribution — converges to normal as it grows |
+| **z-test** | A normal distribution-based test used when the population standard deviation $\sigma$ is known |
+
+### t-Test Statistic
+
+$$t = \frac{\bar{x} - \mu_0}{s / \sqrt{n}}$$
+<br />
+$$(\bar{x}: \text{sample mean},\ \mu_0: \text{hypothesized mean},\ s: \text{sample standard deviation},\ n: \text{sample size})$$
+
+### z-Test Statistic (known population standard deviation $\sigma$)
+
+$$z = \frac{\bar{x} - \mu_0}{\sigma / \sqrt{n}}$$
+
+```python
+import numpy as np
+from scipy import stats
+
+np.random.seed(42)
+
+# One-sample t-test: is the average sleep time different from 7 hours?
+sleep_hours = np.random.normal(loc=6.7, scale=1.2, size=25)
+
+# One-sample t-test
+t_stat, p_value = stats.ttest_1samp(sleep_hours, popmean=7.0)
+
+print("=== One-Sample t-Test ===")
+print(f"Sample mean: {sleep_hours.mean():.3f} hours")
+print(f"Sample std deviation: {sleep_hours.std(ddof=1):.3f}")
+print(f"t statistic: {t_stat:.4f}")
+print(f"Degrees of freedom: {len(sleep_hours) - 1}")
+print(f"p-value (two-tailed): {p_value:.4f}")
+
+# Independent samples t-test: comparing two groups
+group1 = np.random.normal(5.0, 1.0, 30)
+group2 = np.random.normal(5.5, 1.0, 30)
+
+t_stat2, p_value2 = stats.ttest_ind(group1, group2)
+print("\n=== Independent Samples t-Test ===")
+print(f"Group 1 mean: {group1.mean():.3f}, Group 2 mean: {group2.mean():.3f}")
+print(f"t statistic: {t_stat2:.4f}, p-value: {p_value2:.4f}")
+
+# Paired t-test: before-and-after comparison
+before = np.random.normal(100, 15, 20)
+after = before + np.random.normal(5, 5, 20)  # average improvement of 5 points
+
+t_stat3, p_value3 = stats.ttest_rel(before, after)
+print("\n=== Paired t-Test (before vs. after) ===")
+print(f"Mean change: {(after - before).mean():.3f}")
+print(f"t statistic: {t_stat3:.4f}, p-value: {p_value3:.4f}")
+```
+
+> **Real-world application:** t-tests are used in pharmaceutical clinical trials (before-after comparisons), comparing two marketing campaigns, and measuring the effectiveness of educational programs. When sample sizes exceed 30, t-test and z-test results are nearly identical.
+
+## 3.6 Multiple Testing
+
+Testing many hypotheses simultaneously inflates the probability of finding a spurious significant result by chance.
+
+| Term | Description |
+|------|------|
+| **Multiple testing** | Conducting many hypothesis tests simultaneously — with $m$ tests, expect $\alpha \times m$ false positives |
+| **False Discovery Rate (FDR)** | The proportion of rejected hypotheses that are actually true |
+| **p-value adjustment** | Corrects for accumulated Type I errors — methods include Bonferroni and Benjamini-Hochberg |
+| **Overfitting** | When a model learns noise in the data and fails to generalize |
+
+### False Discovery Rate (FDR)
+
+$$\text{FDR} = E\left[\frac{V}{R}\right] \quad (R > 0)$$
+<br />
+$$V: \text{number of false positives},\ R: \text{number of rejected hypotheses}$$
+
+### Multiple Testing Correction Methods
+
+| Method | Principle | Characteristics |
+|------|------|------|
+| **Bonferroni** | Lowers the significance level to $\alpha / m$ | Most conservative; increases risk of false negatives |
+| **Benjamini-Hochberg** | Controls FDR below $q$ | Less conservative; suitable for exploratory analysis |
+| **Holm-Bonferroni** | Sequential Bonferroni correction | More powerful than Bonferroni |
+
+```python
+import numpy as np
+from scipy import stats
+from statsmodels.stats.multitest import multipletests
+
+np.random.seed(42)
+
+# Conduct 20 independent tests (no real difference — null hypothesis is true)
+n_tests = 20
+p_values = []
+
+for _ in range(n_tests):
+    group1 = np.random.normal(0, 1, 50)
+    group2 = np.random.normal(0, 1, 50)  # same distribution
+    _, p = stats.ttest_ind(group1, group2)
+    p_values.append(p)
+
+p_values = np.array(p_values)
+
+# Before correction
+raw_sig = np.sum(p_values < 0.05)
+print(f"Significant tests before correction: {raw_sig}/{n_tests}")
+
+# Bonferroni correction
+bonf_reject, bonf_p, _, _ = multipletests(p_values, method='bonferroni')
+print(f"Significant tests after Bonferroni: {bonf_reject.sum()}/{n_tests}")
+
+# Benjamini-Hochberg (FDR control)
+bh_reject, bh_p, _, _ = multipletests(p_values, method='fdr_bh')
+print(f"Significant tests after Benjamini-Hochberg: {bh_reject.sum()}/{n_tests}")
+
+print(f"\n* Without correction, {raw_sig} tests appeared significant even though no real difference exists (false positives)")
+```
+
+> **Real-world application:** Multiple testing correction is essential in gene expression analysis (testing tens of thousands of genes), multivariate A/B tests, and clinical trials with multiple outcome measures.
+
+## 3.7 Degrees of Freedom
+
+| Situation | Degrees of Freedom | Reason |
+|------|--------|------|
+| **Sample variance** | $n - 1$ | One parameter (the mean) was estimated, reducing df by 1 |
+| **One-sample t-test** | $n - 1$ | Both mean and standard deviation are estimated |
+| **Chi-square test** | Number of categories $- 1$ | Independence test: $(rows-1)(columns-1)$ |
+| **Regression (residuals)** | $n - k - 1$ | $k$: number of predictors |
+
+### Degrees of Freedom for Sample Variance
+
+$$s^2 = \frac{1}{n-1} \sum_{i=1}^{n} (x_i - \bar{x})^2$$
+<br />
+Because the mean $\bar{x}$ is already fixed, the last value is determined automatically. So only $n - 1$ values are free to vary.
+
+```python
+import numpy as np
+from scipy import stats
+
+np.random.seed(42)
+
+# Visualizing the effect of degrees of freedom: t-distribution by sample size
+import matplotlib.pyplot as plt
+import matplotlib
+matplotlib.rcParams['font.family'] = 'AppleGothic'
+matplotlib.rcParams['axes.unicode_minus'] = False
+
+x = np.linspace(-5, 5, 300)
+dfs = [1, 3, 10, 30]
+colors = ['red', 'orange', 'green', 'blue']
+
+plt.figure(figsize=(10, 5))
+for df, color in zip(dfs, colors):
+    plt.plot(x, stats.t.pdf(x, df), color=color, linewidth=2, label=f'df={df}')
+
+plt.plot(x, stats.norm.pdf(x), 'k--', linewidth=2, label='Normal distribution (df=∞)')
+plt.title('t-Distribution by Degrees of Freedom')
+plt.xlabel('t')
+plt.ylabel('Probability density')
+plt.legend()
+plt.grid(alpha=0.3)
+plt.show()
+
+print("Smaller df → heavier tails → larger critical value → stricter test")
+print(f"df=5, α=0.05 critical value: {stats.t.ppf(0.975, df=5):.4f}")
+print(f"df=30, α=0.05 critical value: {stats.t.ppf(0.975, df=30):.4f}")
+print(f"Normal distribution, α=0.05 critical value: {stats.norm.ppf(0.975):.4f}")
+```
+
+> **Real-world application:** In small clinical trials (n=10–20) or pilot studies, low degrees of freedom mean heavier t-distribution tails. The same effect size is harder to detect as statistically significant when the sample is small.
+
+## 3.8 Analysis of Variance (ANOVA)
+
+An omnibus test used to compare the means of three or more groups.
+
+| Term | Description |
+|------|------|
+| **Pairwise comparison** | Individually comparing every pair of groups — requires multiple testing correction |
+| **Omnibus test** | Tests whether at least one group differs from the others — ANOVA is the canonical example |
+| **Variance decomposition** | Total variation = between-group variation + within-group variation |
+| **F-statistic** | Between-group variance / within-group variance — larger values indicate greater group differences |
+
+### Variance Decomposition
+
+$$SS_{\text{total}} = SS_{\text{between}} + SS_{\text{within}}$$
+
+### F-Statistic
+
+$$F = \frac{MSB}{MSW} = \frac{SS_{\text{between}} / (k-1)}{SS_{\text{within}} / (N-k)}$$
+<br />
+$$k: \text{number of groups},\ N: \text{total sample size}$$
+
+```python
+import numpy as np
+from scipy import stats
+import pandas as pd
+
+np.random.seed(42)
+
+# Comparing conversion rates across three ad types (A, B, C)
+ad_A = np.random.normal(5.0, 1.5, 30)   # conversion rate (%)
+ad_B = np.random.normal(5.8, 1.5, 30)
+ad_C = np.random.normal(6.5, 1.5, 30)
+
+# One-way ANOVA
+f_stat, p_value = stats.f_oneway(ad_A, ad_B, ad_C)
+
+print("=== One-Way ANOVA ===")
+print(f"F statistic: {f_stat:.4f}")
+print(f"p-value: {p_value:.4f}")
+print(f"Conclusion: {'Significant difference between groups' if p_value < 0.05 else 'No significant difference'}")
+
+# Post-hoc test: Tukey HSD (which groups differ?)
+from scipy.stats import tukey_hsd
+
+result = tukey_hsd(ad_A, ad_B, ad_C)
+print("\n=== Tukey HSD Post-Hoc Test ===")
+groups = ['A', 'B', 'C']
+for i in range(3):
+    for j in range(i+1, 3):
+        p = result.pvalue[i][j]
+        print(f"{groups[i]} vs {groups[j]}: p={p:.4f} {'*' if p < 0.05 else ''}")
+
+# Manual variance decomposition
+all_data = np.concatenate([ad_A, ad_B, ad_C])
+grand_mean = all_data.mean()
+group_means = [ad_A.mean(), ad_B.mean(), ad_C.mean()]
+n = 30
+
+SS_between = n * sum((m - grand_mean)**2 for m in group_means)
+SS_within = sum(np.sum((g - g.mean())**2) for g in [ad_A, ad_B, ad_C])
+SS_total = np.sum((all_data - grand_mean)**2)
+
+print(f"\nVariance decomposition:")
+print(f"SS_total = {SS_total:.2f}")
+print(f"SS_between = {SS_between:.2f}")
+print(f"SS_within = {SS_within:.2f}")
+print(f"Check: {SS_between:.2f} + {SS_within:.2f} ≈ {SS_total:.2f}")
+```
+
+> **Real-world application:** ANOVA is used to compare three or more UI designs, defect rates across multiple manufacturing processes, and academic outcomes across different teaching methods. When ANOVA is significant, follow up with post-hoc tests (Tukey, Bonferroni, etc.) to identify which groups actually differ.
+
+## 3.9 Chi-Square Test
+
+Tests whether observed frequencies differ from expected frequencies in categorical data.
+
+| Type | Null Hypothesis | Example Use |
+|------|---------|---------|
+| **Goodness-of-fit test** | Observed distribution = theoretical distribution | Is a die fair? |
+| **Independence test** | Two categorical variables are independent | Is there a relationship between gender and purchase? |
+| **Homogeneity test** | Distributions are the same across groups | Do preferences differ by region? |
+
+### Chi-Square Statistic
+
+$$\chi^2 = \sum \frac{(O_i - E_i)^2}{E_i}$$
+<br />
+$$O_i: \text{observed frequency},\ E_i: \text{expected frequency}$$
+<br />
+$$df = (\text{rows} - 1)(\text{columns} - 1) \quad \text{(independence test)}$$
+
+```python
+import numpy as np
+from scipy import stats
+import pandas as pd
+
+# Independence test: is ad type related to purchase behavior?
+# Contingency table
+observed = np.array([
+    [50, 150],   # Ad A: purchased, not purchased
+    [80, 120],   # Ad B: purchased, not purchased
+    [100, 100],  # Ad C: purchased, not purchased
+])
+
+df_table = pd.DataFrame(
+    observed,
+    index=['Ad A', 'Ad B', 'Ad C'],
+    columns=['Purchased', 'Not Purchased']
+)
+print("Observed contingency table:")
+print(df_table)
+
+chi2_stat, p_value, dof, expected = stats.chi2_contingency(observed)
+
+print(f"\nχ² statistic: {chi2_stat:.4f}")
+print(f"Degrees of freedom: {dof}")
+print(f"p-value: {p_value:.4f}")
+print(f"Conclusion: {'Ad type and purchase are related' if p_value < 0.05 else 'No relationship found'}")
+
+print("\nExpected frequencies:")
+print(pd.DataFrame(expected.round(1), index=df_table.index, columns=df_table.columns))
+
+# Goodness-of-fit test: is the die fair?
+observed_dice = np.array([18, 17, 16, 19, 15, 15])  # results from 100 rolls
+expected_dice = np.array([100/6] * 6)  # expected values
+
+chi2_dice, p_dice = stats.chisquare(observed_dice, f_exp=expected_dice)
+print(f"\n=== Die Goodness-of-Fit Test ===")
+print(f"χ² statistic: {chi2_dice:.4f}, p-value: {p_dice:.4f}")
+print(f"Conclusion: {'Unfair die' if p_dice < 0.05 else 'Fair die'}")
+```
+
+> **Real-world application:** Chi-square tests are widely used for analyzing relationships between categorical variables — user behavior analysis (click vs. device type), medical research (treatment method vs. recovery), and quality control (defect vs. production line).
+
+## 3.10 Multi-Armed Bandit Algorithms
+
+Traditional A/B testing requires waiting until the experiment ends before applying results. Multi-armed bandits simultaneously perform **exploration** and **exploitation**, minimizing cumulative losses.
+
+| Term | Description |
+|------|------|
+| **Multi-armed bandit (MAB)** | An exploration-exploitation problem where repeated choices among multiple options maximize cumulative reward |
+| **Arm** | One available option (e.g., Ad A, Ad B, Ad C) |
+| **Reward** | The payoff from a chosen action (e.g., a click, a purchase) |
+| **Regret** | The cumulative loss compared to always choosing the optimal arm |
+
+### Goal: Maximize Expected Cumulative Reward
+
+$$\text{maximize} \sum_{t=1}^{T} r_t$$
+<br />
+The reward distribution for each arm is unknown and must be learned through experience.
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib
+matplotlib.rcParams['font.family'] = 'AppleGothic'
+matplotlib.rcParams['axes.unicode_minus'] = False
+
+np.random.seed(42)
+
+# True click rates for three ads (arms) — assumed unknown
+true_rates = [0.10, 0.15, 0.12]
+n_arms = len(true_rates)
+n_rounds = 1000
+
+# Epsilon-greedy algorithm
+epsilon = 0.1
+counts = np.zeros(n_arms)    # number of times each arm was selected
+rewards = np.zeros(n_arms)   # cumulative rewards
+
+total_reward_bandit = []
+
+for t in range(1, n_rounds + 1):
+    if np.random.random() < epsilon:
+        # Explore: random selection
+        chosen = np.random.randint(n_arms)
+    else:
+        # Exploit: choose the best arm so far
+        estimates = rewards / np.maximum(counts, 1)
+        chosen = np.argmax(estimates)
+
+    reward = np.random.binomial(1, true_rates[chosen])
+    counts[chosen] += 1
+    rewards[chosen] += reward
+    total_reward_bandit.append(reward)
+
+print("=== Epsilon-Greedy Algorithm Results ===")
+for i in range(n_arms):
+    print(f"Arm {i+1}: selected {int(counts[i])} times, estimated click rate {rewards[i]/counts[i]:.4f} (true: {true_rates[i]})")
+
+print(f"\nCumulative reward: {sum(total_reward_bandit)}")
+print(f"Expected reward if always selecting optimal arm: {max(true_rates) * n_rounds:.0f}")
+
+# Comparison with pure A/B testing: full period used for exploration
+ab_reward = sum(np.random.binomial(1, np.random.choice(true_rates)) for _ in range(n_rounds))
+print(f"Pure A/B test cumulative reward: {ab_reward} (loss incurred during exploration)")
+```
+
+### A/B Testing vs. Multi-Armed Bandit
+
+| Aspect | A/B Testing | Multi-Armed Bandit |
+|------|---------|-------------|
+| **Exploration** | Fixed split ratio | Dynamically adjusted by performance |
+| **Decision timing** | After experiment ends | In real time |
+| **Loss** | Fixed exposure to inferior arms | Gradually reduced |
+| **Best suited for** | Precise statistical inference | Fast adaptation, minimizing loss |
+
+> **Real-world application:** Multi-armed bandits replace A/B testing in environments that require real-time decisions — Netflix recommendation systems, ad bidding, and news feed content selection.
+
+## 3.11 Statistical Power and Sample Size
+
+| Term | Description |
+|------|------|
+| **Effect size** | The practical magnitude of the difference between two groups — separate from statistical significance |
+| **Statistical power** | The probability of correctly rejecting the null hypothesis when a real difference exists = $1 - \beta$ |
+| **Significance level ($\alpha$)** | The probability of incorrectly rejecting a true null hypothesis (typically 0.05) |
+
+### Cohen's d (Effect Size)
+
+$$d = \frac{\mu_1 - \mu_2}{\sigma}$$
+
+| Cohen's d | Interpretation |
+|-----------|------|
+| 0.2 | Small |
+| 0.5 | Medium |
+| 0.8 | Large |
+
+### Statistical Power
+
+$$\text{Power} = 1 - \beta = P(\text{reject } H_0 \mid H_1 \text{ is true})$$
+
+```python
+import numpy as np
+from scipy import stats
+import matplotlib.pyplot as plt
+import matplotlib
+matplotlib.rcParams['font.family'] = 'AppleGothic'
+matplotlib.rcParams['axes.unicode_minus'] = False
+
+# Sample size calculation (to achieve target power)
+from statsmodels.stats.power import TTestIndPower
+
+analysis = TTestIndPower()
+
+# Goal: power = 0.8, effect size = 0.5, α = 0.05
+n_required = analysis.solve_power(effect_size=0.5, power=0.8, alpha=0.05, alternative='two-sided')
+print(f"Required sample size (per group): {n_required:.0f}")
+
+# Required sample size by effect size
+print("\n=== Required Sample Size by Effect Size (power=0.8, α=0.05) ===")
+for d in [0.2, 0.5, 0.8]:
+    n = analysis.solve_power(effect_size=d, power=0.8, alpha=0.05, alternative='two-sided')
+    print(f"Cohen's d={d} ({['Small', 'Medium', 'Large'][[0.2, 0.5, 0.8].index(d)]}): {n:.0f} per group")
+
+# Power as a function of sample size
+n_range = np.arange(10, 201, 10)
+powers = [analysis.solve_power(effect_size=0.5, nobs1=n, alpha=0.05, alternative='two-sided') for n in n_range]
+
+plt.figure(figsize=(8, 4))
+plt.plot(n_range, powers, 'b-o', markersize=4)
+plt.axhline(y=0.8, color='red', linestyle='--', label='Target power = 0.8')
+plt.xlabel('Sample size per group (n)')
+plt.ylabel('Power')
+plt.title("Sample Size vs. Power (Cohen's d=0.5)")
+plt.legend()
+plt.grid(alpha=0.3)
+plt.show()
+```
+
+> **Real-world application:** Before launching an A/B test, calculating "how many users do we need?" is what sample size planning is all about. Too little power means you might miss a real effect; too much means wasting resources. The standard target is $\text{Power} \geq 0.8$.
+
+---
+
+Chapter 3 Key Takeaways:
+
+- **A/B testing**: Randomization is key — unbiased assignment is what makes causal inference possible
+- **p-values**: Smaller p-values provide stronger evidence against the null — but always interpret alongside effect size
+- **Multiple testing**: More tests mean more accumulated false positives — apply Bonferroni or FDR correction
+- **ANOVA**: For comparing three or more groups, run an omnibus test first, then post-hoc tests to identify specific differences
+- **Chi-square**: Tests independence and goodness-of-fit for categorical data
+- **Multi-armed bandits**: A real-time exploration-exploitation strategy that overcomes the limitations of A/B testing
+- **Statistical power**: Target $1 - \beta \geq 0.8$ when planning sample sizes

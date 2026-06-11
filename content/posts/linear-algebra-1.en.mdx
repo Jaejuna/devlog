@@ -1,0 +1,245 @@
+---
+title: "Linear Algebra Basics Chapter 1: Systems of Linear Equations and Matrix Singularity"
+date: "2026-03-06"
+category: "MMD"
+tags: ["선형대수", "머신러닝", "행렬", "수학", "딥러닝"]
+excerpt: "A walkthrough of how systems of linear equations are used in machine learning — covering singular vs. non-singular matrices, linear independence/dependence, and determinant calculation."
+readTime: 10
+---
+
+Linear algebra is something you inevitably encounter when studying machine learning. What looks like abstract notation is actually the core mechanism behind how ML models represent and transform data using vectors and matrices. In this post, we'll work through systems of linear equations, matrix singularity, and determinants step by step.
+
+> This post is based on Week 1 of DeepLearning.AI's *Mathematics for Machine Learning and Data Science*.
+
+## What You'll Learn
+
+- Representing data as vectors and matrices, and understanding **singularity**, **rank**, and **linear independence**
+- Key operations: **dot product**, **inverse**, and **determinant**
+- How **linear transformations**, **eigenvalues**, and **eigenvectors** connect to machine learning
+
+---
+
+## Why Linear Algebra Matters in Machine Learning
+
+**Linear** means something can be modeled with a straight line.
+
+**Linear Regression** is the classic example — it models data with a line. Say you want to predict power output from wind speed. You need to find the ideal weight $w$ and bias $b$:
+<br />
+$$y = wx + b$$
+<br />
+When you have multiple features and multiple data points, you need to solve this equation simultaneously for all of them — and that's exactly what a **System of Linear Equations** is.
+
+Once the model knows $w$ and $b$, it can predict the target $y$ given any input feature $x$.
+
+---
+
+## Understanding Equation Systems Through Sentences
+
+A system of linear equations works a lot like a collection of sentences. Just as multiple sentences together convey more information than one alone, a system of equations works the same way.
+
+| System Type | Description |
+|---|---|
+| **Complete** | Contains as much information as the number of equations |
+| **Redundant** | Information is repeated |
+| **Contradictory** | Equations contradict each other |
+
+More information means more useful. A complete system is **non-singular**; a redundant or contradictory system is **singular**.
+
+---
+
+## Equation System Examples
+
+Turning sentences into equations lets us solve the system mathematically.
+
+**Two-variable example**
+<br />
+$$\text{Apple} + \text{Banana} = 10$$
+$$\text{Apple} - \text{Banana} = 6$$
+<br />
+Solving gives $\text{Apple} = 8,\ \text{Banana} = 2$.
+
+**Three-variable example**
+<br />
+$$a + b + c = 10$$
+$$a + 2b + c = 15$$
+$$a + b + 2c = 12$$
+<br />
+Solving gives $\text{Apple} = 3,\ \text{Banana} = 5,\ \text{Cherry} = 2$.
+
+> **Linear vs. Non-linear**: An equation is linear only when all variables appear to the first power. Anything involving $x^2$, $xy$, $\sin(x)$, etc. is non-linear.
+
+---
+
+## Visualizing Equation Systems as Graphs
+
+In a 2D plane, two lines can relate in exactly three ways:
+
+| Case | Number of Solutions | System Type |
+|---|---|---|
+| Two lines intersect at one point | Unique solution | Non-singular |
+| Two lines are parallel | No solution | Singular |
+| Two lines are identical | Infinitely many solutions | Singular |
+
+In 3D, lines become planes:
+
+- **System 1**: Three planes intersect at a single point → **Non-singular** (unique solution)
+- **System 2**: Three planes share a common line → **Singular** (infinitely many solutions)
+- **System 3**: Three planes coincide → **Singular** (the entire plane is the solution)
+
+---
+
+## Singularity and the Role of Constants
+
+Interestingly, **constants (the right-hand side values) do not affect singularity.**
+<br />
+$$x + 2y = 5 \quad \text{vs} \quad x + 2y = 0$$
+<br />
+Both have the same coefficients, so singularity is determined entirely by the coefficients. When checking for singularity, you can safely set all constants to zero.
+
+---
+
+## Matrix Singularity
+
+The coefficients of a linear system can be arranged into a matrix:
+<br />
+$$\begin{cases} x + 2y = 5 \\ 3x + 4y = 7 \end{cases} \quad \Rightarrow \quad \begin{bmatrix} 1 & 2 \\ 3 & 4 \end{bmatrix}$$
+<br />
+- **Non-singular matrix**: comes from a system with a unique solution
+- **Singular matrix**: comes from a system with no solution or infinitely many solutions
+
+---
+
+## Linear Independence and Dependence
+
+This is about the relationship between the rows of a matrix.
+
+- **Linearly Independent**: no row can be expressed as a combination of the other rows
+- **Linearly Dependent**: at least one row can be written as a combination of the others
+<br />
+$$\begin{bmatrix} 1 & 2 \\ 2 & 4 \end{bmatrix} \quad \text{→ row 2 = row 1 × 2, so linearly dependent (singular)}$$
+<br />
+$$\begin{bmatrix} 1 & 2 \\ 3 & 4 \end{bmatrix} \quad \text{→ neither row is a multiple of the other → linearly independent (non-singular)}$$
+<br />
+**Key rule:**
+- Linearly dependent → singular matrix
+- Linearly independent → non-singular matrix
+
+---
+
+## Determinant
+
+The determinant is a single number that tells you at a glance whether a matrix is singular or non-singular.
+<br />
+$$\det(M) = 0 \Rightarrow \text{singular}$$
+$$\det(M) \neq 0 \Rightarrow \text{non-singular}$$
+
+### 2×2 Determinant
+
+$$M = \begin{bmatrix} a & b \\ c & d \end{bmatrix} \quad \Rightarrow \quad \det(M) = ad - bc$$
+<br />
+**Examples:**
+<br />
+$$\begin{bmatrix} 5 & -1 \\ 1 & 3 \end{bmatrix} \Rightarrow \det = (5 \times 3) - (-1 \times 1) = 15 + 1 = 16 \quad \text{(non-singular)}$$
+<br />
+$$\begin{bmatrix} 2 & -6 \\ -1 & 3 \end{bmatrix} \Rightarrow \det = (2 \times 3) - (-6 \times -1) = 6 - 6 = 0 \quad \text{(singular)}$$
+
+### 3×3 Determinant (Sarrus' Rule)
+
+For a 3×3 matrix, use the **diagonal products** method:
+<br />
+$$M = \begin{bmatrix} a & b & c \\ d & e & f \\ g & h & i \end{bmatrix}$$
+<br />
+$$\det(M) = (aei + bfg + cdh) - (ceg + fha + ibd)$$
+<br />
+Add the products of the left-to-right diagonals, then subtract the products of the right-to-left diagonals.
+
+**Example:**
+<br />
+$$\begin{bmatrix} 1 & 0 & 1 \\ 3 & 1 & 0 \\ 3 & 0 & 3 \end{bmatrix}$$
+<br />
+- Left-to-right diagonals: $1 \cdot 1 \cdot 3 + 0 \cdot 0 \cdot 3 + 1 \cdot 3 \cdot 0 = 3$
+- Right-to-left diagonals: $1 \cdot 1 \cdot 3 + 0 \cdot 0 \cdot 3 + 1 \cdot 3 \cdot 0 = 3$
+- $\det = 3 - 3 = 0$ → **singular**
+
+---
+
+## Summary
+
+| Concept | Singular | Non-singular |
+|---|---|---|
+| Number of solutions | 0 or infinitely many | Exactly 1 |
+| Lines / Planes | Parallel or overlapping | Intersect at a point |
+| Row relationship | Linearly dependent | Linearly independent |
+| Determinant | $\det = 0$ | $\det \neq 0$ |
+| Inverse matrix | Does not exist | Exists |
+
+---
+
+<br />
+
+## Quiz
+
+Try these problems to check your understanding.
+
+**Q1. Find the determinant of the following 2×2 matrix and determine whether it is singular or non-singular.**
+<br />
+$$A = \begin{bmatrix} 3 & 6 \\ 1 & 2 \end{bmatrix}$$
+<br />
+<details>
+<summary>Show answer</summary>
+
+$\det(A) = (3 \times 2) - (6 \times 1) = 6 - 6 = 0$
+
+Since the determinant is 0, this is a **singular matrix**. The second row is $\frac{1}{3}$ of the first row, so the rows are **linearly dependent**.
+
+</details>
+
+---
+
+**Q2. Is the following system of equations complete, redundant, or contradictory?**
+<br />
+$$\begin{cases} x + y = 5 \\ 2x + 2y = 10 \end{cases}$$
+<br />
+<details>
+<summary>Show answer</summary>
+
+The second equation is exactly twice the first — it carries no new information. This is a **redundant system**, with infinitely many solutions. As a matrix, this is singular.
+
+</details>
+
+---
+
+**Q3. Find the determinant of the following 3×3 matrix.**
+<br />
+$$B = \begin{bmatrix} 1 & 0 & 0 \\ 0 & 2 & 0 \\ 0 & 0 & 3 \end{bmatrix}$$
+<br />
+<details>
+<summary>Show answer</summary>
+
+For a diagonal matrix, the determinant is the product of the diagonal entries.
+
+$\det(B) = 1 \times 2 \times 3 = 6$
+
+Since the determinant is non-zero, this is a **non-singular matrix**.
+
+</details>
+
+---
+
+**Q4. Which of the following matrices is linearly independent?**
+<br />
+$$C = \begin{bmatrix} 1 & 2 \\ 3 & 6 \end{bmatrix}, \quad D = \begin{bmatrix} 1 & 2 \\ 3 & 4 \end{bmatrix}$$
+<br />
+<details>
+<summary>Show answer</summary>
+
+- Matrix $C$: row 2 = row 1 × 3, so **linearly dependent** ($\det = 6 - 6 = 0$, singular)
+- Matrix $D$: neither row is a multiple of the other → **linearly independent** ($\det = 4 - 6 = -2 \neq 0$, non-singular)
+
+Answer: **D**
+
+</details>
+
+---
+
+In the next post, we'll cover **Elimination** as a method for solving systems of linear equations, Row Echelon Form, Gaussian elimination, and matrix **Rank**.

@@ -1,0 +1,343 @@
+---
+title: "ML Probability & Statistics Chapter 3: Sampling, MLE, and MAP"
+date: "2026-03-06"
+category: "MMD"
+tags: ["확률", "통계", "머신러닝", "MLE", "베이즈", "중심극한정리"]
+excerpt: "A concise guide to the core ideas behind ML estimation: populations vs. samples, the Law of Large Numbers, the Central Limit Theorem, Maximum Likelihood Estimation (MLE), Maximum A Posteriori (MAP), and regularization."
+readTime: 13
+---
+
+In [Chapter 2](/blog/prob-stats-2) we covered descriptive statistics and multivariate distributions. This post focuses on **estimating a population from samples**, along with the two workhorses of machine learning estimation: **MLE** and **MAP**.
+
+> This post is based on Week 2 of DeepLearning.AI's *Mathematics for Machine Learning and Data Science — Probability & Statistics*.
+
+## What You'll Learn
+
+- **Population vs. Sample** — what they are and why the distinction matters
+- **Sample mean, proportion, and variance** — unbiased estimators
+- **Law of Large Numbers** — why more data means better estimates
+- **Central Limit Theorem (CLT)** — why any distribution converges to normal with enough samples
+- **MLE** — finding the parameters that best explain your data
+- **MAP** — combining MLE with prior information
+- **Regularization** — the connection between MAP and L2 regularization
+
+---
+
+## Population and Sample
+
+### Key Concepts
+
+| Term | Definition |
+|---|---|
+| **Population** | The complete set of subjects under study |
+| **Sample** | A randomly drawn subset of the population |
+| **Parameter** | A characteristic of the population ($\mu$, $\sigma^2$) |
+| **Statistic** | An estimate computed from the sample ($\bar{x}$, $s^2$) |
+
+> **Why use samples?** Measuring an entire population is often impossible or prohibitively expensive, so we use random samples to infer population characteristics.
+
+**Properties of a good sample (i.i.d.)**:
+- **Independence**: each observation does not influence the others
+- **Identical distribution**: all observations are drawn from the same distribution
+
+### Sample Mean
+
+$$\bar{x} = \frac{1}{n} \sum_{i=1}^n x_i$$
+<br />
+- An **unbiased estimator** of the population mean $\mu$
+- As the sample size grows, $\bar{x} \to \mu$
+
+### Sample Variance
+
+$$s^2 = \frac{1}{n-1} \sum_{i=1}^n (x_i - \bar{x})^2$$
+<br />
+**Why $n-1$? (Bessel's Correction)**: Dividing by $n$ underestimates the population variance. Because one degree of freedom is consumed when estimating the mean, dividing by $n-1$ yields an unbiased estimator.
+
+> The MLE variance estimator uses $\frac{1}{n}$ and is therefore biased. In practice, always use $\frac{1}{n-1}$ for sample variance.
+
+---
+
+## Law of Large Numbers
+
+**As the sample size $n$ grows, the sample mean converges to the population mean.**
+<br />
+$$\bar{x}_n \xrightarrow{n \to \infty} \mu$$
+<br />
+**Example**: When flipping a coin, the proportion of heads fluctuates wildly in the first few tosses (0.3, 0.7, …), but converges to 0.5 after thousands of trials.
+
+> **ML implication**: The more training data you have, the better your model can learn the true data distribution.
+
+---
+
+## Central Limit Theorem (CLT)
+
+### The Core Statement
+
+**Regardless of the original distribution's shape**, the sample mean of $n$ independent, identically distributed random variables $X_1, X_2, \ldots, X_n$ converges to a **normal distribution** as $n$ grows large.
+<br />
+$$\bar{X}_n \sim N\left(\mu, \frac{\sigma^2}{n}\right) \quad \text{(for large } n\text{)}$$
+<br />
+**Standardized form:**
+<br />
+$$Z_n = \frac{\bar{X}_n - \mu}{\sigma / \sqrt{n}} \xrightarrow{n \to \infty} N(0, 1)$$
+
+### Key Points
+
+| Item | Value |
+|---|---|
+| Minimum sample size for CLT | Typically $n \geq 30$ |
+| If the original distribution is symmetric | Converges with smaller $n$ |
+| If the original distribution is skewed | Requires larger $n$ |
+
+**Why standardize?**: The variance of the sample mean is $\frac{\sigma^2}{n}$, which changes with $n$, making direct comparisons difficult.
+
+> **Practical significance**: No matter what distribution your data comes from, statistics computed from a sufficiently large sample follow a normal distribution. This is the theoretical foundation of confidence intervals and hypothesis testing.
+
+---
+
+## Maximum Likelihood Estimation (MLE)
+
+### Core Idea
+
+**Find the parameters most likely to have generated the observed data.**
+<br />
+$$\hat{\theta}_{\text{MLE}} = \arg\max_\theta P(\text{data} \mid \theta) = \arg\max_\theta L(\theta)$$
+<br />
+We find the $\theta$ that maximizes the **likelihood** of the observed data.
+
+### Bernoulli MLE Example
+
+Flip a coin 10 times, observe 8 heads:
+<br />
+$$L(p) = p^8 (1-p)^2$$
+<br />
+Apply the log transformation (products → sums):
+<br />
+$$\log L(p) = 8\log p + 2\log(1-p)$$
+<br />
+Differentiate and set to zero:
+<br />
+$$\frac{d \log L}{dp} = \frac{8}{p} - \frac{2}{1-p} = 0 \quad \Rightarrow \quad \hat{p} = \frac{8}{10} = 0.8$$
+<br />
+**Takeaway**: The MLE estimate equals the **observed frequency** — an intuitively satisfying result.
+
+### Gaussian MLE
+
+Given $n$ samples $x_1, \ldots, x_n$ drawn from $N(\mu, \sigma^2)$:
+
+**MLE for the mean:**
+<br />
+$$\hat{\mu}_{\text{MLE}} = \frac{1}{n} \sum_{i=1}^n x_i = \bar{x}$$
+<br />
+**MLE for the variance:**
+<br />
+$$\hat{\sigma}^2_{\text{MLE}} = \frac{1}{n} \sum_{i=1}^n (x_i - \bar{x})^2$$
+
+> The MLE variance estimator uses $\frac{1}{n}$ and is **biased** (the sample variance $s^2$ uses $\frac{1}{n-1}$ and is unbiased).
+
+### Linear Regression and MLE
+
+For linear regression $y = wx + b + \epsilon$ (where $\epsilon \sim N(0, \sigma^2)$):
+<br />
+$$P(y_i \mid x_i, w, b) = N(wx_i + b, \sigma^2)$$
+<br />
+Maximizing the likelihood with respect to $w$ and $b$ is equivalent to:
+<br />
+$$\text{minimize} \sum_i (y_i - (wx_i + b))^2$$
+<br />
+**Takeaway**: Under a normality assumption, **MLE = Ordinary Least Squares**.
+
+---
+
+## Regularization
+
+### The Overfitting Problem
+
+When a model is too complex, it overfits the training data and performs poorly on new data.
+
+**Solution**: Add a **penalty** term for complexity.
+<br />
+$$\text{new loss} = \text{original loss} + \lambda \cdot \text{penalty}$$
+<br />
+**L2 Regularization (Ridge)**:
+<br />
+$$\text{penalty} = \sum_j w_j^2 \quad \text{(sum of squared coefficients)}$$
+<br />
+- Larger coefficients incur larger penalties
+- Shrinks all coefficients toward zero (but never exactly to zero)
+
+**L1 Regularization (Lasso)**: Sum of absolute values of coefficients → drives some coefficients to exactly zero, enabling **feature selection**.
+
+> **Hyperparameter $\lambda$**: Controls the penalty strength. A larger $\lambda$ produces a simpler model; a smaller $\lambda$ stays closer to the unregularized model.
+
+---
+
+## MAP and Bayesian Statistics
+
+### Frequentist vs. Bayesian
+
+| | Frequentist | Bayesian |
+|---|---|---|
+| View of parameters | Fixed but unknown values | Random variables with uncertainty |
+| Estimation method | MLE | Prior + data → posterior |
+| Output | Point estimate | Distribution |
+
+### MAP (Maximum A Posteriori)
+
+**MLE + Prior information**:
+<br />
+$$\hat{\theta}_{\text{MAP}} = \arg\max_\theta \underbrace{P(\theta \mid \text{data})}_{\text{posterior}} = \arg\max_\theta \underbrace{P(\text{data} \mid \theta)}_{\text{likelihood}} \cdot \underbrace{P(\theta)}_{\text{prior}}$$
+<br />
+- **Uniform prior** → MAP = MLE
+- **Informative prior** → prior knowledge is incorporated into the estimate
+
+### Connection Between MAP and L2 Regularization
+
+Assume a Gaussian prior $N(0, \tau^2)$ on $\theta$:
+<br />
+$$\log P(\theta) = -\frac{1}{2\tau^2} \sum_j \theta_j^2 + \text{const}$$
+<br />
+Maximizing MAP = minimizing the MLE loss + a $\frac{1}{\tau^2} \sum \theta_j^2$ penalty
+<br />
+$$\Leftrightarrow \text{L2 Regularization (Ridge)}$$
+
+> **Conclusion**: **L2 regularization = MAP estimation with a Gaussian prior.**
+
+### Updating the Prior (Prior → Posterior)
+
+The heart of Bayesian statistics: update the prior each time new data is observed.
+
+**Sequential updating**: the previous posterior becomes the next prior.
+<br />
+$$P(\theta \mid D_1) \xrightarrow{\text{new data } D_2} P(\theta \mid D_1, D_2)$$
+<br />
+Whether you process data all at once or sequentially, the final posterior is the same.
+
+**MAP choice**: Use the mode of the posterior distribution as a point estimate.
+
+---
+
+## MLE vs. MAP Summary
+
+| | MLE | MAP |
+|---|---|---|
+| Uses prior information | ❌ | ✅ |
+| Equivalent to | Least Squares | L2/L1 Regularization |
+| With little data | Risk of overfitting | Stabilized by prior |
+| With lots of data | MLE ≈ MAP | Prior influence diminishes |
+| Output | Point estimate | Point estimate (mode of posterior) |
+
+---
+
+## Key Takeaways
+
+| Concept | Summary |
+|---|---|
+| **Population/Sample** | Whole/subset; i.i.d. condition |
+| **Sample variance** | Unbiased with $\frac{1}{n-1}$ |
+| **Law of Large Numbers** | $n \uparrow$ → sample mean → population mean |
+| **Central Limit Theorem** | $n \geq 30$ → sample mean ~ normal distribution |
+| **MLE** | Maximize likelihood = observed frequency / least squares |
+| **MAP** | Maximize likelihood × prior = MLE + regularization |
+| **L2 Regularization** | Equivalent to MAP with a Gaussian prior |
+
+---
+
+<br />
+
+## Quiz
+
+**Q1. Why do we divide by $n-1$ instead of $n$ when computing sample variance?**
+
+<details>
+<summary>Show answer</summary>
+
+**Bessel's Correction**: Estimating the mean from the sample consumes one degree of freedom.
+
+Dividing by $n$ **underestimates** the population variance. Dividing by $n-1$ removes this bias and yields an **unbiased estimator**.
+
+Intuition: data points within a sample tend to cluster around the sample mean, making the spread appear smaller than it really is in the full population.
+
+</details>
+
+---
+
+**Q2. Which of the following statements about the Central Limit Theorem is correct?**
+
+1. The original distribution must be normal
+2. When the sample size is large, the distribution of the sample mean approaches a normal distribution
+3. As the sample size increases, the population variance decreases
+4. The sample mean always equals the population mean
+
+<details>
+<summary>Show answer</summary>
+
+**Answer: 2**
+
+- 1 ❌: CLT applies regardless of the original distribution's shape
+- 2 ✅: This is the core statement of the CLT
+- 3 ❌: The *sample mean's* variance shrinks to $\sigma^2/n$; the population variance itself does not change
+- 4 ❌: The sample mean converges *probabilistically* to the population mean, but they are not always equal
+
+</details>
+
+---
+
+**Q3. You flip a coin 10 times and observe 7 heads. What is the MLE estimate of the probability $p$ of heads?**
+
+<details>
+<summary>Show answer</summary>
+<br />
+$$L(p) = p^7(1-p)^3$$
+<br />
+$$\log L(p) = 7\log p + 3\log(1-p)$$
+<br />
+$$\frac{d\log L}{dp} = \frac{7}{p} - \frac{3}{1-p} = 0 \quad \Rightarrow \quad \hat{p} = \frac{7}{10} = 0.7$$
+<br />
+The MLE estimate equals the **observed frequency**.
+
+</details>
+
+---
+
+**Q4. Explain the difference between MLE and MAP, and describe the connection to L2 regularization.**
+
+<details>
+<summary>Show answer</summary>
+
+- **MLE**: maximizes the likelihood $P(\text{data} \mid \theta)$ using data alone
+- **MAP**: also incorporates a prior $P(\theta)$ by maximizing $P(\text{data} \mid \theta) \cdot P(\theta)$
+
+Assuming a **Gaussian prior** $P(\theta) \propto e^{-\lambda \|\theta\|^2}$ on $\theta$:
+<br />
+$$\text{MAP} = \arg\min_\theta \left[ -\log P(\text{data} \mid \theta) + \lambda \|\theta\|^2 \right]$$
+<br />
+This is exactly the form of **L2 regularization (Ridge)**.
+
+→ **L2 regularization = MAP estimation with a Gaussian prior**
+
+</details>
+
+---
+
+**Q5. Which of the following correctly describes the difference between the Law of Large Numbers and the Central Limit Theorem?**
+
+1. The LLN describes the shape of the sample mean's distribution; the CLT describes the rate of convergence
+2. The LLN states that the sample mean converges to the population mean; the CLT states that the distribution of the sample mean converges to a normal distribution
+3. The LLN applies only to continuous variables; the CLT applies only to discrete variables
+
+<details>
+<summary>Show answer</summary>
+
+**Answer: 2**
+
+- **Law of Large Numbers**: as $n \to \infty$, $\bar{X}_n \to \mu$ — the **value** of the sample mean approaches the population mean
+- **CLT**: for large $n$, the **distribution** of $\bar{X}_n$ approaches $N(\mu, \sigma^2/n)$
+
+The two theorems describe different aspects: the LLN addresses convergence of the value, while the CLT describes the shape of the distribution it converges to.
+
+</details>
+
+---
+
+The next post will cover **Confidence Intervals** and **Hypothesis Testing** — methods for quantifying the uncertainty in our estimates.

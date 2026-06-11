@@ -1,0 +1,427 @@
+---
+title: "ML Probability & Statistics Chapter 1: Foundations of Probability and Probability Distributions"
+date: "2026-03-06"
+category: "MMD"
+tags: ["확률", "통계", "머신러닝", "확률분포", "베이즈정리", "정규분포"]
+excerpt: "A comprehensive overview of the probability and statistics essentials for machine learning — from basic probability and conditional probability to Bayes' theorem, and the binomial, normal, and chi-squared distributions."
+readTime: 14
+---
+
+This post kicks off a series on **Probability & Statistics**. Machine learning models are, at their core, tools for reasoning under uncertainty. Every step — quantifying the uncertainty in a prediction, drawing inferences from data, evaluating model performance — rests on a foundation of probability and statistics.
+
+> This post is based on Week 1 of DeepLearning.AI's *Mathematics for Machine Learning and Data Science — Probability & Statistics*.
+
+## What You'll Learn
+
+- **Probability basics** — events, sample spaces, complements
+- **Addition rule** — disjoint events vs. joint events
+- **Independence** — the multiplication rule
+- **Conditional probability** — probability given an event
+- **Bayes' theorem** — prior and posterior probabilities
+- **Random variables and distributions** — discrete and continuous
+- **Key distributions** — binomial, Bernoulli, uniform, normal, chi-squared
+
+---
+
+## Probability Basics
+
+### What Is Probability?
+
+**Probability** is a number between 0 and 1 that expresses how likely an event is to occur.
+<br />
+$$P(A) = \frac{\text{number of outcomes where A occurs}}{\text{total number of possible outcomes}}$$
+<br />
+**Examples**
+- 3 out of 10 people play soccer: $P(\text{soccer}) = \frac{3}{10} = 30\%$
+- Rolling a 6 on a six-sided die: $P(6) = \frac{1}{6}$
+- Getting heads twice in two coin flips: $P(HH) = \frac{1}{4}$
+
+**Experiment**: Any process that produces an uncertain outcome
+
+**Sample Space**: The set of all possible outcomes
+
+---
+
+### Complement
+
+The probability that event $A$ does **not** occur:
+<br />
+$$P(A^c) = 1 - P(A)$$
+
+| Example | Calculation |
+|---|---|
+| Probability of not playing soccer | $1 - \frac{3}{10} = \frac{7}{10}$ |
+| Probability of not rolling a 6 | $1 - \frac{1}{6} = \frac{5}{6}$ |
+| Probability of not getting all heads in 3 flips | $1 - \frac{1}{8} = \frac{7}{8}$ |
+
+> **Tip**: When a probability is hard to compute directly, it's often easier to compute its complement instead.
+
+---
+
+### Addition Rule — Disjoint Events
+
+**Disjoint (Mutually Exclusive) Events**: Events that cannot occur at the same time.
+<br />
+$$P(A \cup B) = P(A) + P(B)$$
+<br />
+**Example**
+- Probability of rolling an even number or a 5:
+  $P(\text{even}) = \frac{3}{6}$, $P(5) = \frac{1}{6}$ → $P(\text{even or 5}) = \frac{4}{6} = \frac{2}{3}$
+
+---
+
+### Addition Rule — Joint Events
+
+**Joint Events**: Events that can overlap. You must subtract the intersection to avoid double-counting.
+<br />
+$$P(A \cup B) = P(A) + P(B) - P(A \cap B)$$
+<br />
+**Example** — soccer (0.6), basketball (0.5), both (0.3):
+<br />
+$$P(\text{soccer or basketball}) = 0.6 + 0.5 - 0.3 = 0.8$$
+
+> **Key point**: You must first determine whether two events are disjoint or joint. Without knowing the intersection, the probability cannot be computed.
+
+---
+
+### Independence
+
+Two events $A$ and $B$ are **independent** if the occurrence of one has no effect on the probability of the other.
+<br />
+$$P(A \cap B) = P(A) \times P(B)$$
+<br />
+**Examples**
+- Getting heads 5 times in a row: $P = \left(\frac{1}{2}\right)^5 = \frac{1}{32}$
+- Rolling a 6 ten times in a row: $P = \left(\frac{1}{6}\right)^{10}$
+
+> The independence assumption greatly simplifies computation. The Naive Bayes classifier is built on exactly this assumption.
+
+### The Birthday Problem
+
+With 30 people in a room, what is the probability that **at least two share a birthday**?
+
+It feels low intuitively, but the answer is actually **over 70%**.
+
+Compute it using the complement:
+<br />
+$$P(\text{at least one shared birthday}) = 1 - P(\text{all different birthdays})$$
+<br />
+$$P(\text{all different}) = \frac{365}{365} \times \frac{364}{365} \times \frac{363}{365} \times \cdots \times \frac{336}{365} \approx 0.294$$
+<br />
+$$P(\text{at least one shared birthday}) \approx 1 - 0.294 = 0.706$$
+
+> **Lesson**: Our intuition about probability is often wrong. Always work it out with math.
+
+---
+
+## Conditional Probability
+
+### Concept
+
+**Conditional probability**: The probability that event $A$ occurs, given that event $B$ has already occurred.
+<br />
+$$P(A \mid B) = \frac{P(A \cap B)}{P(B)}$$
+<br />
+**Notation**: $P(A \mid B)$ ("the probability of A given B")
+
+**Example — two coin flips**:
+- $P(HH \mid \text{first flip is H})$ = $\frac{1}{2}$ (if the first is H, only the second needs to be H)
+- $P(HH \mid \text{first flip is T})$ = 0 (HH is impossible if the first flip is T)
+
+### Product Rule
+
+The probability of the intersection of two dependent events:
+<br />
+$$P(A \cap B) = P(A) \times P(B \mid A)$$
+<br />
+**Example** — 40% of students play soccer, and 80% of those wear running shoes:
+<br />
+$$P(\text{soccer} \cap \text{running shoes}) = 0.4 \times 0.8 = 0.32$$
+
+> **Independent vs. dependent**: If events are related, they are dependent and conditional probability must be used.
+
+---
+
+## Bayes' Theorem
+
+### Formula
+
+$$\boxed{P(A \mid B) = \frac{P(B \mid A) \cdot P(A)}{P(B)}}$$
+
+| Term | Meaning |
+|---|---|
+| $P(A)$ | **Prior** — our baseline belief before seeing any evidence |
+| $P(A \mid B)$ | **Posterior** — our updated belief after observing evidence $B$ |
+| $P(B \mid A)$ | **Likelihood** — the probability of observing B given A |
+| $P(B)$ | **Evidence** — the overall probability of observing B |
+
+### Spam Email Example
+
+- 20% of emails are spam: $P(\text{spam}) = 0.2$
+- 40% of spam emails contain "lottery": $P(\text{lottery} \mid \text{spam}) = 0.4$
+- 10% of all emails contain "lottery": $P(\text{lottery}) = 0.1$
+<br />
+$$P(\text{spam} \mid \text{lottery}) = \frac{0.4 \times 0.2}{0.1} = 0.8$$
+<br />
+The probability that an email containing "lottery" is spam is **80%** — a dramatic update from the prior of 20%.
+
+### Naive Bayes
+
+When there are multiple features and we assume all features are **independent**:
+<br />
+$$P(A \mid B_1, B_2, \ldots, B_n) \propto P(A) \cdot P(B_1 \mid A) \cdot P(B_2 \mid A) \cdots P(B_n \mid A)$$
+<br />
+It's called **Naive** because features are rarely truly independent in practice — but the assumption buys us:
+- Dramatically simpler computation
+- Good performance even with limited data
+- Particular effectiveness in text classification (spam filtering)
+
+---
+
+## Random Variables and Probability Distributions
+
+### Random Variable
+
+A **random variable** is a variable that maps the outcome of an experiment to a numeric value.
+
+| Type | Description | Examples |
+|---|---|---|
+| **Discrete** | A countable, finite set of values | Number of heads in coin flips, die roll result |
+| **Continuous** | Infinitely many values within an interval | Height, temperature, waiting time |
+
+---
+
+## Discrete Probability Distributions
+
+### Binomial Distribution
+
+The probability of getting exactly $k$ successes in $n$ independent trials, each with success probability $p$:
+<br />
+$$P(X = k) = \binom{n}{k} p^k (1-p)^{n-k}$$
+<br />
+**Binomial Coefficient**:
+<br />
+$$\binom{n}{k} = \frac{n!}{k!(n-k)!}$$
+<br />
+The number of ways to choose $k$ items from $n$ without regard to order.
+
+**Example** — the probability of rolling a 1 exactly 3 times in 5 die rolls:
+<br />
+$$P(X=3) = \binom{5}{3} \left(\frac{1}{6}\right)^3 \left(\frac{5}{6}\right)^2$$
+<br />
+**Properties**:
+- $p = 0.5$ → symmetric distribution
+- $p \neq 0.5$ → skewed distribution
+- As $n$ grows large, converges to a normal distribution
+
+### Bernoulli Distribution
+
+A special case of the binomial distribution ($n = 1$). A single trial with only two outcomes: **success or failure**.
+<br />
+$$P(X = k) = \begin{cases} p & k = 1 \text{ (success)} \\ 1 - p & k = 0 \text{ (failure)} \end{cases}$$
+<br />
+**Example**: The probability of rolling a 2 on a 4-sided die → $\text{Bernoulli}(p = \frac{1}{4})$
+
+> Bernoulli distribution = Binomial distribution $\text{Binomial}(1, p)$
+
+---
+
+## Continuous Probability Distributions
+
+### Probability Density Function (PDF)
+
+For a continuous random variable, the probability of any **single exact value is 0** (a point has no area). Instead, we compute the probability over an **interval**.
+<br />
+$$P(a \leq X \leq b) = \int_a^b f(x) \, dx$$
+<br />
+$f(x)$: Probability Density Function
+
+**Properties**:
+- $f(x) \geq 0$
+- $\int_{-\infty}^{\infty} f(x) \, dx = 1$ (total area = 1)
+
+> **Discrete**: PMF (Probability Mass Function) ↔ **Continuous**: PDF (Probability Density Function)
+
+### Cumulative Distribution Function (CDF)
+
+$$F(x) = P(X \leq x) = \int_{-\infty}^{x} f(t) \, dt$$
+<br />
+**Properties**:
+- Always starts at 0 and ends at 1
+- Monotonically non-decreasing
+- Discrete: staircase shape / Continuous: smooth curve
+
+> The CDF makes **sampling** from a distribution straightforward. Draw a value from a uniform $[0,1]$ distribution and apply the inverse CDF to get a sample from the desired distribution.
+
+---
+
+### Uniform Distribution
+
+A distribution where every value in the interval $[a, b]$ has **equal probability**.
+<br />
+$$f(x) = \frac{1}{b - a}, \quad a \leq x \leq b$$
+<br />
+**Parameters**: $a$ (lower bound), $b$ (upper bound)
+
+**Example**: If hold time is uniformly distributed between 0 and 5 minutes → $P(2 \leq X \leq 3) = \frac{1}{5} = 20\%$
+
+---
+
+### Normal (Gaussian) Distribution
+
+The most widely used distribution in machine learning. It appears frequently in natural phenomena (height, measurement error, etc.).
+<br />
+$$f(x) = \frac{1}{\sigma\sqrt{2\pi}} e^{-\frac{(x-\mu)^2}{2\sigma^2}}$$
+<br />
+**Parameters**:
+- $\mu$ (mu): mean — determines the **location** of the distribution
+- $\sigma$ (sigma): standard deviation — determines the **spread** of the distribution
+
+**Standard Normal Distribution**: $\mu = 0$, $\sigma = 1$ → $Z \sim N(0, 1)$
+
+**Standardization**:
+<br />
+$$Z = \frac{X - \mu}{\sigma}$$
+<br />
+Used to compare variables with different units and scales. This is the theoretical basis for **feature scaling** in machine learning.
+
+**The 68-95-99.7 Rule**:
+- About 68% of data falls within $\mu \pm 1\sigma$
+- About 95% of data falls within $\mu \pm 2\sigma$
+- About 99.7% of data falls within $\mu \pm 3\sigma$
+
+---
+
+### Chi-Squared Distribution
+
+The distribution of the sum of squares of $k$ independent standard normal variables $Z_i$:
+<br />
+$$\chi^2_k = Z_1^2 + Z_2^2 + \cdots + Z_k^2$$
+<br />
+**Parameter**: $k$ (degrees of freedom)
+
+**Properties**:
+- Small $k$: concentrated near 0, right-skewed
+- Large $k$: spreads out and becomes more symmetric
+
+**Machine learning applications**:
+- Hypothesis testing (independence tests, goodness-of-fit tests)
+- Signal noise modeling (sum of squared noise)
+
+---
+
+## Summary
+
+| Concept | Formula / Description |
+|---|---|
+| **Basic probability** | $P(A) = \frac{\text{favorable outcomes}}{\text{total outcomes}}$ |
+| **Complement** | $P(A^c) = 1 - P(A)$ |
+| **Disjoint union** | $P(A \cup B) = P(A) + P(B)$ |
+| **Joint union** | $P(A \cup B) = P(A) + P(B) - P(A \cap B)$ |
+| **Independent intersection** | $P(A \cap B) = P(A) \cdot P(B)$ |
+| **Conditional probability** | $P(A \mid B) = \frac{P(A \cap B)}{P(B)}$ |
+| **Bayes' theorem** | $P(A \mid B) = \frac{P(B \mid A) \cdot P(A)}{P(B)}$ |
+| **Binomial distribution** | $P(X=k) = \binom{n}{k}p^k(1-p)^{n-k}$ |
+| **Normal distribution** | $f(x) = \frac{1}{\sigma\sqrt{2\pi}}e^{-\frac{(x-\mu)^2}{2\sigma^2}}$ |
+
+---
+
+<br />
+
+## Quiz
+
+**Q1. If you flip a fair coin twice, what is the probability of getting exactly one head and one tail (in any order)?**
+
+<details>
+<summary>Show answer</summary>
+
+Possible outcomes: HH, HT, TH, TT (4 total)
+
+Outcomes with one head and one tail: HT, TH (2 outcomes)
+<br />
+$$P = \frac{2}{4} = \frac{1}{2}$$
+<br />
+</details>
+
+---
+
+**Q2. What is the probability that two dice sum to 10?**
+
+<details>
+<summary>Show answer</summary>
+
+Total outcomes: $6 \times 6 = 36$
+
+Outcomes that sum to 10: $(4,6), (5,5), (6,4)$ → 3 outcomes
+<br />
+$$P = \frac{3}{36} = \frac{1}{12}$$
+<br />
+</details>
+
+---
+
+**Q3. Can you determine $P(\text{fever or headache})$ from the following information?**
+
+Among 100 patients, 50 experienced a headache and 50 had a fever.
+
+1. Cannot be determined
+2. $P = 1.0$
+3. $P = 0.25$
+
+<details>
+<summary>Show answer</summary>
+
+**Answer 1 — Cannot be determined**
+
+We don't know how many patients had both symptoms simultaneously ($P(A \cap B)$).
+<br />
+$$P(A \cup B) = P(A) + P(B) - P(A \cap B) = 0.5 + 0.5 - ?$$
+<br />
+For joint events, knowing the intersection is essential.
+
+</details>
+
+---
+
+**Q4. A factory produces product A (70% of output) and product B (30%). The quality inspection pass rate is 80% for A and 90% for B. Given that a product passes inspection, what is the probability it is product A?**
+
+<details>
+<summary>Show answer</summary>
+
+Applying Bayes' theorem:
+<br />
+$$P(A \mid \text{pass}) = \frac{P(\text{pass} \mid A) \cdot P(A)}{P(\text{pass})}$$
+<br />
+**Numerator:**
+$$P(\text{pass} \mid A) \cdot P(A) = 0.8 \times 0.7 = 0.56$$
+<br />
+**Denominator (total probability of passing):**
+$$P(\text{pass}) = 0.8 \times 0.7 + 0.9 \times 0.3 = 0.56 + 0.27 = 0.83$$
+<br />
+**Result:**
+$$P(A \mid \text{pass}) = \frac{0.56}{0.83} \approx 0.675 = 67.5\%$$
+<br />
+The probability dropped slightly from the prior of 70% to 67.5%, because product B has a higher pass rate.
+
+</details>
+
+---
+
+**Q5. What is the probability of rolling an odd number or a prime number on a single die?**
+
+<details>
+<summary>Show answer</summary>
+
+- Odd numbers: $\{1, 3, 5\}$ → $P = \frac{3}{6} = \frac{1}{2}$
+- Prime numbers: $\{2, 3, 5\}$ → $P = \frac{3}{6} = \frac{1}{2}$
+- Intersection (odd and prime): $\{3, 5\}$ → $P = \frac{2}{6} = \frac{1}{3}$
+
+Applying the addition rule for joint events:
+<br />
+$$P(\text{odd or prime}) = \frac{1}{2} + \frac{1}{2} - \frac{1}{3} = 1 - \frac{1}{3} = \frac{2}{3}$$
+<br />
+</details>
+
+---
+
+The next post will cover **expected value and variance**, **skewness and kurtosis**, **covariance and correlation**, and the **multivariate normal distribution**.

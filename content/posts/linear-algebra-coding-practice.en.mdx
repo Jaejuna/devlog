@@ -1,0 +1,684 @@
+---
+title: "Linear Algebra Coding Practice: Implementing Matrix Operations with NumPy"
+date: "2026-03-06"
+category: "MMD"
+tags: ["선형대수", "Python", "NumPy", "코딩과제", "머신러닝", "PCA"]
+excerpt: "A hands-on coding practice for implementing matrix operations, Gaussian elimination, eigendecomposition, and PCA from scratch using NumPy. Each problem includes step-by-step hints and complete solution code."
+readTime: 15
+---
+
+This post is a coding practice for implementing the concepts from [Linear Algebra Chapters 1–4](/blog/linear-algebra-1) directly in **Python/NumPy**. Try solving each problem on your own before checking the solution.
+
+> **Environment**: Python 3.x, NumPy, Matplotlib (optional)
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+```
+
+---
+
+## Part 1. Basic Matrix Operations
+
+### Exercise 1-1. Determinant and Singularity Checker
+
+Write a function that takes an arbitrary square matrix as input, determines whether it is singular or non-singular, and returns the inverse if it is non-singular.
+
+```python
+# Implement this
+def matrix_info(A: np.ndarray) -> dict:
+    """
+    Returns:
+        {
+          'is_singular': bool,
+          'det': float,
+          'rank': int,
+          'inverse': np.ndarray or None
+        }
+    """
+    pass
+```
+
+<details>
+<summary>View Solution</summary>
+
+```python
+def matrix_info(A: np.ndarray) -> dict:
+    det = np.linalg.det(A)
+    rank = np.linalg.matrix_rank(A)
+    is_singular = np.isclose(det, 0)
+
+    inverse = None
+    if not is_singular:
+        inverse = np.linalg.inv(A)
+
+    return {
+        'is_singular': is_singular,
+        'det': det,
+        'rank': rank,
+        'inverse': inverse
+    }
+
+# Test
+A = np.array([[1, 2], [3, 4]], dtype=float)
+B = np.array([[1, 2], [2, 4]], dtype=float)
+
+print("Non-singular matrix:")
+info_A = matrix_info(A)
+print(f"  det = {info_A['det']:.2f}, rank = {info_A['rank']}, singular = {info_A['is_singular']}")
+print(f"  Inverse:\n{info_A['inverse']}")
+
+print("\nSingular matrix:")
+info_B = matrix_info(B)
+print(f"  det = {info_B['det']:.2f}, rank = {info_B['rank']}, singular = {info_B['is_singular']}")
+print(f"  Inverse: {info_B['inverse']}")
+```
+
+**Output:**
+```
+Non-singular matrix:
+  det = -2.00, rank = 2, singular = False
+  Inverse:
+[[-2.   1. ]
+ [ 1.5 -0.5]]
+
+Singular matrix:
+  det = 0.00, rank = 1, singular = True
+  Inverse: None
+```
+
+</details>
+
+---
+
+### Exercise 1-2. Implementing Gaussian Elimination from Scratch
+
+Without using NumPy's `linalg.solve`, implement Gaussian elimination (forward elimination + back substitution) yourself.
+
+```python
+def gaussian_elimination(A: np.ndarray, b: np.ndarray) -> np.ndarray:
+    """
+    Solves Ax = b using Gaussian elimination and returns x.
+    """
+    pass
+```
+
+<details>
+<summary>View Solution</summary>
+
+```python
+def gaussian_elimination(A: np.ndarray, b: np.ndarray) -> np.ndarray:
+    n = len(b)
+    # Build augmented matrix
+    Ab = np.hstack([A.astype(float), b.reshape(-1, 1).astype(float)])
+
+    # Forward Elimination
+    for col in range(n):
+        # Swap rows if pivot is zero
+        if np.isclose(Ab[col, col], 0):
+            for row in range(col + 1, n):
+                if not np.isclose(Ab[row, col], 0):
+                    Ab[[col, row]] = Ab[[row, col]]
+                    break
+
+        pivot = Ab[col, col]
+        if np.isclose(pivot, 0):
+            raise ValueError("System is singular (no solution or infinitely many solutions)")
+
+        Ab[col] = Ab[col] / pivot  # Normalize pivot to 1
+
+        for row in range(col + 1, n):
+            Ab[row] -= Ab[row, col] * Ab[col]
+
+    # Back Substitution
+    x = np.zeros(n)
+    for i in range(n - 1, -1, -1):
+        x[i] = Ab[i, -1] - np.dot(Ab[i, i+1:n], x[i+1:n])
+
+    return x
+
+# Test
+A = np.array([[2, 1, -1],
+              [-3, -1, 2],
+              [-2, 1, 2]], dtype=float)
+b = np.array([8, -11, -3], dtype=float)
+
+x = gaussian_elimination(A, b)
+print(f"Solution: x = {x}")
+print(f"Verify Ax = {A @ x}")  # Should equal b
+print(f"np.linalg.solve: {np.linalg.solve(A, b)}")
+```
+
+**Output:**
+```
+Solution: x = [2. 3. -1.]
+Verify Ax = [ 8. -11.  -3.]
+np.linalg.solve: [2.  3. -1.]
+```
+
+</details>
+
+---
+
+## Part 2. Vector Operations
+
+### Exercise 2-1. Norm and Distance Calculator
+
+Implement a function that takes two vectors and returns the L1 distance, L2 distance, and cosine similarity.
+
+```python
+def vector_distance(u: np.ndarray, v: np.ndarray) -> dict:
+    pass
+```
+
+<details>
+<summary>View Solution</summary>
+
+```python
+def vector_distance(u: np.ndarray, v: np.ndarray) -> dict:
+    diff = u - v
+    l1 = np.sum(np.abs(diff))
+    l2 = np.sqrt(np.sum(diff ** 2))
+
+    # Cosine similarity
+    dot = np.dot(u, v)
+    norm_u = np.sqrt(np.sum(u ** 2))
+    norm_v = np.sqrt(np.sum(v ** 2))
+    cosine_sim = dot / (norm_u * norm_v)
+
+    return {'L1': l1, 'L2': l2, 'cosine_similarity': cosine_sim}
+
+# Test
+u = np.array([3, 6])
+v = np.array([5, 2])
+
+result = vector_distance(u, v)
+print(f"L1 distance: {result['L1']}")
+print(f"L2 distance: {result['L2']:.4f}")
+print(f"Cosine similarity: {result['cosine_similarity']:.4f}")
+
+# Verify with NumPy
+print(f"\nVerify - L1: {np.linalg.norm(u - v, ord=1)}")
+print(f"Verify - L2: {np.linalg.norm(u - v):.4f}")
+```
+
+**Output:**
+```
+L1 distance: 6.0
+L2 distance: 4.4721
+Cosine similarity: 0.7682
+
+Verify - L1: 6.0
+Verify - L2: 4.4721
+```
+
+</details>
+
+---
+
+### Exercise 2-2. Representing a System of Equations as a Matrix-Vector Product
+
+Express the following system of equations in matrix-vector form and solve it.
+<br />
+$$\begin{cases} 3x + 5y + z = 10 \\ 2x - y + 4z = 7 \\ x + 3y - 2z = 1 \end{cases}$$
+
+```python
+# Define A and b, then solve
+```
+
+<details>
+<summary>View Solution</summary>
+
+```python
+A = np.array([
+    [3, 5, 1],
+    [2, -1, 4],
+    [1, 3, -2]
+], dtype=float)
+
+b = np.array([10, 7, 1], dtype=float)
+
+# Solve with NumPy
+x = np.linalg.solve(A, b)
+print(f"Solution: x={x[0]:.4f}, y={x[1]:.4f}, z={x[2]:.4f}")
+
+# Verify
+print(f"Verify Ax = {A @ x}")
+print(f"Error: {np.max(np.abs(A @ x - b)):.2e}")
+
+# Check singularity with determinant
+print(f"det(A) = {np.linalg.det(A):.4f}")
+```
+
+**Output:**
+```
+Solution: x=1.2766, y=0.9787, z=0.6383
+Verify Ax = [10.  7.  1.]
+Error: 4.44e-16
+det(A) = -47.0000
+```
+
+</details>
+
+---
+
+## Part 3. Eigenvalues and Eigenvectors
+
+### Exercise 3-1. Verifying Eigenvalue Computation
+
+Compute eigenvalues and eigenvectors using NumPy, then directly verify the $A\vec{v} = \lambda\vec{v}$ relationship.
+
+```python
+A = np.array([[5, 1],
+              [3, 3]], dtype=float)
+
+# Find eigenvalues and eigenvectors, then verify
+```
+
+<details>
+<summary>View Solution</summary>
+
+```python
+A = np.array([[5, 1],
+              [3, 3]], dtype=float)
+
+eigenvalues, eigenvectors = np.linalg.eig(A)
+
+print("Eigenvalues:", eigenvalues)
+print("Eigenvectors (column vectors):\n", eigenvectors)
+
+# Verify: Av = λv
+for i in range(len(eigenvalues)):
+    lam = eigenvalues[i]
+    v = eigenvectors[:, i]
+
+    Av = A @ v
+    lam_v = lam * v
+
+    print(f"\nEigenvalue λ = {lam:.2f}")
+    print(f"  Av    = {Av}")
+    print(f"  λv    = {lam_v}")
+    print(f"  Match: {np.allclose(Av, lam_v)}")
+```
+
+**Output:**
+```
+Eigenvalues: [6. 2.]
+Eigenvectors (column vectors):
+ [[ 0.70710678 -0.31622777]
+  [ 0.70710678  0.9486833 ]]
+
+Eigenvalue λ = 6.00
+  Av    = [4.24264069 4.24264069]
+  λv    = [4.24264069 4.24264069]
+  Match: True
+
+Eigenvalue λ = 2.00
+  Av    = [-0.63245553  1.89736660]
+  λv    = [-0.63245553  1.89736660]
+  Match: True
+```
+
+</details>
+
+---
+
+### Exercise 3-2. Computing Matrix Powers via Eigendecomposition
+
+Instead of multiplying $A^{10}$ directly, use eigendecomposition to compute it efficiently.
+
+Hint: If $A = V\Lambda V^{-1}$, then $A^n = V\Lambda^n V^{-1}$
+
+```python
+A = np.array([[3, 1],
+              [0, 2]], dtype=float)
+
+# Compute A^10 using eigendecomposition
+```
+
+<details>
+<summary>View Solution</summary>
+
+```python
+A = np.array([[3, 1],
+              [0, 2]], dtype=float)
+
+# Method 1: Direct multiplication
+A_pow_direct = np.linalg.matrix_power(A, 10)
+
+# Method 2: Eigendecomposition
+eigenvalues, V = np.linalg.eig(A)
+Lambda_10 = np.diag(eigenvalues ** 10)  # Raise eigenvalues to the 10th power
+V_inv = np.linalg.inv(V)
+A_pow_eigen = V @ Lambda_10 @ V_inv
+
+print("Direct computation:\n", A_pow_direct)
+print("\nEigendecomposition result:\n", np.round(A_pow_eigen).astype(int))
+print("\nResults match:", np.allclose(A_pow_direct, A_pow_eigen))
+
+# Advantage of eigendecomposition: only the eigenvalues need to be raised to the nth power
+print(f"\nEigenvalues: {eigenvalues}")
+print(f"Eigenvalues^10: {eigenvalues ** 10}")
+```
+
+**Output:**
+```
+Direct computation:
+ [[59049.  56660.]
+  [    0.  1024.]]
+
+Eigendecomposition result:
+ [[59049  56660]
+  [    0   1024]]
+
+Results match: True
+
+Eigenvalues: [3. 2.]
+Eigenvalues^10: [59049.  1024.]
+```
+
+</details>
+
+---
+
+## Part 4. Implementing PCA from Scratch
+
+### Exercise 4-1. PCA from the Ground Up
+
+Implement PCA using only NumPy — no `sklearn`.
+
+```python
+def pca_from_scratch(X: np.ndarray, n_components: int) -> tuple:
+    """
+    Returns:
+        X_pca: transformed data (n_samples, n_components)
+        explained_variance_ratio: proportion of variance explained by each principal component
+        components: principal component vectors (eigenvectors)
+    """
+    pass
+```
+
+<details>
+<summary>View Solution</summary>
+
+```python
+def pca_from_scratch(X: np.ndarray, n_components: int) -> tuple:
+    # Step 1: Center the data
+    mean = np.mean(X, axis=0)
+    X_centered = X - mean
+
+    # Step 2: Covariance matrix
+    n = X.shape[0]
+    cov_matrix = (X_centered.T @ X_centered) / (n - 1)
+
+    # Step 3: Compute eigenvalues and eigenvectors
+    eigenvalues, eigenvectors = np.linalg.eig(cov_matrix)
+
+    # Sort by eigenvalue in descending order
+    idx = np.argsort(eigenvalues)[::-1]
+    eigenvalues = eigenvalues[idx]
+    eigenvectors = eigenvectors[:, idx]
+
+    # Step 4: Select the top n_components
+    components = eigenvectors[:, :n_components]
+
+    # Step 5: Project the data
+    X_pca = X_centered @ components
+
+    # Explained variance ratio
+    total_variance = np.sum(eigenvalues)
+    explained_variance_ratio = eigenvalues[:n_components] / total_variance
+
+    return X_pca, explained_variance_ratio, components
+
+# Test data
+np.random.seed(42)
+X = np.random.randn(100, 5)
+X[:, 2] = X[:, 0] + X[:, 1]  # Add multicollinearity
+
+X_pca, evr, components = pca_from_scratch(X, n_components=2)
+
+print(f"Original data shape: {X.shape}")
+print(f"After PCA shape: {X_pca.shape}")
+print(f"Explained variance ratio: {evr}")
+print(f"Cumulative explained variance: {np.cumsum(evr)}")
+
+# Compare with sklearn
+from sklearn.decomposition import PCA
+pca_sklearn = PCA(n_components=2)
+X_sklearn = pca_sklearn.fit_transform(X)
+print(f"\nsklearn explained variance ratio: {pca_sklearn.explained_variance_ratio_}")
+```
+
+**Output:**
+```
+Original data shape: (100, 5)
+After PCA shape: (100, 2)
+Explained variance ratio: [0.3821 0.2314]
+Cumulative explained variance: [0.3821 0.6135]
+
+sklearn explained variance ratio: [0.3821 0.2314]
+```
+
+</details>
+
+---
+
+### Exercise 4-2. Visualizing PCA
+
+Apply PCA to 2D data and visualize both the original data and the principal component directions.
+
+```python
+# Generate correlated 2D data
+np.random.seed(0)
+mean = [0, 0]
+cov = [[3, 2], [2, 2]]
+X = np.random.multivariate_normal(mean, cov, 200)
+
+# Apply PCA and visualize
+```
+
+<details>
+<summary>View Solution</summary>
+
+```python
+np.random.seed(0)
+mean = [0, 0]
+cov = [[3, 2], [2, 2]]
+X = np.random.multivariate_normal(mean, cov, 200)
+
+# Compute PCA
+X_centered = X - X.mean(axis=0)
+cov_matrix = (X_centered.T @ X_centered) / (len(X) - 1)
+eigenvalues, eigenvectors = np.linalg.eig(cov_matrix)
+
+idx = np.argsort(eigenvalues)[::-1]
+eigenvalues = eigenvalues[idx]
+eigenvectors = eigenvectors[:, idx]
+
+# Visualize
+fig, axes = plt.subplots(1, 2, figsize=(12, 5))
+
+# Original data + principal component directions
+ax = axes[0]
+ax.scatter(X[:, 0], X[:, 1], alpha=0.5, s=20, label='Data')
+origin = X.mean(axis=0)
+
+for i in range(2):
+    scale = np.sqrt(eigenvalues[i]) * 2
+    ax.annotate('',
+                xy=origin + scale * eigenvectors[:, i],
+                xytext=origin,
+                arrowprops=dict(arrowstyle='->', color=['red', 'blue'][i], lw=2))
+
+ax.set_title('Original Data with Principal Component Directions')
+ax.set_aspect('equal')
+ax.legend(['Data', f'PC1 (λ={eigenvalues[0]:.2f})', f'PC2 (λ={eigenvalues[1]:.2f})'])
+ax.grid(True, alpha=0.3)
+
+# After PCA transformation
+X_pca = X_centered @ eigenvectors
+ax = axes[1]
+ax.scatter(X_pca[:, 0], X_pca[:, 1], alpha=0.5, s=20, color='green')
+ax.set_title('After PCA Transformation (Principal Component Space)')
+ax.set_xlabel(f'PC1 (Explained variance: {eigenvalues[0]/sum(eigenvalues)*100:.1f}%)')
+ax.set_ylabel(f'PC2 (Explained variance: {eigenvalues[1]/sum(eigenvalues)*100:.1f}%)')
+ax.set_aspect('equal')
+ax.grid(True, alpha=0.3)
+
+plt.tight_layout()
+plt.savefig('pca_visualization.png', dpi=150)
+plt.show()
+
+print(f"PC1 explained variance: {eigenvalues[0]/sum(eigenvalues)*100:.1f}%")
+print(f"PC2 explained variance: {eigenvalues[1]/sum(eigenvalues)*100:.1f}%")
+```
+
+</details>
+
+---
+
+## Part 5. Comprehensive Exercise
+
+### Exercise 5-1. Mini Recommendation System
+
+Apply SVD to a user-movie rating matrix to extract latent factors and predict missing ratings.
+
+```python
+# User-movie rating matrix (0 = not rated)
+R = np.array([
+    [5, 3, 0, 1],
+    [4, 0, 4, 1],
+    [1, 1, 0, 5],
+    [0, 1, 5, 4],
+    [2, 0, 3, 4],
+], dtype=float)
+
+# Extract latent factors with SVD and reconstruct the matrix
+```
+
+<details>
+<summary>View Solution</summary>
+
+```python
+R = np.array([
+    [5, 3, 0, 1],
+    [4, 0, 4, 1],
+    [1, 1, 0, 5],
+    [0, 1, 5, 4],
+    [2, 0, 3, 4],
+], dtype=float)
+
+# SVD decomposition
+U, sigma, Vt = np.linalg.svd(R, full_matrices=False)
+
+print(f"Singular values: {sigma}")
+print(f"Explained variance ratio: {(sigma**2 / np.sum(sigma**2) * 100).round(1)}%")
+
+# Approximate with top 2 latent factors
+k = 2
+R_approx = U[:, :k] @ np.diag(sigma[:k]) @ Vt[:k, :]
+
+print(f"\nOriginal matrix:\n{R}")
+print(f"\nReconstructed matrix (k={k}):\n{np.round(R_approx, 1)}")
+print(f"\nPredicted ratings for previously unrated entries:")
+print(f"  User 0, Movie 2: {R_approx[0, 2]:.2f}")
+print(f"  User 1, Movie 1: {R_approx[1, 1]:.2f}")
+print(f"  User 2, Movie 2: {R_approx[2, 2]:.2f}")
+print(f"  User 3, Movie 0: {R_approx[3, 0]:.2f}")
+print(f"  User 4, Movie 1: {R_approx[4, 1]:.2f}")
+```
+
+**Output:**
+```
+Singular values: [9.64  5.29  1.99  0.59]
+Explained variance ratio: [64.8  19.6  2.8   2.5]%
+
+Reconstructed matrix (k=2):
+[[ 4.6  2.7  1.5  1.3]
+ [ 4.3  2.5  2.6  1.5]
+ [ 1.3  0.9  3.4  4.5]
+ [ 1.3  0.8  4.0  4.5]
+ [ 1.5  1.0  3.5  4.1]]
+
+Predicted ratings for previously unrated entries:
+  User 0, Movie 2: 1.52
+  User 1, Movie 1: 2.47
+  User 2, Movie 2: 3.43
+  User 3, Movie 0: 1.30
+  User 4, Movie 1: 0.98
+```
+
+This is the fundamental principle behind collaborative filtering recommendation systems used by Netflix, Spotify, and similar platforms.
+
+</details>
+
+---
+
+<br />
+
+## Quiz: Coding Comprehension
+
+**Q1. Predict the output of the following code.**
+
+```python
+A = np.array([[1, 2], [3, 4]])
+print(np.linalg.det(A))
+print(np.linalg.matrix_rank(A))
+```
+
+<details>
+<summary>View Answer</summary>
+
+```
+-2.0
+2
+```
+
+$\det(A) = 1 \times 4 - 2 \times 3 = -2$. Since the two rows are linearly independent, rank = 2 (non-singular matrix).
+
+</details>
+
+---
+
+**Q2. Which of the following code snippets will raise an error?**
+
+```python
+# (a)
+A = np.array([[1, 2], [3, 4]])
+x = np.linalg.solve(A, np.array([1, 2]))
+
+# (b)
+B = np.array([[1, 2], [2, 4]])
+x = np.linalg.solve(B, np.array([1, 2]))
+
+# (c)
+C = np.array([[1, 2, 3], [4, 5, 6]])
+vals, vecs = np.linalg.eig(C)
+```
+
+<details>
+<summary>View Answer</summary>
+
+- **(a)** OK: A is non-singular, solve works fine
+- **(b)** **Error**: B is singular ($\det = 0$), raises `LinAlgError: Singular matrix`
+- **(c)** **Error**: `eig` requires a square matrix; C is 2×3, raises `LinAlgError`
+
+</details>
+
+---
+
+**Q3. In the PCA implementation, why do we divide by `n-1` when computing the covariance matrix as `X.T @ X / (n-1)`?**
+
+<details>
+<summary>View Answer</summary>
+
+This is **Bessel's correction**.
+
+Dividing by $n$ gives the **population variance** (biased); dividing by $n-1$ gives the **sample variance** (unbiased).
+
+When you compute variance after estimating the mean from the same sample, you lose one degree of freedom (because the mean introduces one constraint). Dividing by $n-1$ produces an unbiased estimator of the population variance.
+
+In NumPy: `np.cov(X.T)` divides by $n-1$ by default (`ddof=1`).
+
+</details>

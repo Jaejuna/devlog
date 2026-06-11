@@ -1,0 +1,236 @@
+---
+title: "Claude Code Hands-on #4 — Hooks in Practice and the Claude Code SDK"
+date: "2026-04-13"
+category: "Claude Code in Action"
+tags: ["Claude Code", "AI", "Hooks", "SDK", "자동화", "TypeScript", "코딩어시스턴트"]
+excerpt: "A practical guide covering Hook security settings, automated TypeScript type-checking, and a duplicate-query prevention Hook — plus a full reference of all Hook types and how to use the Claude Code SDK for programmatic automation."
+readTime: 15
+---
+
+> This post is a translated and summarized version of the Anthropic official course [Claude Code in Action](https://anthropic.skilljar.com/claude-code-in-action). This is the fourth entry in the Hands-on series.
+
+---
+
+## Hook Security — Use Absolute Paths
+
+The official Claude Code documentation recommends using **absolute paths instead of relative paths** when specifying Hook script locations.<br/>
+
+This is to prevent [path interception](https://attack.mitre.org/techniques/T1574/007/) and binary planting attacks.<br/>
+
+The catch is that absolute paths make it hard to share `settings.json` with your team — the absolute path on your machine will differ from your colleague's.
+
+### Solution — The $PWD Placeholder
+
+To work around this, create a `settings.example.json` file in your project and use a `$PWD` placeholder for script paths.<br/>
+
+When you run `npm run setup`, the `scripts/init-claude.js` script automatically:
+
+1. Replaces the `$PWD` placeholder with the absolute path on the current machine
+2. Copies `settings.example.json` and saves it as `settings.local.json`
+
+This lets you share the config file with your team while still running safely with absolute paths on each individual machine.
+
+---
+
+## Practical Hook #1 — Automated TypeScript Type-Checking
+
+There's a common problem that comes up in AI-assisted development: when Claude modifies a function signature, it sometimes misses other files that call that function.<br/>
+
+For example, if you ask Claude to add a `verbose` parameter to a function in `schema.ts`, it may update the function definition but overlook the call site in `main.ts`, introducing a type error.<br/>
+
+You can solve this with a PostToolUse Hook.
+
+```json
+"PostToolUse": [
+  {
+    "matcher": "Write|Edit|MultiEdit",
+    "hooks": [
+      {
+        "type": "command",
+        "command": "/absolute/path/to/hooks/typecheck_hook.js"
+      }
+    ]
+  }
+]
+```
+
+Every time a file is edited, the Hook runs `tsc --noEmit`. If type errors are found, the feedback is sent back to Claude immediately. Claude then uses that feedback to fix the files it missed.<br/>
+
+For languages without a type system, you can apply the same principle by swapping in a Hook that runs automated tests instead.
+
+---
+
+## Practical Hook #2 — Preventing Duplicate Queries
+
+In larger projects, Claude sometimes writes new code for functionality that already exists rather than reusing existing functions. This happens especially often when there are multiple DB query files, each containing dozens of functions.<br/>
+
+For instance, if you ask "build a feature that sends a Slack notification for orders that have been pending for more than 3 days," Claude might write a new query even though a `getPendingOrders()` function already exists.<br/>
+
+You can configure a Hook to prevent this.
+
+```json
+"PostToolUse": [
+  {
+    "matcher": "Write|Edit",
+    "hooks": [
+      {
+        "type": "command",
+        "command": "/absolute/path/to/hooks/query_review_hook.js"
+      }
+    ]
+  }
+]
+```
+
+Here's how the Hook works.<br/>
+
+1. Triggers when a file in the `./queries` directory is modified
+2. Launches a separate Claude instance via the Claude Code SDK
+3. The second instance reviews the changes and checks for similar existing queries
+4. If a duplicate is found, it sends feedback to the first Claude instance
+5. Claude removes the duplicate and reuses the existing function instead
+
+Because this Hook spins up a separate Claude instance, it increases API usage and processing time. Rather than applying it everywhere, it's best to limit it to the key directories where duplication is a real problem.
+
+---
+
+## All Hook Types
+
+Beyond `PreToolUse` and `PostToolUse`, there are several more Hook types available.<br/>
+
+| Hook Type | When It Fires |
+|---|---|
+| `PreToolUse` | Immediately before a tool runs |
+| `PostToolUse` | Immediately after a tool runs |
+| `Notification` | When Claude requests tool permission or has been idle for more than 60 seconds |
+| `Stop` | When Claude finishes generating a response |
+| `SubagentStop` | When a subagent task (shown as "Task" in the UI) completes |
+| `PreCompact` | Immediately before a manual or automatic compact operation |
+| `UserPromptSubmit` | After the user submits a prompt, before Claude processes it |
+| `SessionStart` | When a session starts or resumes |
+| `SessionEnd` | When a session ends |
+
+---
+
+## Understanding Hook Input Structure
+
+The stdin data passed to a Hook script varies depending on the **Hook type** and the **matcher**. This is one of the main reasons writing Hooks can feel tricky.<br/>
+
+For example, here's what the input looks like when a `PostToolUse` Hook is watching the `TodoWrite` tool:
+
+```json
+{
+  "session_id": "9ecf22fa-...",
+  "transcript_path": "<path>",
+  "hook_event_name": "PostToolUse",
+  "tool_name": "TodoWrite",
+  "tool_input": {
+    "todos": [{ "content": "write a readme", "status": "pending", "priority": "medium", "id": "1" }]
+  },
+  "tool_response": {
+    "oldTodos": [],
+    "newTodos": [{ "content": "write a readme", "status": "pending", "priority": "medium", "id": "1" }]
+  }
+}
+```
+
+By contrast, the input for a `Stop` Hook is much simpler:
+
+```json
+{
+  "session_id": "af9f50b6-...",
+  "transcript_path": "<path>",
+  "hook_event_name": "Stop",
+  "stop_hook_active": false
+}
+```
+
+The input structure varies significantly between Hook types and between the tools captured by your matcher.
+
+### A Helper Hook for Inspecting Input Structure
+
+When you're not sure what data is coming in, it helps to build a simple logging Helper Hook first.
+
+```json
+"PostToolUse": [
+  {
+    "matcher": "*",
+    "hooks": [
+      {
+        "type": "command",
+        "command": "jq . > post-log.json"
+      }
+    ]
+  }
+]
+```
+
+`jq .` writes the JSON received on stdin directly to a file. No matter which tool runs, the actual input structure gets recorded in `post-log.json` — you can inspect that file and use it as the basis for writing your script.
+
+---
+
+## Claude Code SDK
+
+The **Claude Code SDK** lets you run Claude Code programmatically from within your own applications or scripts.<br/>
+
+It comes in three flavors — TypeScript, Python, and CLI — and uses the exact same tools and configuration as the Claude Code you use in your terminal.
+
+### Basic Usage
+
+```ts
+import { query } from "@anthropic-ai/claude-code";
+
+const prompt = "Look for duplicate queries in the ./src/queries dir";
+
+for await (const message of query({ prompt })) {
+  console.log(JSON.stringify(message, null, 2));
+}
+```
+
+Running this code prints the conversation between Claude Code and the Claude model, message by message. The final message contains Claude's concluding response.
+
+### Permission Settings
+
+By default, the SDK has **read-only** permissions. It can read files, search directories, and run grep — but it cannot write, edit, or create files.<br/>
+
+If you need write access, add the `allowedTools` option:
+
+```ts
+for await (const message of query({
+  prompt,
+  options: {
+    allowedTools: ["Edit"]
+  }
+})) {
+  console.log(JSON.stringify(message, null, 2));
+}
+```
+
+You can also manage project-wide permissions through the config files in your `.claude` directory.
+
+### Use Cases
+
+The SDK really shines when integrated into larger development workflows.<br/>
+
+- Automatically reviewing code changes in a Git Hook
+- Analyzing and optimizing code from a build script
+- Code maintenance helper commands
+- Automated documentation generation
+- Code quality checks in a CI/CD pipeline
+
+The **duplicate-query prevention Hook** discussed earlier is itself implemented using the SDK — it works by launching a separate Claude instance to do the review.
+
+<br />
+
+## Summary
+
+| Concept | Description |
+|---|---|
+| Absolute paths | Recommended for Hook scripts (security) |
+| `settings.example.json` | A team-shareable config template using `$PWD` placeholders |
+| TypeScript Hook | Runs `tsc --noEmit` after edits → immediate type error feedback |
+| Duplicate-query Hook | Spawns a separate Claude instance via the SDK to check for duplicates |
+| `Stop`, `SessionStart`, etc. | Additional Hook types beyond PreToolUse/PostToolUse |
+| Helper Hook (`jq .`) | Saves actual stdin structure to a file for inspection |
+| Claude Code SDK | Runs Claude Code programmatically from scripts or apps |
+| SDK default permissions | Read-only; use `allowedTools` to grant write access |

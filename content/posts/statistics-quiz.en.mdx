@@ -1,0 +1,581 @@
+---
+title: "Practical Statistics for Data Scientists — Quiz"
+date: "2026-03-04"
+category: "데이터사이언스"
+tags: ["통계", "퀴즈", "데이터사이언스", "면접준비"]
+excerpt: "Test your understanding across all seven chapters — from descriptive statistics to unsupervised learning — with concept, calculation, code, and scenario problems."
+readTime: 20
+---
+
+This is a self-assessment covering everything from Chapters 1 through 7. Problems are organized into concept checks, calculations, code interpretation, and real-world scenarios. **Answers are at the end of each part.** Try solving them on your own before peeking at the solutions.
+
+> Difficulty: ⭐ Beginner / ⭐⭐ Intermediate / ⭐⭐⭐ Applied
+
+---
+
+## Part 1 — Descriptive Statistics and Data Exploration (Chapter 1)
+
+### Problem 1-1 ⭐ Concept Check
+
+Find the mean, median, and mode of the following dataset.
+<br />
+$$\{3, 7, 7, 2, 9, 7, 4, 1, 8\}$$
+
+### Problem 1-2 ⭐ Calculation
+
+Calculate the sample variance and sample standard deviation for the data below.
+<br />
+$$\{4, 8, 6, 5, 3, 2, 8, 9, 2, 5\}$$
+<br />
+Sample variance formula: $s^2 = \dfrac{1}{n-1}\sum_{i=1}^{n}(x_i - \bar{x})^2$
+
+### Problem 1-3 ⭐ Concept Check
+
+Which of the following pairs are **robust** measures of central tendency and spread (resistant to outliers)?
+
+1. Mean, Variance
+2. Median, IQR
+3. Mean, Standard Deviation
+4. Mode, Range
+
+### Problem 1-4 ⭐⭐ Code Reading
+
+Read the code below and predict the output.
+
+```python
+import numpy as np
+
+data = np.array([10, 20, 20, 30, 40, 50, 50, 50, 100])
+
+print(np.mean(data))
+print(np.median(data))
+print(np.percentile(data, 75) - np.percentile(data, 25))
+```
+
+---
+
+## Part 2 — Sampling Distributions and Probability Distributions (Chapter 2)
+
+### Problem 2-1 ⭐ Concept Check
+
+Fill in the blanks.
+
+According to the Central Limit Theorem (CLT), regardless of the population's distribution, when the sample size is sufficiently large, the distribution of the sample mean approaches ___. In this case, the standard deviation of the sample mean (standard error) is ___.
+
+### Problem 2-2 ⭐ Calculation
+
+A population has mean $\mu = 50$ and standard deviation $\sigma = 10$.
+
+**(a)** When drawing a sample of $n = 100$, what is the standard error of the sample mean?
+
+**(b)** What is the probability that the sample mean is 52 or greater? (Compute the z-score and use $P(Z > 2) = 0.0228$)
+
+### Problem 2-3 ⭐⭐ Concept Comparison
+
+Explain the following about bootstrap:
+
+1. What is bootstrap?
+2. Does it use sampling with replacement or without replacement?
+3. In what situations is bootstrap particularly useful?
+
+### Problem 2-4 ⭐⭐ Calculation
+
+For a binomial distribution $X \sim B(n=10, p=0.3)$, find the following.
+
+**(a)** $E[X]$ and $\text{Var}(X)$
+
+**(b)** Express $P(X = 3)$ using the formula below.
+<br />
+$$P(X = k) = \binom{n}{k} p^k (1-p)^{n-k}$$
+
+---
+
+## Part 3 — Statistical Experiments and Significance Testing (Chapter 3)
+
+### Problem 3-1 ⭐ Concept Check
+
+Which of the following is the **correct interpretation of a p-value**?
+
+1. The p-value is the probability that the null hypothesis is true.
+2. The p-value is the probability that the alternative hypothesis is true.
+3. The p-value is the probability of observing a result as extreme as (or more extreme than) the current one, assuming the null hypothesis is true.
+4. If p < 0.05, the effect is practically large.
+
+### Problem 3-2 ⭐⭐ Scenario
+
+A pharmaceutical company wants to test whether a new drug is more effective than the existing one.
+
+**(a)** State the null hypothesis ($H_0$) and the alternative hypothesis ($H_1$).
+
+**(b)** Should you use a one-tailed test or a two-tailed test? Explain your reasoning.
+
+**(c)** Explain what a Type I error and a Type II error each mean in this context.
+
+### Problem 3-3 ⭐⭐ Calculation
+
+You are comparing conversion rates across three marketing channels (A, B, C), each with a sample size of 100.
+
+Which statistical test should you use, and what is the null hypothesis?
+
+If the F-statistic is large and p < 0.05, what is the next step?
+
+### Problem 3-4 ⭐⭐⭐ Applied
+
+Explain the difference between A/B testing and Multi-Armed Bandit (MAB), and give one scenario where each is more appropriate.
+
+---
+
+## Part 4 — Regression and Prediction (Chapter 4)
+
+### Problem 4-1 ⭐ Code Reading
+
+Read the regression output below and answer the questions.
+
+```
+OLS Regression Results
+===========================================================
+Dep. Variable:    Sales     R-squared:        0.782
+===========================================================
+                coef    std err    t      P>|t|
+-----------------------------------------------------------
+const         12.450    3.210    3.88    0.000
+AdSpend        2.345    0.180   13.03    0.000
+Employees      1.820    0.650    2.80    0.006
+Age           -0.430    0.210   -2.05    0.043
+===========================================================
+```
+
+**(a)** On average, how much does Sales change when AdSpend increases by 1 unit?
+
+**(b)** What percentage of the variation in Sales does this model explain?
+
+**(c)** Interpret the sign and meaning of the `Age` coefficient.
+
+**(d)** At a significance level of 0.05, are there any statistically insignificant variables?
+
+### Problem 4-2 ⭐⭐ Concept Comparison
+
+| Concept | Description |
+|---------|-------------|
+| **RMSE** | ? |
+| **$R^2$** | ? |
+| **Confidence Interval** | ? |
+| **Prediction Interval** | ? |
+
+Fill in each blank, then explain which is wider — the confidence interval or the prediction interval — and why.
+
+### Problem 4-3 ⭐⭐ Calculation
+
+In a simple linear regression $y = \beta_0 + \beta_1 x$, the following data are given.
+<br />
+$$\bar{x} = 5, \quad \bar{y} = 12, \quad \sum(x_i - \bar{x})(y_i - \bar{y}) = 30, \quad \sum(x_i - \bar{x})^2 = 10$$
+<br />
+**(a)** Find $\hat{\beta}_1$.
+
+**(b)** Find $\hat{\beta}_0$.
+
+**(c)** What is $\hat{y}$ when $x = 7$?
+
+### Problem 4-4 ⭐⭐⭐ Residual Diagnostics
+
+Diagnose the issue in each of the following residual plot descriptions.
+
+- **Situation A**: In the residuals-vs-fitted plot, the residuals fan out as fitted values increase (funnel shape).
+- **Situation B**: In the QQ plot, both tails deviate significantly from the diagonal line.
+- **Situation C**: In the leverage-residual plot, there is a single point in the upper-right corner.
+
+For each situation, identify which regression assumption is being violated and suggest how to address it.
+
+---
+
+## Part 5 — Classification (Chapter 5)
+
+### Problem 5-1 ⭐ Calculation
+
+Using the confusion matrix below, calculate accuracy, sensitivity (recall), precision, and F1 score.
+
+|  | Predicted Positive | Predicted Negative |
+|--|-------------------|-------------------|
+| **Actual Positive** | 80 | 20 |
+| **Actual Negative** | 10 | 90 |
+
+### Problem 5-2 ⭐⭐ Concept Check
+
+In logistic regression, explain the following.
+
+**(a)** The difference between odds and odds ratio.
+
+**(b)** How to interpret the coefficient $\beta_1 = 0.5$ (use $\exp(0.5) \approx 1.65$).
+
+**(c)** Why does logistic regression use the logit instead of directly regressing on probabilities?
+
+### Problem 5-3 ⭐⭐ Concept Comparison
+
+Compare Naive Bayes and Logistic Regression from the following perspectives.
+
+| Aspect | Naive Bayes | Logistic Regression |
+|--------|-------------|---------------------|
+| Probability estimation | ? | ? |
+| Key assumption | ? | ? |
+| Advantages | ? | ? |
+| Disadvantages | ? | ? |
+
+### Problem 5-4 ⭐⭐⭐ Scenario
+
+You are developing a cancer diagnosis model. 3% of all patients test positive for cancer.
+
+**(a)** What is the accuracy of a model that always predicts "negative"?
+
+**(b)** Why is that number meaningless, and what metrics should you use instead?
+
+**(c)** In this problem, which is more serious — a Type I error (classifying a positive as negative) or a Type II error (classifying a negative as positive)? Explain your reasoning.
+
+**(d)** Describe three methods for addressing class imbalance.
+
+---
+
+## Part 6 — Statistical Machine Learning (Chapter 6)
+
+### Problem 6-1 ⭐ Concept Check
+
+Answer the following questions about the KNN algorithm.
+
+**(a)** What are the problems when $k$ is too small (e.g., $k=1$) versus too large (e.g., $k=n$)?
+
+**(b)** Explain why feature scaling is essential in KNN, using an example.
+
+**(c)** Why is cosine distance more appropriate than Euclidean distance for text classification?
+
+### Problem 6-2 ⭐⭐ Code Reading
+
+Read the code below and answer the questions.
+
+```python
+from sklearn.tree import DecisionTreeClassifier
+
+dt = DecisionTreeClassifier(max_depth=None, random_state=42)
+dt.fit(X_train, y_train)
+
+print(dt.score(X_train, y_train))  # Output: 1.0
+print(dt.score(X_test, y_test))    # Output: 0.71
+```
+
+**(a)** What does a training accuracy of 1.0 indicate?
+
+**(b)** Propose at least two ways to fix this.
+
+**(c)** Explain why Random Forest outperforms a single decision tree from the perspective of the bias-variance tradeoff.
+
+### Problem 6-3 ⭐⭐ Concept Comparison
+
+Compare bagging and boosting.
+
+| Aspect | Bagging | Boosting |
+|--------|---------|----------|
+| Training order | ? | ? |
+| Error primarily reduced | ? | ? |
+| Sensitivity to outliers | ? | ? |
+| Representative algorithm | ? | ? |
+
+### Problem 6-4 ⭐⭐⭐ Applied
+
+When training a gradient boosting model, how should you adjust hyperparameters in each of the following situations?
+
+- **Situation A**: Training accuracy is 0.98, test accuracy is 0.72 (overfitting)
+- **Situation B**: Both training and test accuracy are 0.73 (underfitting)
+- **Situation C**: The model is too slow to deploy
+
+---
+
+## Part 7 — Unsupervised Learning (Chapter 7)
+
+### Problem 7-1 ⭐ Concept Check
+
+Which of the following statements about PCA is **incorrect**?
+
+1. PCA projects data in the direction that maximizes variance.
+2. The principal components are orthogonal to each other.
+3. Standardization before PCA is optional.
+4. The number of principal components is determined at the elbow point of the scree plot.
+
+### Problem 7-2 ⭐⭐ Calculation
+
+In K-means clustering, the following data points and initial centroids are given.
+<br />
+$$\text{Data: } A(1,1),\ B(2,1),\ C(4,3),\ D(5,4),\ E(3,2)$$
+<br />
+$$\text{Initial centroids: } \mu_1 = (1,1),\ \mu_2 = (5,4)$$
+<br />
+**(a)** Find the cluster assignment for each point after one iteration. (Use Euclidean distance.)
+
+**(b)** Calculate the new centroids.
+
+### Problem 7-3 ⭐⭐ Concept Comparison
+
+Compare K-means and hierarchical clustering.
+
+| Aspect | K-means | Hierarchical Clustering |
+|--------|---------|------------------------|
+| K specified in advance | ? | ? |
+| Result visualization | ? | ? |
+| Time complexity | ? | ? |
+| Sensitivity to outliers | ? | ? |
+| Deterministic results | ? | ? |
+
+### Problem 7-4 ⭐⭐⭐ Scenario
+
+You want to segment customers using clustering.
+Variables: age (numeric), annual income (numeric), region (categorical: metropolitan/non-metropolitan), membership status (binary: Y/N)
+
+**(a)** Identify which variables need scaling and explain why.
+
+**(b)** Explain two ways to handle the categorical and binary variables.
+
+**(c)** Among K-means, hierarchical clustering, and GMM, which is most appropriate for this situation and why?
+
+---
+
+<br />
+
+## Answers and Explanations
+
+### Part 1 Answers
+
+**1-1.**
+<br />
+$$\{1, 2, 3, 4, 7, 7, 7, 8, 9\} \text{ (sorted)}$$
+<br />
+- Mean: $\dfrac{3+7+7+2+9+7+4+1+8}{9} = \dfrac{48}{9} \approx 5.33$
+- Median: the 5th value after sorting = $7$
+- Mode: $7$ (appears 3 times)
+
+**1-2.**
+
+$\bar{x} = \dfrac{4+8+6+5+3+2+8+9+2+5}{10} = \dfrac{52}{10} = 5.2$
+<br />
+$$s^2 = \frac{(4-5.2)^2+(8-5.2)^2+\cdots+(5-5.2)^2}{9} = \frac{54.4}{9} \approx 6.04$$
+<br />
+$$s = \sqrt{6.04} \approx 2.46$$
+<br />
+**1-3.** ✅ **Answer: 2** — Median and IQR are robust statistics unaffected by outliers.
+
+**1-4.** Output:
+- `np.mean(data)` → `43.33...` (the outlier 100 skews the mean)
+- `np.median(data)` → `40.0`
+- IQR = `np.percentile(data, 75) - np.percentile(data, 25)` = `50 - 20` = `30.0`
+
+---
+
+### Part 2 Answers
+
+**2-1.** The distribution of the sample mean approaches a **normal distribution**, and the standard error is $\dfrac{\sigma}{\sqrt{n}}$.
+
+**2-2.**
+
+(a) Standard error $= \dfrac{10}{\sqrt{100}} = 1.0$
+
+(b) $z = \dfrac{52 - 50}{1} = 2$, $P(\bar{X} \geq 52) = P(Z > 2) = 0.0228$
+
+**2-3.**
+1. Bootstrap: a resampling method that repeatedly draws new samples from the given sample **with replacement** to estimate the distribution of a statistic.
+2. Uses **sampling with replacement** (the same data point can be drawn multiple times).
+3. Useful when the sample size is small, the theoretical distribution of the statistic is unknown, or you need to estimate confidence intervals.
+
+**2-4.**
+
+(a) $E[X] = np = 10 \times 0.3 = 3$, $\text{Var}(X) = np(1-p) = 10 \times 0.3 \times 0.7 = 2.1$
+
+(b) $P(X=3) = \dbinom{10}{3}(0.3)^3(0.7)^7 = 120 \times 0.027 \times 0.0824 \approx 0.267$
+
+---
+
+### Part 3 Answers
+
+**3-1.** ✅ **Answer: 3** — The p-value is the probability of observing a result as extreme as (or more extreme than) the current one, assuming the null hypothesis is true.
+
+**3-2.**
+
+(a) $H_0$: The new drug and the existing drug are equally effective ($\mu_{\text{new}} = \mu_{\text{old}}$)  
+$H_1$: The new drug is more effective ($\mu_{\text{new}} > \mu_{\text{old}}$)
+
+(b) **One-tailed test** — the question has a clear direction: "Is the new drug *more* effective?"
+
+(c)
+- Type I error ($\alpha$): Concluding the drug works when it actually doesn't → approving an ineffective drug
+- Type II error ($\beta$): Failing to detect a drug that actually works → missing a beneficial treatment
+
+**3-3.** Use **ANOVA (Analysis of Variance)**. Null hypothesis: $\mu_A = \mu_B = \mu_C$ (the conversion rates of all three channels are equal). If the F-statistic is significant, run a **post-hoc test (e.g., Tukey HSD)** to identify which specific pairs differ.
+
+**3-4.** A/B testing exposes users equally to both versions during the exploration period, causing opportunity loss from the inferior version. MAB dynamically adjusts exposure based on performance to minimize that loss. **A/B testing** is better suited for: clinical drug trials requiring rigorous statistical inference. **MAB** is better suited for: real-time ad optimization, Netflix content recommendations.
+
+---
+
+### Part 4 Answers
+
+**4-1.**
+
+(a) A 1-unit increase in AdSpend is associated with an average increase of **2.345** in Sales (holding other variables constant).
+
+(b) The model explains **78.2%** of the variation in Sales ($R^2 = 0.782$).
+
+(c) Each additional unit of Age is associated with an average **decrease** of 0.430 in Sales (older means worse performance).
+
+(d) None — all variables have p-values below 0.05 and are statistically significant.
+
+**4-2.**
+- **RMSE**: Average magnitude of prediction error (same units as the response variable)
+- **$R^2$**: Proportion of variance in the response explained by the model (0–1; closer to 1 is better)
+- **Confidence Interval**: Range of uncertainty for the population mean response
+- **Prediction Interval**: Range of uncertainty for a new individual observation
+
+**The prediction interval is wider** — it captures both the uncertainty in the mean and the additional variability of an individual data point ($\varepsilon$).
+
+**4-3.**
+
+(a) $\hat{\beta}_1 = \dfrac{30}{10} = 3$
+
+(b) $\hat{\beta}_0 = \bar{y} - \hat{\beta}_1 \bar{x} = 12 - 3 \times 5 = -3$
+
+(c) $\hat{y} = -3 + 3 \times 7 = 18$
+
+**4-4.**
+- **Situation A**: **Heteroscedasticity** — error variance is not constant → apply log transformation or weighted regression
+- **Situation B**: **Non-normal residuals** — normality assumption violated → consider variable transformation or robust regression
+- **Situation C**: **Influential point** — high leverage, large residual → check for data errors, then remove or apply robust regression
+
+---
+
+### Part 5 Answers
+
+**5-1.**
+<br />
+$$\text{Accuracy} = \frac{80+90}{80+20+10+90} = \frac{170}{200} = 0.85$$
+<br />
+$$\text{Sensitivity (Recall)} = \frac{80}{80+20} = \frac{80}{100} = 0.80$$
+<br />
+$$\text{Precision} = \frac{80}{80+10} = \frac{80}{90} \approx 0.889$$
+<br />
+$$F_1 = 2 \times \frac{0.889 \times 0.80}{0.889 + 0.80} = 2 \times \frac{0.711}{1.689} \approx 0.842$$
+<br />
+**5-2.**
+
+(a) Odds = $\dfrac{p}{1-p}$ (ratio of an event occurring vs. not occurring for a single observation). Odds ratio = the ratio of two odds (the multiplicative change in odds per unit increase in a variable).
+
+(b) $\exp(0.5) \approx 1.65$ → A 1-unit increase in $x_1$ increases the odds of the event occurring by approximately 65%.
+
+(c) The probability $p$ is bounded to $[0, 1]$, while a linear combination $\beta_0 + \beta_1 x$ ranges over all real numbers. The logit is a link function that maps $p$ to the entire real line.
+
+**5-3.**
+
+| Aspect | Naive Bayes | Logistic Regression |
+|--------|-------------|---------------------|
+| Probability estimation | Generative model (estimates P(X\|C)) | Discriminative model (directly estimates P(C\|X)) |
+| Key assumption | Conditional independence of features | Logit is a linear combination of features |
+| Advantages | Fast, works well with small datasets | Excellent probability calibration, handles multicollinearity |
+| Disadvantages | Independence assumption rarely holds in practice | Requires more data, sensitive to feature scaling |
+
+**5-4.**
+
+(a) 97% (the proportion of negatives) — always predicting negative yields 0.97 accuracy.
+
+(b) Because the model fails to detect any of the actual positives (cancer cases). Use **Recall (Sensitivity), AUC, and F1** instead.
+
+(c) **Type I error is more serious** — classifying a cancer patient as negative means they miss treatment, which is life-threatening. A Type II error (classifying a healthy person as positive) can be resolved with further testing.
+
+(d) ① SMOTE (synthetic oversampling) ② Class weight adjustment (`class_weight='balanced'`) ③ Lowering the classification threshold (to improve recall)
+
+---
+
+### Part 6 Answers
+
+**6-1.**
+
+(a) $k=1$: Over-reliance on a single neighbor → overfitting, sensitive to noise. $k=n$: All data points are neighbors → always predicts the majority class → underfitting.
+
+(b) If income (in dollars) and age (in years) are used together without scaling, income dominates the distance metric. Standardization ensures each feature contributes equally.
+
+(c) In text, the **direction of word distribution** matters more than document length for measuring similarity. Cosine distance measures direction (angle), not magnitude.
+
+**6-2.**
+
+(a) The model has memorized the training data perfectly — this is **overfitting**.
+
+(b) ① Limit `max_depth` ② Increase `min_samples_leaf` ③ Apply pruning ④ Switch to Random Forest
+
+(c) A single decision tree has very high variance (it is sensitive to changes in the data). Random Forest averages many trees to reduce variance. Bias remains similar, but the large reduction in variance significantly improves generalization.
+
+**6-3.**
+
+| Aspect | Bagging | Boosting |
+|--------|---------|----------|
+| Training order | Parallel (independent) | Sequential (each corrects prior errors) |
+| Error primarily reduced | Variance | Bias |
+| Sensitivity to outliers | Low | High (misclassified points get higher weight) |
+| Representative algorithm | Random Forest | XGBoost, LightGBM, AdaBoost |
+
+**6-4.**
+
+- **Situation A (Overfitting)**: Decrease `learning_rate`, reduce `max_depth`, add `subsample`, reduce `n_estimators`, add regularization ($L1/L2$)
+- **Situation B (Underfitting)**: Increase `n_estimators`, raise `learning_rate`, increase `max_depth`
+- **Situation C (Speed issue)**: Switch to LightGBM, reduce `n_estimators`, reduce feature count (PCA), apply early stopping
+
+---
+
+### Part 7 Answers
+
+**7-1.** ✅ **Answer: 3** — Standardization before PCA is **required**. Features with a larger scale will dominate the principal components.
+
+**7-2.**
+
+(a) Euclidean distances:
+
+| Point | $d(\mu_1=(1,1))$ | $d(\mu_2=(5,4))$ | Assignment |
+|-------|-----------------|-----------------|------------|
+| A(1,1) | 0 | $\sqrt{25}=5$ | **Cluster 1** |
+| B(2,1) | 1 | $\sqrt{13}\approx3.6$ | **Cluster 1** |
+| C(4,3) | $\sqrt{13}\approx3.6$ | $\sqrt{2}\approx1.4$ | **Cluster 2** |
+| D(5,4) | $\sqrt{25}=5$ | 0 | **Cluster 2** |
+| E(3,2) | $\sqrt{5}\approx2.2$ | $\sqrt{8}\approx2.8$ | **Cluster 1** |
+
+(b) New centroids:
+$$\mu_1 = \frac{A+B+E}{3} = \frac{(1+2+3, 1+1+2)}{3} = (2, \tfrac{4}{3}) \approx (2, 1.33)$$
+$$\mu_2 = \frac{C+D}{2} = \frac{(4+5, 3+4)}{2} = (4.5, 3.5)$$
+<br />
+**7-3.**
+
+| Aspect | K-means | Hierarchical Clustering |
+|--------|---------|------------------------|
+| K specified in advance | Required | Not required (decided post-hoc) |
+| Result visualization | Scatter plot | Dendrogram |
+| Time complexity | $O(nKt)$ — fast | $O(n^2)$ — slow |
+| Sensitivity to outliers | Distorts centroids | Sensitive with single linkage |
+| Deterministic results | No (depends on initialization) | Yes (fixed by distance metric) |
+
+**7-4.**
+
+(a) **Age and annual income** — the difference in scale distorts distance calculations. Apply standardization or MinMax scaling.
+
+(b) ① One-hot encode, then standardize. ② Use Gower Distance — it handles a mix of numeric, categorical, and binary variables by computing a unified [0,1] similarity score.
+
+(c) **Gower distance-based hierarchical clustering** or **GMM** is recommended. K-means only supports Euclidean distance, making it awkward with categorical data. If the number of customers is not too large, hierarchical clustering lets you inspect the dendrogram and choose K intuitively.
+
+---
+
+## Grading Rubric
+
+| Part | Points | Content |
+|------|--------|---------|
+| Part 1 (Ch. 1) | 20 pts | Descriptive statistics concepts and calculation |
+| Part 2 (Ch. 2) | 20 pts | Sampling distributions, bootstrap, probability distributions |
+| Part 3 (Ch. 3) | 15 pts | Hypothesis testing, p-values, A/B testing |
+| Part 4 (Ch. 4) | 20 pts | Regression coefficient interpretation, residual diagnostics |
+| Part 5 (Ch. 5) | 20 pts | Classification, confusion matrix, class imbalance |
+| Part 6 (Ch. 6) | 15 pts | KNN, decision trees, ensemble methods |
+| Part 7 (Ch. 7) | 15 pts | PCA, clustering |
+| **Total** | **125 pts** | |
+
+**90 or above**: Ready for real-world work — core data science fundamentals mastered
+
+**70–89**: Good conceptual understanding — focus on reviewing weaker sections
+
+**Below 70**: Re-read the relevant chapters and try again
