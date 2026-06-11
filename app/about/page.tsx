@@ -1,72 +1,174 @@
 import type { Metadata } from 'next'
 import Image from 'next/image'
-import Link from 'next/link'
 
 export const metadata: Metadata = {
   title: '소개 | devlog',
-  description: 'Linguistic Engineer — 언어와 시스템의 교차점에서 일합니다.',
+  description: 'Localization Engineer & PM @ Nexon Korea — LLM 번역·평가 연구',
 }
 
 // ── 데이터 ─────────────────────────────────────────────────────────────────
-// 아래 배열에 항목을 추가하면 자동으로 섹션에 렌더링됩니다.
 
-const EXPERIENCE = [
+const EXPERIENCE: {
+  role: string
+  company: string
+  period: string
+  type?: string
+  desc?: string
+  bullets?: string[]
+  tags?: string[]
+}[] = [
   {
-    role: 'AI/ML Engineer',
+    role: 'Localization PM & Engineer',
     company: 'Nexon Korea',
-    period: '2023 — 현재',
-    desc: '현지화(L10N) · 국제화(I18N) 자동화를 위한 LLM 파이프라인 및 언어 처리 시스템 구축',
-    tags: ['LLM', 'FastAPI', 'AWS', 'PostgreSQL'],
+    period: 'Jul 2024 — 현재',
+    type: 'Full-time',
+    bullets: [
+      'MapleStory: Idle RPG — 텍스트 데이터 관리, 예산·일정 컨트롤, 다국어 번역 벤더 코디네이션',
+      'LLM Translation System — RAG 기반 클라우드 플랫폼으로 다국어 게임 텍스트 번역·평가 시스템 개발',
+      'Domain Specific Benchmark — HITL 파이프라인이 포함된 게임 도메인 번역 벤치마크 시스템 설계 및 개발',
+    ],
+    tags: ['Localization Engineering', 'LLM', 'RAG', 'HITL', 'AWS'],
   },
-  // 예시: 이전 경력은 아래에 추가
+  {
+    role: 'Localization Engineer',
+    company: 'Nexon Korea',
+    period: 'Jan 2024 — Jul 2024',
+    type: 'Internship',
+    tags: ['Project Planning', 'Project Management', 'L10N'],
+  },
+  {
+    role: 'Research Assistant',
+    company: 'Hanyang University · MILab',
+    period: 'Jan 2023 — Dec 2023',
+    type: 'Internship',
+    desc: 'Multimodal Intelligence and Interaction Group (ERICA)',
+    tags: ['Data Analysis', 'Machine Learning', 'Multimodal AI'],
+  },
 ]
 
-const EDUCATION = [
+const EDUCATION: {
+  degree: string
+  school: string
+  dept: string
+  period: string
+  desc?: string
+}[] = [
   {
-    degree: '학사',
-    school: '○○대학교',
-    dept: '언어학과',
-    period: '2019 — 2023',
-    desc: '',
+    degree: 'B.A.',
+    school: 'Hanyang University ERICA',
+    dept: 'French Studies',
+    period: 'Mar 2017 — Feb 2024',
+  },
+  {
+    degree: 'B.S. (Dual)',
+    school: 'Hanyang University ERICA',
+    dept: 'Software Engineering',
+    period: 'Mar 2017 — Feb 2024',
   },
 ]
 
-const PUBLICATIONS = [
-  // 예시:
-  // {
-  //   title: '논문 제목',
-  //   venue: '학회 / 저널',
-  //   year: '2023',
-  //   link: 'https://...',
-  // },
-] as { title: string; venue: string; year: string; link?: string }[]
-
-const ACTIVITIES = [
+const CERTIFICATIONS: {
+  name: string
+  issuer: string
+  date: string
+  expires?: string
+  credentialId?: string
+}[] = [
   {
-    title: 'devlog · 기술 블로그 운영',
-    period: '2024 — 현재',
-    desc: 'AI, LLM, 개발 경험을 정리하는 개인 블로그. 월 방문자 성장 중.',
-    link: 'https://j-devlog.space',
+    name: 'Hugging Face Agents Course',
+    issuer: 'Hugging Face',
+    date: 'Feb 2026',
+    credentialId: 'jajuna99',
   },
-  // 오픈소스 기여, 커뮤니티 활동 등 추가
+  {
+    name: 'AWS Certified AI Practitioner',
+    issuer: 'Amazon Web Services',
+    date: 'Jan 2026',
+    expires: 'Jan 2029',
+  },
+  {
+    name: 'Azure AI Fundamentals',
+    issuer: 'Microsoft',
+    date: 'Dec 2024',
+    credentialId: 'BEB321926F561C6E',
+  },
+  {
+    name: 'Google Analytics Certification',
+    issuer: 'Google',
+    date: 'Feb 2025',
+    expires: 'Feb 2026',
+  },
+]
+
+const PUBLICATIONS: {
+  title: string
+  venue: string
+  year: string
+  link?: string
+}[] = [
+  {
+    title: 'Speech-Gesture Recognition Model for Intuitive Control of Industrial Rail Robots',
+    venue: 'The 19th Korea Robotics Society Annual Conference (KRoC 2024)',
+    year: 'Jan 2024',
+  },
+]
+
+const ACTIVITIES: {
+  title: string
+  period: string
+  role?: string
+  desc?: string
+  link?: string
+  award?: string
+}[] = [
+  {
+    title: 'Pseudo Lab — A S-class Translation System',
+    period: 'Mar 2026 — 현재',
+    role: '12th Member as Runner',
+    desc: '일반 LLM을 넘어서는 한국 문화 콘텐츠 번역 시스템 구축 연구',
+  },
+  {
+    title: 'KakaoImpact × Modulabs — B-Peach LAB',
+    period: 'Jul 2025 — Jan 2026',
+    role: 'AI Dev Leader (2nd Member)',
+    desc: '사회적 취약계층의 정보 격차 해소를 위한 AI 적응형 서비스 개발',
+  },
+  {
+    title: 'ABB Hackathon',
+    period: '2024',
+    award: '🥈 2nd place — AI Business Development Division',
+    desc: 'AI/빅데이터/블록체인 해커톤',
+  },
+  {
+    title: 'NDC Monlakethon',
+    period: 'NDC 2024',
+    award: '5th place — Idea Division',
+    desc: 'Nexon Developers Conference 2024',
+  },
+  {
+    title: 'Peer Tutor',
+    period: 'Mar 2021 — Jul 2021',
+    role: 'Hanyang University · Hanmille',
+    desc: '외국인 유학생 대상 동료 튜터링',
+  },
 ]
 
 const SKILLS = [
   {
+    label: 'Localization',
+    items: ['L10N', 'I18N', 'TMS', 'Game Localization', 'CAT Tools', 'Vendor Management'],
+  },
+  {
     label: 'AI / ML',
-    items: ['LLM', 'RAG', 'Fine-tuning', 'Prompt Engineering', 'LangChain', 'HuggingFace'],
+    items: ['LLM', 'RAG', 'Fine-tuning', 'Prompt Engineering', 'HuggingFace', 'Azure AI'],
   },
   {
-    label: 'Data',
-    items: ['Pandas', 'NumPy', 'Scikit-learn', 'PyTorch', 'SQL'],
-  },
-  {
-    label: 'Backend',
-    items: ['FastAPI', 'PostgreSQL', 'Redis', 'REST API'],
+    label: 'Data & Backend',
+    items: ['Python', 'FastAPI', 'PostgreSQL', 'Pandas', 'PyTorch', 'SQL'],
   },
   {
     label: 'Infra',
-    items: ['Docker', 'AWS', 'GitHub Actions', 'Linux', 'Git'],
+    items: ['AWS', 'Docker', 'GitHub Actions', 'Snowflake', 'Linux', 'Git'],
   },
 ]
 
@@ -94,7 +196,7 @@ function TimelineItem({
         <div className="w-2 h-2 rounded-full bg-accent-600 ring-2 ring-[#0a0e17] mt-1.5 flex-shrink-0" />
         {!isLast && <div className="w-px flex-1 bg-slate-800/60 mt-1" />}
       </div>
-      <div className={`flex-1 pb-6 ${isLast ? '' : ''}`}>{children}</div>
+      <div className="flex-1 pb-7">{children}</div>
     </div>
   )
 }
@@ -115,9 +217,9 @@ export default function AboutPage() {
           <div className="flex items-start justify-between gap-4 flex-wrap">
             <div>
               <h1 className="text-xl font-bold text-slate-100">재준 정 · Jaejuna</h1>
-              <p className="font-mono text-sm text-accent-400 mt-0.5">Linguistic Engineer</p>
+              <p className="font-mono text-sm text-accent-400 mt-0.5">Localization Engineer & PM · Linguistic Engineer</p>
             </div>
-            <div className="flex items-center gap-2 flex-shrink-0">
+            <div className="flex items-center gap-2 flex-shrink-0 flex-wrap">
               <a
                 href="https://github.com/Jaejuna"
                 target="_blank"
@@ -144,17 +246,17 @@ export default function AboutPage() {
           </div>
 
           <p className="text-sm text-slate-400 mt-4 leading-relaxed">
-            언어(Language)와 엔지니어링의 교차점에서 일합니다.
-            현지화·국제화 자동화를 위한 LLM 파이프라인을 구축하고,
-            자연어와 코드가 만나는 지점을 탐구합니다.
+            Nexon Korea에서 게임 현지화 PM·엔지니어로 일합니다.
+            한국 문화 콘텐츠를 위한 LLM 번역·평가 시스템을 연구하고,
+            언어와 AI, 엔지니어링이 교차하는 지점을 탐구합니다.
           </p>
 
           <div className="flex flex-wrap gap-4 mt-4">
             <span className="font-mono text-xs text-slate-500">
-              <span className="text-accent-700">❯</span> Seoul, Korea
+              <span className="text-accent-700">❯</span> Pangyo, South Korea
             </span>
             <span className="font-mono text-xs text-slate-500">
-              <span className="text-accent-700">❯</span> Open to connect
+              <span className="text-accent-700">❯</span> Nexon Korea
             </span>
           </div>
         </div>
@@ -169,23 +271,40 @@ export default function AboutPage() {
               <div className="flex items-start justify-between flex-wrap gap-1 mb-1">
                 <div>
                   <p className="text-sm font-semibold text-slate-200">{exp.role}</p>
-                  <p className="font-mono text-xs text-accent-500 mt-0.5">{exp.company}</p>
+                  <p className="font-mono text-xs text-accent-500 mt-0.5">
+                    {exp.company}
+                    {exp.type && (
+                      <span className="text-slate-700 ml-2">· {exp.type}</span>
+                    )}
+                  </p>
                 </div>
                 <span className="font-mono text-xs text-slate-600">{exp.period}</span>
               </div>
               {exp.desc && (
                 <p className="text-sm text-slate-400 leading-relaxed mt-1 mb-2">{exp.desc}</p>
               )}
-              <div className="flex flex-wrap gap-1.5">
-                {exp.tags.map((t) => (
-                  <span
-                    key={t}
-                    className="font-mono text-xs text-slate-500 bg-slate-800/40 border border-slate-800/60 px-2 py-0.5 rounded"
-                  >
-                    {t}
-                  </span>
-                ))}
-              </div>
+              {exp.bullets && exp.bullets.length > 0 && (
+                <ul className="mt-2 mb-2 space-y-1.5">
+                  {exp.bullets.map((b) => (
+                    <li key={b} className="flex gap-2 text-sm text-slate-400 leading-relaxed">
+                      <span className="text-accent-700 mt-0.5 flex-shrink-0">·</span>
+                      <span>{b}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {exp.tags && exp.tags.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 mt-2">
+                  {exp.tags.map((t) => (
+                    <span
+                      key={t}
+                      className="font-mono text-xs text-slate-500 bg-slate-800/40 border border-slate-800/60 px-2 py-0.5 rounded"
+                    >
+                      {t}
+                    </span>
+                  ))}
+                </div>
+              )}
             </TimelineItem>
           ))}
         </div>
@@ -196,7 +315,7 @@ export default function AboutPage() {
         <SectionHeader label="education" />
         <div>
           {EDUCATION.map((edu, i) => (
-            <TimelineItem key={edu.school + edu.degree} isLast={i === EDUCATION.length - 1}>
+            <TimelineItem key={edu.degree + edu.dept} isLast={i === EDUCATION.length - 1}>
               <div className="flex items-start justify-between flex-wrap gap-1 mb-1">
                 <div>
                   <p className="text-sm font-semibold text-slate-200">{edu.school}</p>
@@ -214,7 +333,32 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* ── 논문 / 발표 (항목이 있을 때만 렌더) ─────── */}
+      {/* ── 자격증 ─────────────────────────────────── */}
+      <section className="mb-10 pb-10 border-b border-slate-800/60">
+        <SectionHeader label="certifications" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {CERTIFICATIONS.map((cert) => (
+            <div
+              key={cert.name}
+              className="p-4 rounded-lg border border-slate-800/60 bg-slate-900/20"
+            >
+              <p className="text-sm font-medium text-slate-200 mb-1">{cert.name}</p>
+              <p className="font-mono text-xs text-accent-500">{cert.issuer}</p>
+              <div className="flex items-center gap-2 mt-2">
+                <span className="font-mono text-xs text-slate-600">{cert.date}</span>
+                {cert.expires && (
+                  <>
+                    <span className="text-slate-800 font-mono text-xs">·</span>
+                    <span className="font-mono text-xs text-slate-700">exp {cert.expires}</span>
+                  </>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ── 논문 ───────────────────────────────────── */}
       {PUBLICATIONS.length > 0 && (
         <section className="mb-10 pb-10 border-b border-slate-800/60">
           <SectionHeader label="publications" />
@@ -238,7 +382,7 @@ export default function AboutPage() {
                     ) : (
                       <p className="text-sm font-medium text-slate-200">{pub.title}</p>
                     )}
-                    <p className="font-mono text-xs text-accent-500 mt-0.5">{pub.venue}</p>
+                    <p className="font-mono text-xs text-accent-500 mt-1">{pub.venue}</p>
                   </div>
                   <span className="font-mono text-xs text-slate-600 flex-shrink-0">{pub.year}</span>
                 </div>
@@ -267,6 +411,12 @@ export default function AboutPage() {
                     </a>
                   ) : (
                     <p className="text-sm font-semibold text-slate-200">{act.title}</p>
+                  )}
+                  {act.role && (
+                    <p className="font-mono text-xs text-accent-500 mt-0.5">{act.role}</p>
+                  )}
+                  {act.award && (
+                    <p className="font-mono text-xs text-primary-400 mt-0.5">{act.award}</p>
                   )}
                 </div>
                 <span className="font-mono text-xs text-slate-600">{act.period}</span>
