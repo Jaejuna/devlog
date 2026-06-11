@@ -131,12 +131,12 @@ export default function HeroSection({ postCount, categoryCount }: HeroSectionPro
         >
           <div className="flex items-center gap-2">
             <span className="font-mono font-bold text-2xl text-primary-400">{postCount}</span>
-            <span className="font-mono text-sm text-slate-600">posts</span>
+            <span className="font-mono text-sm text-slate-500">posts</span>
           </div>
-          <span className="text-slate-800 font-mono">|</span>
+          <span className="text-slate-700 font-mono">|</span>
           <div className="flex items-center gap-2">
             <span className="font-mono font-bold text-2xl text-accent-500">{categoryCount}</span>
-            <span className="font-mono text-sm text-slate-600">categories</span>
+            <span className="font-mono text-sm text-slate-500">categories</span>
           </div>
         </div>
       </div>

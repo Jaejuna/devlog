@@ -1,34 +1,559 @@
 [
   {
-    "slug": "nextjs-app-router-migration",
-    "title": "Next.js App Router 마이그레이션 가이드",
-    "excerpt": "Pages Router에서 App Router로 마이그레이션하는 과정에서 겪은 경험과 핵심 변경사항을 정리했습니다.",
+    "slug": "abb-hackathon",
+    "title": "ABB 해커톤 후기",
+    "excerpt": "대구광역시 주관 ABB 해커톤 참가 후기 — AI/빅데이터 아이디어톤에서 최우수상(경북대학교 총장상)을 수상했습니다.",
     "tags": [
-      "Next.js"
+      "해커톤",
+      "ABB",
+      "대구",
+      "공모전"
     ],
-    "category": "개발",
-    "date": "2024-03-05"
+    "category": "회고",
+    "date": "2023-11-13"
   },
   {
-    "slug": "os-interview-questions",
-    "title": "운영체제 면접 질문 완벽 정리",
-    "excerpt": "프로세스, 스레드, 메모리 관리, 데드락 등 운영체제 핵심 면접 질문을 정리했습니다.",
+    "slug": "calculus-1",
+    "title": "머신러닝 미적분 1장: 미분의 개념과 주요 미분 공식",
+    "excerpt": "머신러닝 최적화의 핵심인 미분(derivative)을 직관적으로 이해하고, 상수·다항함수·지수·로그·삼각함수의 미분 공식과 스칼라 곱·합·곱·연쇄 법칙까지 정리했습니다.",
     "tags": [
-      "CS",
-      "OS"
+      "미적분",
+      "머신러닝",
+      "미분",
+      "도함수",
+      "최적화",
+      "딥러닝"
     ],
-    "category": "면접 준비",
-    "date": "2024-01-15"
+    "category": "MMD",
+    "date": "2026-03-06"
   },
   {
-    "slug": "useeffect-deep-dive",
-    "title": "useEffect 완전 정복: 의존성 배열과 클린업 함수",
-    "excerpt": "React의 useEffect 훅을 완전히 이해하고 흔한 실수를 피하는 방법을 알아봅니다.",
+    "slug": "calculus-2",
+    "title": "머신러닝 미적분 2장: 최적화, 편미분, 그래디언트",
+    "excerpt": "손실 함수 최적화, 제곱 손실과 로그 손실의 미분, 편미분과 그래디언트의 개념, 그래디언트로 최솟값 찾기까지 머신러닝 최적화의 핵심을 정리했습니다.",
     "tags": [
-      "React",
-      "Hooks"
+      "미적분",
+      "머신러닝",
+      "최적화",
+      "경사하강법",
+      "그래디언트",
+      "편미분"
+    ],
+    "category": "MMD",
+    "date": "2026-03-06"
+  },
+  {
+    "slug": "calculus-3",
+    "title": "머신러닝 미적분 3장: 경사 하강법과 뉴럴 네트워크 최적화",
+    "excerpt": "경사 하강법의 원리와 학습률, 퍼셉트론 회귀·분류, 역전파, 그리고 뉴턴 방법과 헤시안까지 뉴럴 네트워크 최적화의 핵심을 정리했습니다.",
+    "tags": [
+      "미적분",
+      "머신러닝",
+      "경사하강법",
+      "역전파",
+      "뉴럴네트워크",
+      "뉴턴방법"
+    ],
+    "category": "MMD",
+    "date": "2026-03-06"
+  },
+  {
+    "slug": "calculus-coding-practice",
+    "title": "미적분 코딩 과제: NumPy로 구현하는 최적화 알고리즘",
+    "excerpt": "수치 미분, 경사 하강법, 퍼셉트론 역전파, 뉴턴 방법을 NumPy로 직접 구현하는 코딩 과제입니다. 각 문제에 단계별 힌트와 전체 풀이 코드가 포함되어 있습니다.",
+    "tags": [
+      "미적분",
+      "Python",
+      "NumPy",
+      "코딩과제",
+      "경사하강법",
+      "역전파"
+    ],
+    "category": "MMD",
+    "date": "2026-03-06"
+  },
+  {
+    "slug": "calculus-concept-practice",
+    "title": "미적분 실무 개념 과제: ML 최적화 현장에서 마주치는 문제들",
+    "excerpt": "미분, 손실 함수 최적화, 경사 하강법, 역전파 개념을 머신러닝 실무 시나리오에 적용하는 개념 과제 모음입니다. 각 문제는 실제 모델 학습 현장에서 자주 마주치는 상황을 기반으로 합니다.",
+    "tags": [
+      "미적분",
+      "머신러닝",
+      "과제",
+      "최적화",
+      "역전파",
+      "면접준비"
+    ],
+    "category": "MMD",
+    "date": "2026-03-06"
+  },
+  {
+    "slug": "claude-code-hands-on-1",
+    "title": "Claude Code Hands-on #1 — 컨텍스트 관리부터 커스텀 명령어까지",
+    "excerpt": "Claude Code를 제대로 쓰려면 컨텍스트 관리가 핵심이다. /init, CLAUDE.md, @ 파일 멘션, Planning Mode, Thinking Mode, 대화 흐름 제어, 커스텀 명령어까지 실무에서 바로 쓰는 핵심 기능을 정리했습니다.",
+    "tags": [
+      "Claude Code",
+      "AI",
+      "코딩어시스턴트",
+      "컨텍스트관리",
+      "CLAUDE.md",
+      "커스텀명령어"
+    ],
+    "category": "Claude Code in Action",
+    "date": "2026-04-10"
+  },
+  {
+    "slug": "claude-code-hands-on-2",
+    "title": "Claude Code Hands-on #2 — MCP 서버와 GitHub 통합",
+    "excerpt": "Claude Code에 MCP 서버를 추가해 브라우저를 직접 제어하고, GitHub Actions와 통합해 PR 리뷰와 이슈 처리를 자동화하는 방법을 정리했습니다.",
+    "tags": [
+      "Claude Code",
+      "AI",
+      "MCP",
+      "Playwright",
+      "GitHub Actions",
+      "코딩어시스턴트"
+    ],
+    "category": "Claude Code in Action",
+    "date": "2026-04-10"
+  },
+  {
+    "slug": "claude-code-hands-on-3",
+    "title": "Claude Code Hands-on #3 — Hooks로 도구 실행 제어하기",
+    "excerpt": "Claude Code의 Hooks를 사용하면 도구 실행 전후에 커스텀 명령어를 끼워넣을 수 있다. 코드 포매터 자동 실행부터 민감한 파일 접근 차단까지, 실전 예제와 함께 정리했습니다.",
+    "tags": [
+      "Claude Code",
+      "AI",
+      "Hooks",
+      "자동화",
+      "보안",
+      "코딩어시스턴트"
+    ],
+    "category": "Claude Code in Action",
+    "date": "2026-04-13"
+  },
+  {
+    "slug": "claude-code-hands-on-4",
+    "title": "Claude Code Hands-on #4 — 실전 Hooks와 Claude Code SDK",
+    "excerpt": "Hooks 보안 설정, TypeScript 타입체크 자동화, 쿼리 중복 방지 Hook까지 실전 활용법과 함께, 전체 Hook 타입 목록과 Claude Code SDK를 이용한 프로그래밍 방식 자동화를 정리했습니다.",
+    "tags": [
+      "Claude Code",
+      "AI",
+      "Hooks",
+      "SDK",
+      "자동화",
+      "TypeScript",
+      "코딩어시스턴트"
+    ],
+    "category": "Claude Code in Action",
+    "date": "2026-04-13"
+  },
+  {
+    "slug": "claude-code-intro",
+    "title": "Claude Code in Action - What is Claude Code?",
+    "excerpt": "코딩 어시스턴트가 내부에서 어떻게 동작하는지, 언어 모델이 파일을 읽고 명령을 실행하는 원리(Tool Use)는 무엇인지, 그리고 Claude Code가 왜 다른지를 정리합니다.",
+    "tags": [
+      "Claude",
+      "Claude Code",
+      "AI",
+      "코딩어시스턴트",
+      "LLM",
+      "툴유즈"
+    ],
+    "category": "Claude Code in Action",
+    "date": "2026-03-07"
+  },
+  {
+    "slug": "linear-algebra-1",
+    "title": "선형대수 기초 1장: 선형방정식 시스템과 행렬의 특이성",
+    "excerpt": "선형방정식 시스템이 머신러닝에서 어떻게 활용되는지, 특이행렬과 비특이행렬의 차이, 선형 독립/종속, 행렬식 계산법까지 핵심 개념을 정리했습니다.",
+    "tags": [
+      "선형대수",
+      "머신러닝",
+      "행렬",
+      "수학",
+      "딥러닝"
+    ],
+    "category": "MMD",
+    "date": "2026-03-06"
+  },
+  {
+    "slug": "linear-algebra-2",
+    "title": "선형대수 기초 2장: 소거법, 행 사다리꼴, 가우스 소거법",
+    "excerpt": "소거법으로 선형방정식을 푸는 방법, 행렬의 행 사다리꼴(REF)과 기약 행 사다리꼴(RREF), 가우스 소거법, 랭크(Rank)까지 핵심 개념을 정리했습니다.",
+    "tags": [
+      "선형대수",
+      "머신러닝",
+      "행렬",
+      "수학",
+      "가우스소거법"
+    ],
+    "category": "MMD",
+    "date": "2026-03-06"
+  },
+  {
+    "slug": "linear-algebra-3",
+    "title": "선형대수 기초 3장: 벡터, 선형 변환, 행렬 곱셈과 역행렬",
+    "excerpt": "벡터의 노름·점곱·스칼라 곱, 선형 변환의 개념, 행렬 곱셈, 역행렬 계산법, 그리고 이 모든 개념이 뉴럴 네트워크(퍼셉트론)에서 어떻게 연결되는지 정리했습니다.",
+    "tags": [
+      "선형대수",
+      "머신러닝",
+      "벡터",
+      "행렬곱셈",
+      "뉴럴네트워크",
+      "퍼셉트론"
+    ],
+    "category": "MMD",
+    "date": "2026-03-06"
+  },
+  {
+    "slug": "linear-algebra-4",
+    "title": "선형대수 기초 4장: 고유값·고유벡터와 PCA",
+    "excerpt": "행렬식의 기하학적 의미, 기저와 생성, 고유값·고유벡터 계산, 차원 축소(PCA)의 작동 원리와 수식, 마르코프 행렬까지 선형대수 핵심을 완결합니다.",
+    "tags": [
+      "선형대수",
+      "머신러닝",
+      "고유값",
+      "PCA",
+      "차원축소",
+      "공분산행렬"
+    ],
+    "category": "MMD",
+    "date": "2026-03-06"
+  },
+  {
+    "slug": "linear-algebra-coding-practice",
+    "title": "선형대수 코딩 과제: NumPy로 구현하는 행렬 연산",
+    "excerpt": "NumPy를 사용해 행렬 연산, 가우스 소거법, 고유값 분해, PCA를 직접 구현해보는 코딩 과제입니다. 각 문제에 단계별 힌트와 전체 풀이 코드가 포함되어 있습니다.",
+    "tags": [
+      "선형대수",
+      "Python",
+      "NumPy",
+      "코딩과제",
+      "머신러닝",
+      "PCA"
+    ],
+    "category": "MMD",
+    "date": "2026-03-06"
+  },
+  {
+    "slug": "linear-algebra-concept-practice",
+    "title": "선형대수 실무 개념 과제: ML 현장에서 마주치는 문제들",
+    "excerpt": "행렬 특이성, 랭크, 고유값, PCA 등 선형대수 개념을 머신러닝 실무 시나리오에 적용하는 개념 과제 모음입니다. 각 문제는 실제 ML 파이프라인에서 자주 마주치는 상황을 기반으로 합니다.",
+    "tags": [
+      "선형대수",
+      "머신러닝",
+      "과제",
+      "실무",
+      "면접준비"
+    ],
+    "category": "MMD",
+    "date": "2026-03-06"
+  },
+  {
+    "slug": "military-discharge",
+    "title": "정보보호병 전역 후기",
+    "excerpt": "정보보호병으로 복무하며 겪은 입대 전 준비부터 전역까지의 이야기. 스펙, 보직, 후반기 교육기관 조교 경험을 정리했습니다.",
+    "tags": [
+      "군대",
+      "정보보호병",
+      "전역",
+      "후기"
+    ],
+    "category": "회고",
+    "date": "2023-03-14"
+  },
+  {
+    "slug": "oauth-oidc",
+    "title": "OAuth 2.0과 OIDC — 인증과 인가의 차이부터 소셜 로그인 원리까지",
+    "excerpt": "OAuth 2.0과 OIDC의 차이, Authorization Code Flow, JWT 구조, PKCE까지 — 소셜 로그인이 내부적으로 어떻게 동작하는지 원리부터 실무 구현까지 정리했습니다.",
+    "tags": [
+      "OAuth",
+      "OIDC",
+      "인증",
+      "보안",
+      "JWT",
+      "소셜로그인",
+      "웹개발"
     ],
     "category": "개발",
-    "date": "2024-02-10"
+    "date": "2026-04-25"
+  },
+  {
+    "slug": "playwright-mcp",
+    "title": "Playwright MCP — LLM에게 브라우저를 주다",
+    "excerpt": "Playwright MCP 서버를 통해 LLM이 실제 브라우저를 직접 제어하는 방법을 정리했습니다. 접근성 트리 기반의 기본 동작과 비전 모드의 차이, 실전 활용법, 자주 마주치는 함정까지 다룹니다.",
+    "tags": [
+      "LLM",
+      "MCP",
+      "Playwright",
+      "Claude Code",
+      "브라우저자동화",
+      "AI"
+    ],
+    "category": "LLM 실무",
+    "date": "2026-04-25"
+  },
+  {
+    "slug": "prob-stats-1",
+    "title": "머신러닝 확률통계 1장: 확률의 기초와 확률 분포",
+    "excerpt": "확률의 기본 개념, 조건부 확률, 베이즈 정리, 이항·정규·카이제곱 분포까지 머신러닝에서 필요한 확률·통계의 핵심을 정리했습니다.",
+    "tags": [
+      "확률",
+      "통계",
+      "머신러닝",
+      "확률분포",
+      "베이즈정리",
+      "정규분포"
+    ],
+    "category": "MMD",
+    "date": "2026-03-06"
+  },
+  {
+    "slug": "prob-stats-2",
+    "title": "머신러닝 확률통계 2장: 기댓값, 분산, 공분산",
+    "excerpt": "기댓값·분산·표준편차, 왜도·첨도 등 분포 기술 통계와 결합 분포·주변 분포·조건부 분포·공분산·상관계수·다변수 정규 분포를 정리했습니다.",
+    "tags": [
+      "확률",
+      "통계",
+      "머신러닝",
+      "기댓값",
+      "공분산",
+      "다변수분포"
+    ],
+    "category": "MMD",
+    "date": "2026-03-06"
+  },
+  {
+    "slug": "prob-stats-3",
+    "title": "머신러닝 확률통계 3장: 표본, MLE, MAP",
+    "excerpt": "모집단과 표본, 대수의 법칙, 중심극한정리, 최대 우도 추정(MLE), 최대 사후 추정(MAP), 정규화까지 머신러닝 추정의 핵심을 정리했습니다.",
+    "tags": [
+      "확률",
+      "통계",
+      "머신러닝",
+      "MLE",
+      "베이즈",
+      "중심극한정리"
+    ],
+    "category": "MMD",
+    "date": "2026-03-06"
+  },
+  {
+    "slug": "prob-stats-4",
+    "title": "머신러닝 확률통계 4장: 신뢰구간과 가설검정",
+    "excerpt": "신뢰구간의 개념과 계산, t분포, 가설검정의 원리(귀무/대립가설, p값, 기각역, 검정력), 다양한 t검정과 A/B 테스트까지 정리했습니다.",
+    "tags": [
+      "확률",
+      "통계",
+      "머신러닝",
+      "신뢰구간",
+      "가설검정",
+      "t분포",
+      "p값"
+    ],
+    "category": "MMD",
+    "date": "2026-03-06"
+  },
+  {
+    "slug": "prob-stats-coding-practice",
+    "title": "확률·통계 코딩 과제: Python으로 구현하는 ML 통계 도구",
+    "excerpt": "베이즈 업데이트, 분포 시뮬레이션, CLT 검증, MLE/MAP 구현, 신뢰구간, 가설검정, A/B 테스트 파이프라인까지 — 확률통계 1~4장을 코드로 구현합니다.",
+    "tags": [
+      "확률",
+      "통계",
+      "Python",
+      "NumPy",
+      "scipy",
+      "코딩과제",
+      "머신러닝"
+    ],
+    "category": "MMD",
+    "date": "2026-03-06"
+  },
+  {
+    "slug": "prob-stats-concept-practice",
+    "title": "확률·통계 실무 개념 과제: ML 현장에서 마주치는 추론 문제들",
+    "excerpt": "확률 기초, 베이즈 정리, 분포, MLE/MAP, 신뢰구간, 가설검정까지 — 머신러닝 실무 시나리오로 배우는 확률통계 개념 과제 모음입니다.",
+    "tags": [
+      "확률",
+      "통계",
+      "머신러닝",
+      "과제",
+      "베이즈",
+      "가설검정",
+      "면접준비"
+    ],
+    "category": "MMD",
+    "date": "2026-03-06"
+  },
+  {
+    "slug": "rtk-token-killer",
+    "title": "RTK — LLM 토큰을 60~90% 줄이는 CLI 프록시",
+    "excerpt": "RTK(Token Killer)는 git, pytest 등 CLI 명령어 출력을 LLM에 넘기기 전에 필터링해 토큰 소비를 60~90% 줄이는 프록시 도구입니다. 설치부터 동작 원리까지 정리했습니다.",
+    "tags": [
+      "LLM",
+      "Claude Code",
+      "토큰최적화",
+      "CLI",
+      "개발도구",
+      "AI",
+      "RTK"
+    ],
+    "category": "LLM 실무",
+    "date": "2026-04-25"
+  },
+  {
+    "slug": "statistics-1",
+    "title": "통계 기초 정리 1장: 데이터 종류와 위치·변이 추정",
+    "excerpt": "데이터의 종류(연속형, 이산, 범주형 등)와 위치 추정(평균, 중앙값), 변이 추정(분산, 표준편차)의 개념을 코드 예시와 함께 정리했습니다.",
+    "tags": [
+      "통계",
+      "데이터분석",
+      "pandas",
+      "Python"
+    ],
+    "category": "데이터사이언스",
+    "date": "2026-03-04"
+  },
+  {
+    "slug": "statistics-2",
+    "title": "통계 기초 정리 2장: 데이터와 표본분포",
+    "excerpt": "랜덤표본추출과 편향, 부트스트랩, 신뢰구간, 정규분포, t분포, 이항·푸아송 분포까지 표본분포의 핵심 개념을 코드와 함께 정리했습니다.",
+    "tags": [
+      "통계",
+      "데이터분석",
+      "표본분포",
+      "Python"
+    ],
+    "category": "데이터사이언스",
+    "date": "2026-03-04"
+  },
+  {
+    "slug": "statistics-3",
+    "title": "통계 기초 정리 3장: 통계적 실험과 유의성 검정",
+    "excerpt": "A/B 검정, 가설검정, p-값, t-검정, 분산분석(ANOVA), 카이제곱, 멀티암드 밴딧까지 통계적 실험의 핵심 개념을 코드와 함께 정리했습니다.",
+    "tags": [
+      "통계",
+      "가설검정",
+      "A/B테스트",
+      "Python"
+    ],
+    "category": "데이터사이언스",
+    "date": "2026-03-04"
+  },
+  {
+    "slug": "statistics-4",
+    "title": "통계 기초 정리 4장: 회귀와 예측",
+    "excerpt": "단순·다중선형회귀, 잔차 진단, 범주형 변수 인코딩, 다항·스플라인 회귀까지 회귀분석의 핵심 개념을 코드와 함께 정리했습니다.",
+    "tags": [
+      "통계",
+      "회귀분석",
+      "머신러닝",
+      "Python"
+    ],
+    "category": "데이터사이언스",
+    "date": "2026-03-04"
+  },
+  {
+    "slug": "statistics-5",
+    "title": "통계 기초 정리 5장: 분류",
+    "excerpt": "나이브 베이즈, 판별분석, 로지스틱 회귀, 혼동행렬, ROC/AUC, 불균형 데이터 처리까지 분류 알고리즘의 핵심 개념을 코드와 함께 정리했습니다.",
+    "tags": [
+      "통계",
+      "분류",
+      "로지스틱회귀",
+      "머신러닝",
+      "Python"
+    ],
+    "category": "데이터사이언스",
+    "date": "2026-03-04"
+  },
+  {
+    "slug": "statistics-6",
+    "title": "통계 기초 정리 6장: 통계적 머신러닝",
+    "excerpt": "KNN, 결정 트리, 랜덤 포레스트, AdaBoost, 그레이디언트 부스팅까지 트리 기반 앙상블 모델의 핵심 개념을 코드와 함께 정리했습니다.",
+    "tags": [
+      "통계",
+      "머신러닝",
+      "랜덤포레스트",
+      "부스팅",
+      "Python"
+    ],
+    "category": "데이터사이언스",
+    "date": "2026-03-04"
+  },
+  {
+    "slug": "statistics-7",
+    "title": "통계 기초 정리 7장: 비지도 학습",
+    "excerpt": "PCA, K-평균, 계층적 클러스터링, 혼합 모형(GMM), 스케일링까지 비지도 학습의 핵심 개념을 코드와 함께 정리했습니다.",
+    "tags": [
+      "통계",
+      "비지도학습",
+      "PCA",
+      "클러스터링",
+      "Python"
+    ],
+    "category": "데이터사이언스",
+    "date": "2026-03-04"
+  },
+  {
+    "slug": "statistics-quiz",
+    "title": "Practical Statistics for Data Scientists 퀴즈",
+    "excerpt": "기술통계부터 비지도 학습까지, 7장 전체를 아우르는 개념·계산·코드·시나리오 문제로 실력을 점검합니다.",
+    "tags": [
+      "통계",
+      "퀴즈",
+      "데이터사이언스",
+      "면접준비"
+    ],
+    "category": "데이터사이언스",
+    "date": "2026-03-04"
+  },
+  {
+    "slug": "stewart-calculus-1",
+    "title": "미분적분학 바이블 1장: 함수와 극한",
+    "excerpt": "James Stewart 미분적분학 1장 — 함수의 정의, 종류, 극한의 개념과 계산 법칙, 연속성, 무한대를 수반하는 극한까지 핵심 내용을 정리했습니다.",
+    "tags": [
+      "미적분",
+      "함수",
+      "극한",
+      "연속성",
+      "James Stewart",
+      "수학"
+    ],
+    "category": "미분적분학 바이블",
+    "date": "2026-03-20"
+  },
+  {
+    "slug": "stewart-calculus-2",
+    "title": "미분적분학 바이블 2장: 도함수",
+    "excerpt": "James Stewart 미분적분학 2장 — 미분계수와 변화율, 도함수의 정의, 기본 미분 공식, 연쇄법칙, 음함수의 미분법, 관련 비율, 선형 근사까지 핵심 내용을 정리했습니다.",
+    "tags": [
+      "미적분",
+      "도함수",
+      "미분",
+      "연쇄법칙",
+      "James Stewart",
+      "수학"
+    ],
+    "category": "미분적분학 바이블",
+    "date": "2026-03-20"
+  },
+  {
+    "slug": "stewart-calculus-3",
+    "title": "미분적분학 바이블 3장: 도함수의 응용",
+    "excerpt": "James Stewart 미분적분학 3장 — 최댓값과 최솟값, 평균값 정리, 도함수와 그래프의 모양, 최적화, 뉴턴의 방법, 역도함수까지 핵심 내용을 정리했습니다.",
+    "tags": [
+      "미적분",
+      "도함수",
+      "최적화",
+      "평균값 정리",
+      "뉴턴의 방법",
+      "James Stewart",
+      "수학"
+    ],
+    "category": "미분적분학 바이블",
+    "date": "2026-03-20"
   }
 ]

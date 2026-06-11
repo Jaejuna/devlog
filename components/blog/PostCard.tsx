@@ -31,11 +31,11 @@ export default function PostCard({ post }: PostCardProps) {
                 [{post.category}]
               </span>
               <span className="text-slate-700">·</span>
-              <time dateTime={post.date} className="text-slate-600">
+              <time dateTime={post.date} className="text-slate-500">
                 {formatDate(post.date)}
               </time>
               <span className="text-slate-700">·</span>
-              <span className="text-slate-600">{post.readTime}min</span>
+              <span className="text-slate-500">{post.readTime}min</span>
             </div>
 
             {/* Title */}
@@ -54,7 +54,7 @@ export default function PostCard({ post }: PostCardProps) {
                 {post.tags.slice(0, 5).map((tag) => (
                   <span
                     key={tag}
-                    className="font-mono text-xs text-slate-600 bg-slate-800/40 border border-slate-700/30 px-1.5 py-0.5 rounded"
+                    className="font-mono text-xs text-slate-500 bg-slate-800/40 border border-slate-700/30 px-1.5 py-0.5 rounded"
                   >
                     #{tag}
                   </span>

@@ -235,7 +235,7 @@ export default function Header({ categories, tags }: HeaderProps) {
                         <li key={post.slug}>
                           <Link
                             href={`/blog/${post.slug}`}
-                            className="block py-1 font-mono text-xs text-slate-600 hover:text-primary-400 leading-snug transition-colors"
+                            className="block py-1 font-mono text-xs text-slate-500 hover:text-primary-400 leading-snug transition-colors"
                             onClick={() => setDrawerOpen(false)}
                           >
                             {post.title}
@@ -263,7 +263,7 @@ export default function Header({ categories, tags }: HeaderProps) {
                   onClick={() => setDrawerOpen(false)}
                 >
                   #{name}
-                  <span className="text-slate-700">{count}</span>
+                  <span className="text-slate-500">{count}</span>
                 </Link>
               ))}
             </div>

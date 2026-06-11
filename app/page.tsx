@@ -53,12 +53,12 @@ function CategoryCard({ category, posts }: { category: string; posts: PostMeta[]
             {posts.length}
           </span>
         </div>
-        <p className="text-xs text-slate-600 mb-2 leading-relaxed">{desc}</p>
+        <p className="text-xs text-slate-500 mb-2 leading-relaxed">{desc}</p>
         <ul className="space-y-0.5">
           {posts.slice(0, 2).map((p) => (
             <li
               key={p.slug}
-              className="font-mono text-xs text-slate-700 truncate group-hover:text-slate-500 transition-colors"
+              className="font-mono text-xs text-slate-600 truncate group-hover:text-slate-400 transition-colors"
             >
               ↳ {p.title}
             </li>
@@ -120,7 +120,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
                     <p className="text-sm font-medium text-slate-500 group-hover:text-primary-400 transition-colors line-clamp-2 leading-snug">
                       {post.title}
                     </p>
-                    <p className="font-mono text-xs text-slate-700 mt-0.5">{post.readTime}min</p>
+                    <p className="font-mono text-xs text-slate-500 mt-0.5">{post.readTime}min</p>
                   </div>
                 </Link>
               </li>

@@ -21,7 +21,13 @@
       "Bash(do echo \"=== $f ===\" grep -n \"^## 마무리\\\\|^## 정리\\\\|^## 요약\\\\|<br\" /Users/jajuna99/git/proj/devlog/content/posts/$f.mdx)",
       "Read(//Users/jajuna99/git/proj/devlog/**)",
       "Bash(tail -4 /Users/jajuna99/git/proj/devlog/content/posts/prob-stats-concept-practice.mdx\ntail -4 /Users/jajuna99/git/proj/devlog/content/posts/prob-stats-coding-practice.mdx\ngrep -n \"^## 퀴즈\\\\|^## 정리\\\\|^## 마무리\\\\|^## 정답\" /Users/jajuna99/git/proj/devlog/content/posts/statistics-3.mdx | tail -3\ngrep -n \"^## 퀴즈\\\\|^## 정리\\\\|^## 마무리\\\\|^## 정답\" /Users/jajuna99/git/proj/devlog/content/posts/statistics-4.mdx | tail -3)",
-      "Bash(find /Users/jajuna99/git/proj/devlog/app -type d -name \"*privacy*\" -o -type d -name \"*contact*\" 2>/dev/null | grep -v node_modules)"
+      "Bash(find /Users/jajuna99/git/proj/devlog/app -type d -name \"*privacy*\" -o -type d -name \"*contact*\" 2>/dev/null | grep -v node_modules)",
+      "Bash(rtk ls *)",
+      "Bash(rtk grep *)",
+      "Bash(rtk find *)",
+      "Bash(rtk git *)",
+      "Bash(git mv *)",
+      "WebSearch"
     ]
   }
 }
