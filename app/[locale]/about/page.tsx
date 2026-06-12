@@ -114,7 +114,7 @@ const ACTIVITIES: {
   },
   {
     title: 'ABB Hackathon',
-    period: '2024',
+    period: '2023',
     award: '🥈 2nd place — AI Business Development Division',
     desc: 'AI/빅데이터/블록체인 해커톤',
     descEn: 'AI / Big Data / Blockchain Hackathon',
