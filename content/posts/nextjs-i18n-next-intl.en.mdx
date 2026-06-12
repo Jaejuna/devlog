@@ -1,0 +1,305 @@
+---
+title: "Adding i18n to a Next.js Blog — next-intl v4 Practical Guide"
+date: "2026-06-12"
+category: "개발"
+tags: ["Next.js", "TypeScript", "next-intl", "i18n", "웹개발", "실무"]
+excerpt: "Notes from adding an English version to a Korean-only dev blog. Covers next-intl v4 routing design, the slug.en.mdx file strategy, and the setRequestLocale trap."
+readTime: 10
+---
+
+This blog started as Korean-only. As a localization engineer, the thought of not having i18n felt wrong — so I set out to add an `/en/` version without touching any existing URLs.
+
+There are several ways to handle multilingual routing in Next.js App Router, but I went with **next-intl**, which has become the de facto standard. This post documents the architecture I settled on and the errors I hit along the way.
+
+---
+
+## Design Principle — Don't Break Existing URLs
+
+The first decision when adding i18n is URL structure.
+
+| Strategy | Korean | English |
+|---|---|---|
+| prefix-always | `/ko/blog/foo` | `/en/blog/foo` |
+| as-needed | `/blog/foo` | `/en/blog/foo` |
+
+`prefix-always` is simpler to implement, but every URL Google has already indexed — `/blog/foo` — would become `/ko/blog/foo`. That's an SEO disaster.
+
+`as-needed` keeps the default locale (Korean) prefix-free and only adds `/en/` for English. next-intl v4 supports this option natively.
+
+```ts
+// i18n/routing.ts
+import { defineRouting } from 'next-intl/routing'
+
+export const routing = defineRouting({
+  locales: ['ko', 'en'] as const,
+  defaultLocale: 'ko',
+  localePrefix: 'as-needed',
+})
+```
+
+---
+
+## next-intl v4 Core Setup
+
+Beyond the routing config, two more files are needed.
+
+**`i18n/request.ts`** — decides which language messages to load per request.
+
+```ts
+import { getRequestConfig } from 'next-intl/server'
+import { routing } from './routing'
+
+export default getRequestConfig(async ({ requestLocale }) => {
+  let locale = await requestLocale
+  if (!locale || !(routing.locales as readonly string[]).includes(locale)) {
+    locale = routing.defaultLocale
+  }
+  return {
+    locale,
+    messages: (await import(`../messages/${locale}.json`)).default,
+  }
+})
+```
+
+**`i18n/navigation.ts`** — replaces next-intl's `Link`, `useRouter`, etc. with locale-aware versions. You must swap `next/link` for this or the `/en/` prefix won't be applied automatically.
+
+```ts
+import { createNavigation } from 'next-intl/navigation'
+import { routing } from './routing'
+
+export const { Link, redirect, usePathname, useRouter, getPathname } =
+  createNavigation(routing)
+```
+
+---
+
+## Directory Structure Change
+
+To integrate with App Router in next-intl v4, pages under `app/` move into `app/[locale]/`. The root `app/layout.tsx` becomes a passthrough only.
+
+```
+app/
+  layout.tsx          ← passthrough only (children as never)
+  [locale]/
+    layout.tsx        ← setRequestLocale(locale) goes here, once
+    page.tsx
+    blog/[slug]/page.tsx
+    category/[name]/page.tsx
+    tag/[name]/page.tsx
+    tags/page.tsx
+    about/page.tsx
+```
+
+The `as never` cast in the root layout exists purely to satisfy TypeScript.
+
+```tsx
+// app/layout.tsx
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return children as never
+}
+```
+
+---
+
+## `setRequestLocale` — The One Line You Can't Skip
+
+Without this line in `[locale]/layout.tsx`, any server component downstream that calls `getTranslations()` will error.
+
+```tsx
+// app/[locale]/layout.tsx
+import { setRequestLocale } from 'next-intl/server'
+
+export default async function LocaleLayout({ children, params }) {
+  const { locale } = await params
+  setRequestLocale(locale)   // ← everything breaks without this
+  // ...
+}
+```
+
+next-intl reads the locale from request context, and this function initializes that context. Call it once here and every server component below can call `getTranslations()` without passing a locale prop.
+
+---
+
+## Three Translation Strategies
+
+The blog had three distinct kinds of translatable text, each handled differently.
+
+### 1. UI Text — `messages/*.json`
+
+Navigation labels, buttons, and other UI strings live in `messages/ko.json` and `messages/en.json`.
+
+```json
+// messages/en.json (excerpt)
+{
+  "nav": { "home": "/home", "tags": "/tags", "about": "/about" },
+  "post": { "readTime": "{minutes} min read" },
+  "blog": {
+    "prevPost": "Prev",
+    "nextPost": "Next",
+    "relatedPosts": "Related Posts"
+  }
+}
+```
+
+Server components use `getTranslations`; client components use `useTranslations`.
+
+```tsx
+// Server component
+const t = await getTranslations('post')
+return <span>{t('readTime', { minutes: post.readTime })}</span>
+
+// Client component
+const t = useTranslations('blog')
+return <button>{t('prevPost')}</button>
+```
+
+### 2. Tags — `translateTag()` Function
+
+Tags double as URL slugs, which makes the `messages/` approach awkward. The strategy is to keep tag URLs as Korean slugs (`/tag/인증`) and only translate the display text.
+
+```ts
+// lib/tagTranslations.ts
+const TAG_MAP: Record<string, string> = {
+  '머신러닝': 'Machine Learning',
+  '미적분': 'Calculus',
+  '선형대수': 'Linear Algebra',
+  '인증': 'Authentication',
+  // ... ~80 entries
+}
+
+export function translateTag(tag: string, locale: string): string {
+  if (locale !== 'en') return tag
+  return TAG_MAP[tag] ?? tag  // fall back to original if no translation
+}
+```
+
+Every place tags are displayed — PostCard, blog post header, tags index page — renders through this function.
+
+**In practice:**<br />
+The blog detail page was initially rendering tags as `{tag}` directly, so Korean tags appeared even on the EN locale. Every place that renders tags needs to be audited for a missing `translateTag()` call.
+
+### 3. Post Content — `slug.en.mdx`
+
+Post body text is far too large for `messages/` files, and stuffing conditional rendering into MDX is messy.
+
+The approach I landed on is a **parallel file strategy**: add a `.en.mdx` file in the same directory for any post that needs an English version.
+
+```
+content/posts/
+  oauth-oidc.mdx        ← Korean original
+  oauth-oidc.en.mdx     ← English translation
+  calculus-1.mdx
+  calculus-1.en.mdx
+```
+
+The logic in `lib/mdx.ts` is straightforward.
+
+```ts
+function resolvePostPath(slug: string, locale?: string): string {
+  if (locale === 'en') {
+    const enPath = path.join(postsDirectory, `${slug}.en.mdx`)
+    if (fs.existsSync(enPath)) return enPath  // use EN file if it exists
+  }
+  return path.join(postsDirectory, `${slug}.mdx`)  // fall back to Korean
+}
+
+export function getAllPosts(locale?: string): PostMeta[] {
+  return fs.readdirSync(postsDirectory)
+    .filter((name) => name.endsWith('.mdx') && !name.endsWith('.en.mdx'))
+    // ↑ exclude .en.mdx from the base list — prevents duplicate entries
+    .map((fileName) => {
+      const slug = fileName.replace(/\.mdx$/, '')
+      const localizedPath = resolvePostPath(slug, locale)
+      const { data, content } = matter(fs.readFileSync(localizedPath, 'utf8'))
+
+      // always extract thumbnail from the Korean base file
+      // (EN files don't need images — thumbnails won't break)
+      const basePath = path.join(postsDirectory, fileName)
+      const baseContent = localizedPath !== basePath
+        ? matter(fs.readFileSync(basePath, 'utf8')).content
+        : content
+      const thumbnail = extractFirstImage(baseContent)
+
+      return { slug, title: data.title, .../* rest of frontmatter */ }
+    })
+}
+```
+
+In `.en.mdx` files, only `title` and `excerpt` are translated. `tags`, `date`, `category`, `readTime`, and `thumbnail` stay identical to the Korean original. Since thumbnails are always read from the base file, EN files don't need any images.
+
+---
+
+## Troubleshooting
+
+### `generateStaticParams` Should Call `getAllPosts()` Without Locale
+
+```ts
+// ❌ Wrong — EN locale may produce different slug sets
+export async function generateStaticParams() {
+  return routing.locales.flatMap((locale) =>
+    getAllPosts(locale).map((post) => ({ locale, slug: post.slug }))
+  )
+}
+
+// ✅ Correct — get base slugs without locale, then combine with locales
+export async function generateStaticParams() {
+  return routing.locales.flatMap((locale) =>
+    getAllPosts().map((post) => ({ locale, slug: post.slug }))
+  )
+}
+```
+
+Calling `getAllPosts(locale)` with `'en'` reads EN frontmatter, but the slugs themselves are identical — so always use the base list here.
+
+### `git add` With Bracket Paths in zsh
+
+Paths like `app/[locale]/page.tsx` are interpreted as zsh globs if you don't quote them.
+
+```bash
+# ❌
+git add app/[locale]/blog/[slug]/page.tsx
+
+# ✅
+git add "app/[locale]/blog/[slug]/page.tsx"
+```
+
+### `next/link` vs `Link` from `@/i18n/navigation`
+
+Using `next/link` in a locale-aware component means the `/en/` prefix never gets applied.
+
+```tsx
+// ❌ — /en/ prefix missing on EN locale
+import Link from 'next/link'
+
+// ✅ — locale handled automatically
+import { Link } from '@/i18n/navigation'
+```
+
+`<a>` tags inside MDX content and external links are fine using standard `next/link`.
+
+---
+
+## Result
+
+This structure supports 38 Korean posts, each with an English translation. Visiting `/en/blog/oauth-oidc` serves the English version; posts without an `.en.mdx` file fall back silently to Korean.
+
+| | Korean | English |
+|---|---|---|
+| Home | `/` | `/en` |
+| Post | `/blog/slug` | `/en/blog/slug` |
+| Tag URL | `/tag/인증` | `/en/tag/인증` |
+| Tag display | `#인증` | `#Authentication` |
+
+Tag URLs stay as Korean slugs; only the display text is translated. It's a deliberate trade-off between SEO URL consistency and localization.
+
+<br />
+
+## Wrapping Up
+
+next-intl v4's `localePrefix: 'as-needed'` is the cleanest way to add multilingual support without breaking existing URLs. Three things to remember:
+
+- `setRequestLocale` — call it in `[locale]/layout.tsx`, no exceptions
+- Replace `next/link` with `Link` from `@/i18n/navigation`
+- Use the `slug.en.mdx` file strategy for post content
+
+Building i18n from scratch on a small blog made it clear that "translation" means something different depending on what you're translating — UI strings, tags, and body content each need their own approach. Trying to solve all three with one mechanism just adds complexity.
