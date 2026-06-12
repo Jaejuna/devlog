@@ -17,7 +17,7 @@ export default function Footer() {
 
           {/* EOF comment */}
           <p className="font-mono text-xs text-slate-700">
-            {`// © ${currentYear} Jaejuna · linguistic engineer`}
+            {`// © ${currentYear} Jaejun Jung · linguistic engineer`}
           </p>
 
           {/* Social Links */}

@@ -206,7 +206,7 @@ export default async function AboutPage({ params: { locale } }: { params: { loca
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-4 flex-wrap">
             <div>
-              <h1 className="text-xl font-bold text-slate-100">재준 정 · Jaejuna</h1>
+              <h1 className="text-xl font-bold text-slate-100">정재준 · Jaejun Jung</h1>
               <p className="font-mono text-sm text-accent-400 mt-0.5">Localization Engineer & PM · Linguistic Engineer</p>
             </div>
             <div className="flex items-center gap-2 flex-shrink-0 flex-wrap">
