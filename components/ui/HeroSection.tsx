@@ -12,7 +12,6 @@ const HERO_TOKENS = [
   { text: 'Linguistic', typeLabel: '<adj>', colorClass: 'text-amber-400' },
   { text: 'Engineer', typeLabel: '<noun>', colorClass: 'text-accent-400' },
   { text: 'Blog', typeLabel: '<noun>', colorClass: 'text-slate-400' },
-  { text: '...?', typeLabel: '<punct>', colorClass: 'text-slate-600' },
 ]
 
 const BG_TOKENS = [
