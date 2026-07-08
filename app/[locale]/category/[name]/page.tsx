@@ -5,6 +5,7 @@ import PostList from '@/components/blog/PostList'
 import AdSidebar from '@/components/ads/AdSidebar'
 import { Link } from '@/i18n/navigation'
 import { routing } from '@/i18n/routing'
+import { translateCategory } from '@/lib/categoryTranslations'
 
 interface CategoryPageProps {
   params: { locale: string; name: string }
@@ -44,7 +45,7 @@ export default function CategoryPage({ params }: CategoryPageProps) {
         <div className="flex-1 min-w-0">
           <div className="mb-6">
             <p className="font-mono text-xs text-accent-600 mb-2">$ filter --category</p>
-            <h1 className="text-2xl font-bold text-slate-100">{categoryName}</h1>
+            <h1 className="text-2xl font-bold text-slate-100">{translateCategory(categoryName, locale)}</h1>
             <p className="font-mono text-xs text-slate-700 mt-1">
               {'// '}
               <span className="text-slate-500">{posts.length}</span>
@@ -66,7 +67,7 @@ export default function CategoryPage({ params }: CategoryPageProps) {
                     : 'border-slate-800/60 text-slate-500 hover:border-accent-700/40'
                 }`}
               >
-                [{cat}]
+                [{translateCategory(cat, locale)}]
               </Link>
             ))}
           </div>

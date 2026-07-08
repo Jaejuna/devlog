@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useTranslations, useLocale } from 'next-intl'
 import { Link, usePathname } from '@/i18n/navigation'
 import SearchModal from '@/components/blog/SearchModal'
+import { translateCategory } from '@/lib/categoryTranslations'
 
 type CategoryData = { name: string; posts: { slug: string; title: string }[] }
 type TagData = { name: string; count: number }
@@ -155,7 +156,7 @@ export default function Header({ categories, tags }: HeaderProps) {
                     className="w-full flex items-center justify-between py-1.5 px-2 font-mono text-sm text-slate-400 hover:text-accent-400 hover:bg-slate-800/40 rounded transition-all text-left"
                     onClick={() => toggleCategory(cat.name)}
                   >
-                    <span>[{cat.name}]</span>
+                    <span>[{translateCategory(cat.name, locale)}]</span>
                     <span className="flex items-center gap-1.5">
                       <span className="text-xs text-slate-700">{cat.posts.length}</span>
                       <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}

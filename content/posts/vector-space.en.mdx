@@ -1,0 +1,210 @@
+---
+title: "Linear Algebra with MML 1: Vector Spaces and Subspaces"
+date: "2026-07-08"
+category: "MML"
+tags: ["Linear Algebra", "Machine Learning", "Vector Space", "Subspace", "Mathematics", "MML"]
+excerpt: "An axiomatic tour of vector spaces based on the ML math textbook MML. Starting from groups, we cover the eight axioms of a vector space, examples like polynomials, matrices, and functions, subspaces, and linear combinations and span."
+readTime: 12
+---
+
+When you first learn linear algebra, you treat a vector as an "arrow" and a matrix as a "table of numbers" and move on. But once you start handling data, weights, and embeddings in machine learning, you need a fundamental agreement about **why these objects can be freely added and scaled within a single space**. That agreement is the **vector space**.
+
+> This post is based on *Mathematics for Machine Learning* (Deisenroth, Faisal, Ong), Chapter 2 Linear Algebra, Section 2.4 Vector Spaces — the standard textbook for the math of machine learning.
+
+## What you'll learn
+
+- **Groups** — the minimal rules a set and an operation must satisfy
+- The definition of a **vector space** — two operations and eight axioms
+- Why a vector isn't only an arrow — polynomials, matrices, and functions are vectors too
+- **Vector subspaces** — a space within a space, and why it always contains the origin
+- **Linear combinations** and **span**
+
+---
+
+## Why do we need the abstraction "vector space"?
+
+Whether it's an arrow in $\mathbb{R}^2$, a cubic polynomial, or a $28 \times 28$ image, we use the same two operations on all of them: **addition** and **scalar multiplication**.
+
+Mathematics extracts this common structure and gives the name **vector space** to "a set with two such operations satisfying certain rules." Once the rules are fixed, a theorem proved for arrows applies **unchanged** to polynomials, matrices, and functions. That is exactly the payoff of abstraction.
+
+---
+
+## Groups — the skeleton of a vector space
+
+To define a vector space, you first need the notion of a **group**. A set $\mathcal{G}$ with an operation $\otimes: \mathcal{G} \times \mathcal{G} \rightarrow \mathcal{G}$ is a group $(\mathcal{G}, \otimes)$ if it satisfies these four axioms.
+
+| Axiom | Meaning |
+|---|---|
+| **Closure** | $\forall x, y \in \mathcal{G}: x \otimes y \in \mathcal{G}$ |
+| **Associativity** | $(x \otimes y) \otimes z = x \otimes (y \otimes z)$ |
+| **Identity** | $\exists e:\ x \otimes e = e \otimes x = x$ |
+| **Inverse** | $\forall x,\ \exists y:\ x \otimes y = e$ |
+
+If it additionally satisfies **commutativity** $x \otimes y = y \otimes x$, it is an **Abelian group**.
+
+> **Key point**: Integer addition $(\mathbb{Z}, +)$ is an Abelian group, but integer multiplication $(\mathbb{Z}, \cdot)$ is not a group — it has no inverses (e.g. the inverse of $2$ would be $\frac{1}{2}$, which is not an integer).
+
+---
+
+## Definition of a vector space
+
+A vector space $V$ is a set equipped with **two operations**.
+
+- **Vector addition** $+: V \times V \rightarrow V$
+- **Scalar multiplication** $\cdot: \mathbb{R} \times V \rightarrow V$
+
+Then $(V, +)$ must be an **Abelian group**, and scalar multiplication must satisfy the following rules. Altogether that is eight axioms.
+
+| Group | Axiom |
+|---|---|
+| Addition (Abelian group) | closure, associativity, identity (zero vector $\mathbf{0}$), inverse ($-x$), commutativity |
+| Distributivity 1 | $\lambda \cdot (x + y) = \lambda \cdot x + \lambda \cdot y$ |
+| Distributivity 2 | $(\lambda + \psi) \cdot x = \lambda \cdot x + \psi \cdot x$ |
+| Scalar associativity | $\lambda \cdot (\psi \cdot x) = (\lambda \psi) \cdot x$ |
+| Scalar identity | $1 \cdot x = x$ |
+
+An element $x \in V$ satisfying these axioms is called a **vector**.
+<br />
+$$V = \mathbb{R}^n,\quad x = \begin{bmatrix} x_1 \\ \vdots \\ x_n \end{bmatrix}$$
+<br />
+The most familiar vector space is the $n$-dimensional real space $\mathbb{R}^n$, where a vector is the column vector you already know.
+
+> **Note**: The **sum** and the **scalar multiple** of vectors must again lie in $V$ (closure). But a "product" of two vectors ($x \cdot y$) is **not** part of the definition of a vector space.
+
+---
+
+## A vector isn't only an arrow
+
+Anything that satisfies the vector-space axioms is a "vector." An arrow is just one example.
+
+| Set | What the vector is | Zero vector $\mathbf{0}$ |
+|---|---|---|
+| $\mathbb{R}^n$ | column vector with $n$ coordinates | $(0, \dots, 0)$ |
+| polynomials of degree $\le n$ | $p(x) = a_0 + a_1 x + \cdots + a_n x^n$ | constant function $0$ |
+| $\mathbb{R}^{m \times n}$ matrices | all $m \times n$ matrices | zero matrix |
+| real functions $f: \mathbb{R} \rightarrow \mathbb{R}$ | the function itself | $f(x) = 0$ |
+
+For instance, adding or scaling two polynomials still yields a polynomial, and all eight axioms hold.
+<br />
+$$(a_0 + a_1 x) + (b_0 + b_1 x) = (a_0 + b_0) + (a_1 + b_1)x$$
+<br />
+So the set of polynomials is a bona fide vector space too.
+
+> **In practice?** In deep learning a single image is a $28 \times 28$ matrix and simultaneously a 784-dimensional vector.<br />Because we view data as elements of a vector space, a single matrix operation can transform thousands of images at once.
+
+---
+
+## Vector subspaces
+
+If a subset $U \subseteq V$ of a vector space $V$ is **itself a vector space**, then $U$ is a **subspace** of $V$.
+
+To check whether a subset $U$ is a subspace, you only need three things.
+
+- $U \neq \emptyset$, and in particular the **zero vector $\mathbf{0} \in U$**
+- **closed under addition**: $x, y \in U \Rightarrow x + y \in U$
+- **closed under scalar multiplication**: $x \in U,\ \lambda \in \mathbb{R} \Rightarrow \lambda x \in U$
+
+The crucial point is that **a subspace always passes through the origin**. Substituting $\lambda = 0$ gives $0 \cdot x = \mathbf{0} \in U$.
+<br />
+$$U = \left\{ \begin{bmatrix} x_1 \\ x_2 \end{bmatrix} \in \mathbb{R}^2 \ \middle|\ x_2 = 2x_1 \right\}$$
+<br />
+A line through the origin is a subspace of $\mathbb{R}^2$. A line that does **not** pass through the origin (e.g. $x_2 = 2x_1 + 1$) does not contain $\mathbf{0}$ and is therefore not a subspace.
+
+> **Key point**: "Does it pass through the origin?" is the first gate for a subspace. Relaxing this condition to handle planes and lines that miss the origin leads to the **affine space**, which comes next.
+
+---
+
+## Linear combinations and span
+
+For vectors $x_1, \dots, x_k \in V$ and scalars $\lambda_1, \dots, \lambda_k \in \mathbb{R}$, a vector of the following form is a **linear combination**.
+<br />
+$$v = \lambda_1 x_1 + \lambda_2 x_2 + \cdots + \lambda_k x_k = \sum_{i=1}^{k} \lambda_i x_i$$
+<br />
+The set of **all linear combinations** you can build from a set of vectors $A = \{x_1, \dots, x_k\}$ is called its **span**, written $\text{span}[A]$.
+<br />
+$$\text{span}[A] = \left\{ \sum_{i=1}^{k} \lambda_i x_i \ \middle|\ \lambda_i \in \mathbb{R} \right\}$$
+<br />
+A span is always a **subspace** of $V$. For example, in $\mathbb{R}^3$ the span of two distinct vectors is a **plane** through the origin.
+
+> **In practice?** The span is exactly "the range of data expressible as combinations of these features."<br />If the span fails to cover the whole original space, there remain directions that no amount of training can represent.
+
+---
+
+## Vector spaces in machine learning
+
+Here is how the abstract definitions above actually show up in ML.
+
+| Concept | Where it appears in ML |
+|---|---|
+| vector space $\mathbb{R}^n$ | feature space — one data point = one vector |
+| vector addition / scalar mult. | embedding-vector arithmetic (e.g. `king - man + woman ≈ queen`) |
+| subspace | the low-dimensional space PCA projects data onto |
+| span | the range of outputs a model can represent |
+
+In other words, the data and parameters a model works with are all elements of some vector space, and training is the process of finding a good vector (weights) within that space.
+
+---
+
+## Summary
+
+| Concept | Description |
+|---|---|
+| **Group** | set + operation satisfying closure, associativity, identity, inverse |
+| **Abelian group** | a group that also satisfies commutativity |
+| **Vector space** | $(V,+)$ is an Abelian group + scalar-multiplication axioms (eight in total) |
+| **Vector** | an element of a vector space (not just arrows — polynomials, matrices, functions) |
+| **Subspace** | a subset that is itself a vector space; must contain $\mathbf{0}$ |
+| **Linear combination** | a vector of the form $\sum \lambda_i x_i$ |
+| **Span** | the set of all linear combinations (always a subspace) |
+
+<br />
+
+## Quiz
+
+**Q1. Is $(\mathbb{N}, +)$ (natural numbers under addition) a group? If not, which axiom fails?**
+
+<details>
+<summary>Show answer</summary>
+<br />
+It is **not** a group. It satisfies closure, associativity, and identity ($0$, if your definition of $\mathbb{N}$ includes zero), but it lacks **inverses**. For example, the additive inverse of $3$ is $-3$, which is not a natural number, so the inverse axiom fails.
+
+</details>
+
+---
+
+**Q2. In $\mathbb{R}^2$, is the set $U = \{ (x_1, x_2) \mid x_2 = 2x_1 + 1 \}$ a subspace?**
+
+<details>
+<summary>Show answer</summary>
+<br />
+It is **not** a subspace. When $x_1 = 0$ we get $x_2 = 1$, so this line does not pass through the origin $(0, 0)$. Since it does not contain the zero vector, it cannot be a subspace. (The line $x_2 = 2x_1$ through the origin would be a subspace.)
+
+</details>
+
+---
+
+**Q3. What is the span $\text{span}[\{x_1, x_2\}]$ of $x_1 = (1, 0)$ and $x_2 = (0, 1)$?**
+
+<details>
+<summary>Show answer</summary>
+<br />
+$$\lambda_1 (1, 0) + \lambda_2 (0, 1) = (\lambda_1, \lambda_2)$$
+<br />
+Since $\lambda_1, \lambda_2$ can be any real numbers, the span is **all of** $\mathbb{R}^2$.
+
+</details>
+
+---
+
+**Q4. If the set of polynomials of degree $\le 2$ is a vector space, what is its zero vector?**
+
+<details>
+<summary>Show answer</summary>
+<br />
+The polynomial with all coefficients equal to $0$, i.e. the constant function $p(x) = 0$. Adding it to any polynomial $q(x)$ gives $q(x) + 0 = q(x)$, so it serves as the additive identity.
+
+</details>
+
+---
+
+In the next post we'll look at **how much the vectors of a vector space overlap** with one another: **linear independence**, **basis**, **dimension**, and **rank**.

@@ -10,6 +10,7 @@ import type { Metadata } from 'next'
 import TotalViews from '@/components/blog/TotalViews'
 import type { PostMeta } from '@/lib/types'
 import { getTranslations } from 'next-intl/server'
+import { translateCategory } from '@/lib/categoryTranslations'
 
 export const metadata: Metadata = {
   title: 'devlog — 개발자 블로그',
@@ -39,6 +40,7 @@ const CATEGORY_DESC: Record<string, Record<string, string>> = {
     면접: 'CS 기초, 기술 면접 빈출 문제 정리',
     회고: '프로젝트와 이벤트 경험의 기록',
     MMD: 'ML/DS를 위한 선형대수, 미적분, 통계',
+    MML: 'MML 책으로 배우는 머신러닝 수학',
   },
   en: {
     AI: 'LLM, prompt engineering, AI tooling',
@@ -46,6 +48,7 @@ const CATEGORY_DESC: Record<string, Record<string, string>> = {
     면접: 'CS fundamentals & interview prep',
     회고: 'Project & event retrospectives',
     MMD: 'Linear algebra, calculus & stats for ML/DS',
+    MML: 'Math for machine learning, via the MML book',
   },
 }
 
@@ -53,17 +56,19 @@ function CategoryCard({
   category,
   posts,
   desc,
+  locale,
 }: {
   category: string
   posts: PostMeta[]
   desc: string
+  locale: string
 }) {
   return (
     <Link href={`/?category=${encodeURIComponent(category)}`}>
       <div className="h-full p-4 rounded-lg border border-slate-800/60 bg-slate-900/20 hover:border-accent-800/50 hover:bg-slate-800/30 transition-all cursor-pointer group">
         <div className="flex items-start justify-between mb-2">
           <span className="font-mono text-sm text-accent-500/80 bg-accent-900/10 border border-accent-800/20 px-1.5 py-0.5 rounded">
-            [{category}]
+            [{translateCategory(category, locale)}]
           </span>
           <span className="font-mono text-xs text-slate-700 bg-slate-800/40 px-1.5 py-0.5 rounded ml-2 shrink-0">
             {posts.length}
@@ -180,6 +185,7 @@ export default async function HomePage({ params, searchParams }: HomePageProps) 
                       category={cat}
                       posts={postsByCategory[cat]}
                       desc={categoryDesc[cat] ?? '관련 포스트 모음'}
+                      locale={locale}
                     />
                   ))}
                 </div>
@@ -206,7 +212,7 @@ export default async function HomePage({ params, searchParams }: HomePageProps) 
               </Link>
               {categories.map((cat) => (
                 <Link key={cat} href={`/?category=${encodeURIComponent(cat)}`}>
-                  <Badge variant={searchParams.category === cat ? 'amber' : 'gray'}>{cat}</Badge>
+                  <Badge variant={searchParams.category === cat ? 'amber' : 'gray'}>{translateCategory(cat, locale)}</Badge>
                 </Link>
               ))}
             </div>
@@ -217,7 +223,7 @@ export default async function HomePage({ params, searchParams }: HomePageProps) 
                 href="/"
                 className="inline-flex items-center gap-1 px-2.5 py-1 rounded font-mono text-xs bg-primary-900/20 text-primary-400 border border-primary-800/30 hover:bg-primary-900/30 transition-colors"
               >
-                [{searchParams.category}]
+                [{translateCategory(searchParams.category ?? '', locale)}]
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   width="10"

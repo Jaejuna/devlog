@@ -18,6 +18,7 @@ import PostNavigation from '@/components/blog/PostNavigation'
 import RelatedPosts from '@/components/blog/RelatedPosts'
 import ReadingProgress from '@/components/blog/ReadingProgress'
 import ViewCounter from '@/components/blog/ViewCounter'
+import { translateCategory } from '@/lib/categoryTranslations'
 import TotalViews from '@/components/blog/TotalViews'
 import { routing } from '@/i18n/routing'
 import { getTranslations } from 'next-intl/server'
@@ -124,7 +125,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
         <article>
           <header className="mb-10">
             <p className="font-mono text-xs text-accent-500/80 bg-accent-900/10 border border-accent-800/20 px-1.5 py-0.5 rounded inline-block mb-4">
-              [{post.category}]
+              [{translateCategory(post.category, params.locale)}]
             </p>
             <h1 className="text-3xl md:text-4xl font-extrabold text-slate-100 mb-5 leading-tight tracking-tight">
               {post.title}

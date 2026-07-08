@@ -2,6 +2,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import type { PostMeta } from '@/lib/types'
 import { translateTag } from '@/lib/tagTranslations'
+import { translateCategory } from '@/lib/categoryTranslations'
 
 interface PostCardProps {
   post: PostMeta
@@ -28,7 +29,7 @@ export default function PostCard({ post, locale = 'ko' }: PostCardProps) {
             {/* Meta */}
             <div className="flex items-center gap-2 mb-2 font-mono text-xs">
               <span className="text-accent-500/80 bg-accent-900/10 border border-accent-800/20 px-1.5 py-0.5 rounded">
-                [{post.category}]
+                [{translateCategory(post.category, locale)}]
               </span>
               <span className="text-slate-700">·</span>
               <time dateTime={post.date} className="text-slate-500">
